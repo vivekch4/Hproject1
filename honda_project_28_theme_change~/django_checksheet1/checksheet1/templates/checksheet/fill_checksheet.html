@@ -1,0 +1,2054 @@
+{% extends 'checksheet/base.html' %}
+{% block title %}Fill Checksheet{% endblock %}
+{% load static %}
+<script src="{% static 'js/offline.js' %}"></script>
+
+{% block content %}
+<style>
+    /* Base styles */
+    option{
+        background: #1e293b;
+        }
+        body{
+            background-image:linear-gradient(270deg, rgb(19 19 41 / 71%) 6.5%, rgb(13 18 45) 93.2%) !important;
+        }
+        .settings-float{
+            display:none;
+        }
+        .user-info {
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+            padding: 0.75rem 1rem !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+            transition: all 0.2s ease !important;
+            border:unset !important;
+        }
+        .user-name{
+            color:white!important;
+        }
+        .logout-btn {
+            padding: 0.5rem 1.25rem !important;
+            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 10px !important;
+            font-size: 0.875rem !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            text-decoration: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.5rem !important;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
+        }
+        .user-role{
+            color:white!important;
+        }
+        .navbar{
+            background:rgba(19, 19, 41, 0.85) !important;
+        }
+        .content-inner{
+            background:unset !important;
+        }
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+        background-color: #0f172a;
+    }
+    
+    /* Sidebar and content adjustments */
+    body.fill-checksheet .sidebar {
+        display: none !important;
+    }
+    
+    body.fill-checksheet .content,
+    body.fill-checksheet .navbar {
+        margin-left: 0 !important;
+        width: 100% !important;
+        left: 0 !important;
+    }
+    
+    body.fill-checksheet .menu-toggle {
+        display: none !important;
+    }
+    
+    .sidebar-toggle {
+        display: none !important;
+    }
+    
+    .content-inner {
+        padding: 0;
+    }
+    
+    /* Header styling */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 0;
+        margin-bottom: 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: rgba(0, 0, 0, 0.2);
+    }
+    
+    .page-title {
+        color: #ffffff;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    /* Button styling */
+    .back-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .back-button:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        transform: scale(1.05);
+    }
+    
+    .save-btn {
+        background-color: #3b82f6;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 48px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .save-btn:hover {
+        background-color: #2563eb;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 14px rgba(59, 130, 246, 0.3);
+    }
+    
+    .edit-btn {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+        padding: 7px 15px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 37px;
+    }
+    
+    .edit-btn:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        transform: translateY(-3px);
+    }
+    
+    .ack-btn {
+        background-color: #10b981;
+        color: white;
+        padding: 7px 15px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 37px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .ack-btn:hover {
+        background-color: #059669;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 14px rgba(5, 150, 105, 0.3);
+    }
+    
+    .reject-btn {
+        background-color: #ef4444;
+        color: white;
+        padding: 7px 15px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 37px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .reject-btn:hover {
+        background-color: #dc2626;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 14px rgba(220, 38, 38, 0.3);
+    }
+    
+    .form-submit-btn {
+        width: 15%;
+        padding: 16px;
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-top: 24px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-submit-btn:hover {
+        background-color: #2563eb;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 14px rgba(59, 130, 246, 0.3);
+    }
+    
+    /* Translation button styling */
+    .translate-btn {
+        background-color: #3b82f6;
+        color: white;
+        padding: 7px 15px;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 37px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .translate-btn:hover {
+        background-color: #2563eb;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 14px rgba(59, 130, 246, 0.3);
+    }
+    
+    /* Content layout */
+    .content-layout {
+        display: flex;
+        gap: 32px;
+    }
+    
+    /* Images section */
+    .images-section {
+        flex: 0 0 42%;
+    }
+    
+    .images-grid {
+        display: grid;
+        gap: 16px;
+        height: 100%;
+        width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .image-container {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        overflow: hidden;
+        height: 240px;
+        width: 100%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .image-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+        padding: 4px;
+    }
+    
+    .images-grid.one-image {
+        grid-template-columns: 1fr;
+    }
+    
+    .images-grid.one-image .image-container {
+        height: 500px;
+    }
+    
+    .images-grid.two-images {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .images-grid.three-images {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+    
+    .images-grid.four-images {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+    }
+    
+    .no-image {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px dashed rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .no-image i {
+        font-size: 48px;
+        margin-bottom: 12px;
+    }
+    
+    .no-image p {
+        font-size: 0.875rem;
+    }
+    
+    /* Form section */
+    .form-section {
+        flex: 1;
+    }
+    
+    .checksheet-header {
+        margin-bottom: 24px;
+    }
+    
+    .checksheet-title {
+        color: #ffffff;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .zones-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 16px;
+        padding: 24px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 24px;
+    }
+    
+    .zone-item {
+        flex: 0 0 auto;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .zone-item:hover {
+        border-color: #3b82f6;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .zone-item.selected {
+        background-color: #3b82f6;
+        border-color: #2563eb;
+        color: white;
+    }
+    
+    .zone-label {
+        font-size: 1.75rem;
+        text-align: center;
+        margin-bottom: 4px;
+        color: #ffffff;
+    }
+    
+    .zone-item.selected .zone-label {
+        color: white;
+    }
+    
+    .zone-check {
+        display: none;
+    }
+    
+    .zone-input {
+        width: 100%;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        padding: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        font-size: 0.875rem;
+    }
+    
+    .zone-item.selected .zone-input {
+        color: white;
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Reject section */
+    .reject-section {
+        margin: 32px 0;
+        padding: 20px;
+        background-color: rgba(239, 68, 68, 0.2);
+        border: 2px solid rgba(239, 68, 68, 0.3);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .reject-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 600;
+        color: #ef4444;
+        font-size: 1.125rem;
+    }
+    
+    .reject-title i {
+        font-size: 1.25rem;
+    }
+    
+    .reject-zone {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    
+    .reject-label {
+        font-weight: 600;
+        color: #ef4444;
+        font-size: 1.125rem;
+    }
+    
+    .reject-check-container {
+        width: 36px;
+        height: 36px;
+        position: relative;
+    }
+    
+    .reject-check {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+    
+    .reject-checkbox-custom {
+        display: block;
+        width: 36px;
+        height: 36px;
+        border: 2px solid rgba(239, 68, 68, 0.3);
+        border-radius: 6px;
+        background-color: rgba(255, 255, 255, 0.1);
+        transition: all 0.2s;
+        position: relative;
+    }
+    
+    .reject-check:checked+.reject-checkbox-custom {
+        background-color: #ef4444;
+        border-color: #ef4444;
+    }
+    
+    .reject-check:checked+.reject-checkbox-custom:after {
+        content: '';
+        position: absolute;
+        top: 7px;
+        left: 14px;
+        width: 8px;
+        height: 18px;
+        border: solid white;
+        border-width: 0 3px 3px 0;
+        transform: rotate(45deg);
+    }
+    
+    /* Action buttons */
+    .action-buttons {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+    
+    /* Pin button */
+    .pin-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        color: rgba(255, 255, 255, 0.7);
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .pin-button:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        transform: scale(1.05);
+    }
+    
+    .pin-button.pinned {
+        color: #3b82f6;
+        background-color: rgba(59, 130, 246, 0.2);
+        border-color: #3b82f6;
+    }
+    
+    .pin-info {
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.7);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        padding-left: 4px;
+    }
+    
+    /* Back button */
+    .back-btn {
+        padding: 12px 20px;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        height: 48px;
+        font-weight: 500;
+    }
+    
+    .back-btn:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+    }
+    
+    /* Checksheets table */
+    #checksheets-table {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 24px;
+        margin-top: 24px;
+    }
+    
+    #checksheets-table h3 {
+        color: #ffffff;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+    
+    #checksheets-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    #checksheets-table th {
+        text-align: left;
+        padding: 14px;
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    thead {
+        background: linear-gradient(to right, #4d4ae6, #3c7df4);
+    }
+    #checksheets-table td {
+        padding: 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .delete-entry {
+        background-color: #ef4444;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .delete-entry:hover {
+        background-color: #dc2626;
+        transform: translateY(-2px);
+    }
+    
+    /* Modal styling */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 400px;
+        background-image: linear-gradient(270deg, rgb(19 19 41 / 71%) 6.5%, rgb(13 18 45) 93.2%);
+        padding: 32px;
+        z-index: 1000;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        transform: translate(-50%, -50%);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .modal-content {
+        text-align: center;
+    }
+    
+    .modal-content h3 {
+        font-size: 1.25rem;
+        color: #ef4444;
+        margin-bottom: 16px;
+    }
+    
+    .modal-content select {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        font-size: 1rem;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        transition: all 0.2s;
+    }
+    
+    .modal-content select:focus {
+        outline: none;
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+    }
+    
+    .modal-content button {
+        margin-top: 16px;
+        padding: 12px 24px;
+        background-color: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .modal-content button:hover {
+        background-color: #dc2626;
+        transform: translateY(-2px);
+    }
+    
+    .close-btn {
+        position: absolute;
+        top: 12px;
+        right: 16px;
+        cursor: pointer;
+        font-size: 20px;
+        color: rgba(255, 255, 255, 0.7);
+        transition: all 0.2s;
+    }
+    
+    .close-btn:hover {
+        color: #ffffff;
+    }
+    
+    .modal::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: -1;
+    }
+    
+    /* Success and alert popups */
+    .success-popup,
+    .alert-popup {
+        display: none;
+        position: fixed;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #10b981;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        z-index: 1001;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .success-popup i,
+    .alert-popup i {
+        font-size: 48px;
+        margin-bottom: 16px;
+    }
+    
+    .success-popup h3,
+    .alert-popup h3 {
+        color: #ffffff;
+        font-size: 1.25rem;
+        margin-bottom: 8px;
+    }
+    
+    .success-popup p,
+    .alert-popup p {
+        color: white;
+        margin-bottom: 20px;
+    }
+    
+    .success-popup button,
+    .alert-popup button {
+        background: #white;
+        color: #10b981;
+        border: none;
+        padding: 13px 35px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .success-popup button:hover,
+    .alert-popup button:hover {
+        background: #e6f7ff;
+        transform: translateY(-2px);
+    }
+    
+    .alert-popup i {
+        color: #ef4444;
+    }
+    
+    .alert-popup button {
+        background: #ef4444;
+    }
+    
+    .alert-popup button:hover {
+        background: #dc2626;
+    }
+    
+    #ack-success-popup i,
+    #ack-success-popup button {
+      
+    }
+    
+    #ack-success-popup button:hover {
+        background: #059669;
+    }
+    
+    .success-popup::before,
+    .alert-popup::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      
+        z-index: -1;
+    }
+    
+    /* Chart container */
+    .chart-container {
+        margin-top: 24px;
+        padding: 16px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Navbar styling */
+    .navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+        height: 60px;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .navbar-left {
+        display: flex;
+        align-items: center;
+        flex: 1;
+    }
+    
+    .navbar-center {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        margin-right: 20px;
+    }
+    
+    /* Current time display */
+    .datetime-display {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.8);
+        background-color: rgba(255, 255, 255, 0.1);
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .datetime-display i {
+        color: #3b82f6;
+    }
+    
+    /* Current shift display */
+    .shift-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #ffffff;
+        background-color: rgba(59, 130, 246, 0.2);
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(59, 130, 246, 0.5);
+    }
+    
+    .shift-label i {
+        color: #3b82f6;
+    }
+    
+    /* Countdown timer styling */
+    .shift-countdown-alert {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #ef4444;
+        background-color: rgba(239, 68, 68, 0.2);
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+    
+    /* Hidden class */
+    .hidden {
+        display: none;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .content-layout {
+            flex-direction: column;
+        }
+    
+        .images-section {
+            flex: none;
+            width: 100%;
+            margin-bottom: 24px;
+        }
+    
+        .images-grid.one-image .image-container {
+            height: 350px;
+        }
+    
+        .navbar-center {
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .zones-list {
+            grid-template-columns: 1fr;
+        }
+    
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+    
+        .action-buttons {
+            width: 100%;
+            flex-wrap: wrap;
+        }
+    
+        .save-btn,
+        .edit-btn,
+        .ack-btn,
+        .reject-btn,
+        .translate-btn {
+            flex: 1;
+            min-width: 140px;
+            justify-content: center;
+        }
+    
+        .images-grid.one-image .image-container {
+            height: 250px;
+        }
+    
+        .navbar {
+            flex-wrap: wrap;
+            height: auto;
+            padding: 10px 15px;
+        }
+    
+        .navbar-left,
+        .navbar-center {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    
+        .datetime-display,
+        .shift-label,
+        .shift-countdown-alert {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+{% if selected_checksheet %}
+<div class="page-container">
+    <div class="header">
+        <h2 class="page-title">{{ selected_checksheet.name }}</h2>
+        <div class="action-buttons">
+            <button id="edit-checksheets-btn" class="edit-btn">
+                <i class="fas fa-edit"></i> <span data-translate="edit">Edit</span>
+            </button>
+            <div class="reject-zone">
+                <button type="button" class="reject-btn" onclick="handleRejectReason()">
+                    <i class="fas fa-times-circle"></i> <span data-translate="reject">Reject</span>
+                </button>
+            </div>
+            <button id="send-acknowledgment-btn" class="ack-btn">
+                <i class="fas fa-check"></i> <span data-translate="finish">Finish</span>
+            </button>
+            <button class="translate-btn" onclick="toggleLanguage()">
+                <i class="fas fa-language"></i> <span data-translate="translate_to_hindi">Hindi</span>
+            </button>
+            <a href="{% if request.user.role == 'quality_incharge' %}{% url 'quality_incharge_dashboard' %}
+         {% elif request.user.role == 'shift_incharge' %}{% url 'shift_incharge_dashboard' %}
+         {% else %}{% url 'operator_dashboard' %}{% endif %}" class="back-button" title="Close" data-translate-title="close">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="checksheet-container">
+        <form method="POST" id="checksheet-form">
+            {% csrf_token %}
+            <input type="hidden" name="line" value="{{ selected_checksheet.line }}">
+            <div class="content-layout">
+                <div class="images-section">
+                    {% with image_count=images|length %}
+                    <div class="images-grid" id="images-grid">
+                        {% if images %}
+                        {% for img in images %}
+                        <div class="image-container">
+                            <img src="{{ img.image.url }}" alt="Checksheet Image">
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="no-image">
+                            <i class="fas fa-image"></i>
+                            <p data-translate="no_images">No images available</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endwith %}
+                </div>
+
+                <div class="form-section">
+                    <div class="zones-list">
+                        {% for zone in zones %}
+                        {% if zone.input_type == "checkbox" %}
+                        <div class="zone-item" onclick="toggleZone(this)">
+                            <label class="zone-label">{{ zone.name }}</label>
+                            <input type="checkbox" id="zone_{{ zone.id }}" name="zone_{{ zone.id }}" class="zone-check">
+                        </div>
+                        {% elif zone.input_type == "int" %}
+                        <div class="zone-item">
+                            <label class="zone-label" for="zone_{{ zone.id }}">{{ zone.name }}</label>
+                            <input type="number" id="zone_{{ zone.id }}" name="zone_{{ zone.id }}" class="zone-input"
+                                min="0">
+                        </div>
+                        {% elif zone.input_type == "float" %}
+                        <div class="zone-item">
+                            <label class="zone-label" for="zone_{{ zone.id }}">{{ zone.name }}</label>
+                            <input type="number" id="zone_{{ zone.id }}" name="zone_{{ zone.id }}" class="zone-input"
+                                step="0.01">
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="form-submit-btn">
+                        <i class="fas fa-save"></i>
+                        <span data-translate="save">Save</span>
+                    </button>
+                    <div class="chart-container">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div id="reject-reason-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeRejectReasonModal()">×</span>
+                <h3><i class="fas fa-exclamation-circle"></i> <span data-translate="select_rejection_details">Select Rejection Details</span></h3>
+                <select id="reject-reason-select">
+                    <option value="" data-translate="select_reason">Select Reason</option>
+                    <option value="damaged" data-translate="damaged">Damaged</option>
+                    <option value="paint_error" data-translate="paint_error">Paint Error</option>
+                    <option value="not_good" data-translate="not_good">Not Good</option>
+                </select>
+                <select id="reject-zone-select">
+                    <option value="" data-translate="select_zone">Select Zone</option>
+                    {% for zone in zones %}
+                    <option value="{{ zone.name }}">{{ zone.name }}</option>
+                    {% endfor %}
+                </select>
+                <button onclick="saveRejectReason()" data-translate="save_selection">Save Selection</button>
+            </div>
+        </div>
+
+        <div class="success-popup" id="success-popup">
+            <i class="fas fa-check-circle"></i>
+            <h3 data-translate="success">Success!</h3>
+            <p data-translate="form_submitted">Form submitted successfully</p>
+            <button onclick="closeSuccessPopup()" data-translate="ok">OK</button>
+        </div>
+    </div>
+</div>
+
+<div id="checksheets-table" class="hidden">
+    <div class="page-container">
+        <div class="header">
+            <h2 class="page-title" data-translate="todays_checksheets">Today's Submitted Checksheets</h2>
+            <button id="back-btn" class="back-button" title="Close" data-translate-title="close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="form-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th data-translate="id">ID</th>
+                        <th data-translate="status_data">Status Data</th>
+                        <th data-translate="timestamp">Timestamp</th>
+                        <th data-translate="action">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="checksheets-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="alert-popup" class="alert-popup hidden">
+    <div class="alert-content">
+        <i class="fas fa-exclamation-circle"></i>
+        <h3 data-translate="required">Required</h3>
+        <p data-translate="select_reason_and_zone">Please select both a reason and a zone for rejection</p>
+        <button onclick="closeAlertPopup()" data-translate="ok">OK</button>
+    </div>
+</div>
+
+<div id="shift-alert-popup" class="alert-popup hidden">
+    <div class="alert-content">
+        <i class="fas fa-exclamation-circle"></i>
+        <h3 data-translate="shift_required">Shift Required</h3>
+        <p data-translate="select_shift">Please select a shift before submitting</p>
+        <button onclick="closeShiftAlertPopup()" data-translate="ok">OK</button>
+    </div>
+</div>
+
+<div id="ack-success-popup" class="alert-popup hidden">
+    <div class="alert-content">
+        <i class="fas fa-check-circle" style="color: white;"></i>
+        <h3 data-translate="success">Success</h3>
+        <p data-translate="ack_sent">Acknowledgment sent successfully</p>
+        <button onclick="closeAckPopup()" style="background: white;" data-translate="ok">OK</button>
+    </div>
+</div>
+
+<div id="ack-error-popup" class="alert-popup hidden">
+    <div class="alert-content">
+        <i class="fas fa-exclamation-circle"></i>
+        <h3 data-translate="error">Error</h3>
+        <p data-translate="ack_failed">Failed to send acknowledgment</p>
+        <button onclick="closeAckPopup()" data-translate="ok">OK</button>
+    </div>
+</div>
+
+<div id="zone-alert-popup" class="alert-popup hidden">
+    <div class="alert-content">
+        <i class="fas fa-exclamation-circle"></i>
+        <h3 data-translate="zone_required">Zone Required</h3>
+        <p data-translate="select_one_zone">Please select at least one zone before submitting</p>
+        <button onclick="closeZoneAlertPopup()" data-translate="ok">OK</button>
+    </div>
+</div>
+
+<script>
+    function isOnline() {
+        return navigator.onLine;
+    }
+    
+    // Function to generate a unique ID for offline submissions
+    function generateUniqueId() {
+        return 'offline_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    // Function to save form data to localStorage
+    function saveFormDataLocally(formData) {
+        const formDataObj = {};
+        formData.forEach((value, key) => {
+            formDataObj[key] = value;
+        });
+    
+        // Add a unique ID and timestamp
+        formDataObj.id = generateUniqueId();
+        formDataObj.timestamp = new Date().toISOString();
+    
+        // Retrieve existing offline submissions or initialize an empty array
+        let offlineSubmissions = JSON.parse(localStorage.getItem('offlineSubmissions') || '[]');
+        offlineSubmissions.push(formDataObj);
+        localStorage.setItem('offlineSubmissions', JSON.stringify(offlineSubmissions));
+    
+        console.log('Form data saved to localStorage:', formDataObj);
+    }
+    
+    // Function to sync offline submissions to the server
+    function syncOfflineSubmissions() {
+        let offlineSubmissions = JSON.parse(localStorage.getItem('offlineSubmissions') || '[]');
+        if (offlineSubmissions.length === 0) {
+            console.log('No offline submissions to sync.');
+            return;
+        }
+    
+        console.log('Attempting to sync offline submissions:', offlineSubmissions);
+    
+        // Track successful syncs
+        let successfulSyncs = 0;
+        const totalSubmissions = offlineSubmissions.length;
+        const newOfflineSubmissions = [...offlineSubmissions]; // Copy to avoid modifying during iteration
+    
+        // Process each submission
+        const syncPromises = offlineSubmissions.map((submission, index) => {
+            const formData = new FormData();
+            Object.entries(submission).forEach(([key, value]) => {
+                if (key !== 'id' && key !== 'timestamp') {
+                    formData.append(key, value);
+                }
+            });
+    
+            return fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log(`Successfully synced submission ${submission.id}`);
+                    successfulSyncs++;
+                    newOfflineSubmissions[index] = null; // Mark as synced
+                } else {
+                    console.error(`Failed to sync submission ${submission.id}`);
+                }
+            })
+            .catch(error => {
+                console.error(`Error syncing submission ${submission.id}:`, error);
+            });
+        });
+    
+        // Wait for all sync attempts to complete
+        Promise.all(syncPromises).then(() => {
+            // Update localStorage with only failed submissions
+            const remainingSubmissions = newOfflineSubmissions.filter(submission => submission !== null);
+            localStorage.setItem('offlineSubmissions', JSON.stringify(remainingSubmissions));
+    
+            // Show a single popup if any submissions were synced
+            if (successfulSyncs > 0) {
+                showSyncSuccessMessage(successfulSyncs);
+            }
+        });
+    }
+    
+    // Function to show sync success message
+    function showSyncSuccessMessage(count) {
+        const popup = document.createElement('div');
+        popup.className = 'alert-popup';
+        popup.innerHTML = `
+            <div class="alert-content">
+                <i class="fas fa-check-circle"></i>
+                <h3>Sync Success</h3>
+                <p>${count} offline submission${count > 1 ? 's have' : ' has'} been synced to the server.</p>
+                <button onclick="this.parentElement.parentElement.remove()">OK</button>
+            </div>
+        `;
+        document.body.appendChild(popup);
+        popup.style.display = 'block';
+    }
+    
+    // Function to show offline save message
+    function showOfflineSaveMessage() {
+        const popup = document.createElement('div');
+        popup.className = 'alert-popup';
+        popup.innerHTML = `
+            <div class="alert-content">
+                <i class="fas fa-info-circle"></i>
+                <h3>Offline Mode</h3>
+                <p>Your submission has been saved locally and will sync when internet is available.</p>
+                <button onclick="this.parentElement.parentElement.remove()">OK</button>
+            </div>
+        `;
+        document.body.appendChild(popup);
+        popup.style.display = 'block';
+    }
+    
+    // Initialize event listeners for online/offline events
+    window.addEventListener('online', () => {
+        console.log('Internet connection restored. Attempting to sync offline submissions...');
+        syncOfflineSubmissions();
+    });
+    
+    window.addEventListener('offline', () => {
+        console.log('Internet connection lost. Submissions will be saved locally.');
+    });
+    
+    // Export functions for use in the main script
+    window.offlineUtils = {
+        isOnline,
+        saveFormDataLocally,
+        syncOfflineSubmissions,
+        showOfflineSaveMessage
+    };
+    // Translation dictionary
+    const translations = {
+        en: {
+            edit: "Edit",
+            reject: "Reject",
+            finish: "Finish",
+            translate_to_hindi: "Hindi",
+            translate_to_english: "English",
+            close: "Close",
+            no_images: "No images available",
+            save: "Save",
+            select_rejection_details: "Select Rejection Details",
+            select_reason: "Select Reason",
+            damaged: "Damaged",
+            paint_error: "Paint Error",
+            not_good: "Not Good",
+            select_zone: "Select Zone",
+            save_selection: "Save Selection",
+            success: "Success!",
+            form_submitted: "Form submitted successfully",
+            ok: "OK",
+            todays_checksheets: "Today's Submitted Checksheets",
+            id: "ID",
+            status_data: "Status Data",
+            timestamp: "Timestamp",
+            action: "Action",
+            required: "Required",
+            select_reason_and_zone: "Please select both a reason and a zone for rejection",
+            shift_required: "Shift Required",
+            select_shift: "Please select a shift before submitting",
+            zone_required: "Zone Required",
+            select_one_zone: "Please select at least one zone before submitting",
+            ack_sent: "Acknowledgment sent successfully",
+            ack_failed: "Failed to send acknowledgment",
+            zone_performance: "Zone Performance Overview",
+            zone_summary: "Zone Summary",
+            values: "Values",
+            zones: "Zones",
+            current_shift: "Current Shift",
+            shift_ending_in: "Shift ending in",
+            delete: "Delete",
+        },
+        hi: {
+            edit: "संपादित करें",
+            reject: "अस्वीकार करें",
+            finish: "समाप्त करें",
+            translate_to_hindi: "हिंदी ",
+            translate_to_english: "अंग्रेजी",
+            close: "बंद करें",
+            no_images: "कोई चित्र उपलब्ध नहीं",
+            save: "सहेजें",
+            select_rejection_details: "अस्वीकृति विवरण चुनें",
+            select_reason: "कारण चुनें",
+            damaged: "क्षतिग्रस्त",
+            paint_error: "पेंट त्रुटि",
+            not_good: "अच्छा नहीं",
+            select_zone: "जोन चुनें",
+            save_selection: "चयन सहेजें",
+            success: "सफलता!",
+            form_submitted: "फॉर्म सफलतापूर्वक जमा किया गया",
+            ok: "ठीक है",
+            todays_checksheets: "आज की जमा की गई चेकशीट",
+            id: "आईडी",
+            status_data: "स्थिति डेटा",
+            timestamp: "टाइमस्टैम्प",
+            action: "कार्रवाई",
+            required: "आवश्यक",
+            select_reason_and_zone: "कृपया अस्वीकृति के लिए कारण और जोन दोनों चुनें",
+            shift_required: "शिफ्ट आवश्यक",
+            select_shift: "कृपया जमा करने से पहले एक शिफ्ट चुनें",
+            zone_required: "जोन आवश्यक",
+            select_one_zone: "कृपया जमा करने से पहले कम से कम एक जोन चुनें",
+            ack_sent: "पावती सफलतापूर्वक भेजी गई",
+            ack_failed: "पावती भेजने में विफल",
+            zone_performance: "जोन प्रदर्शन अवलोकन",
+            zone_summary: "जोन सारांश",
+            values: "मान",
+            zones: "जोन",
+            current_shift: "वर्तमान पाली",
+            shift_ending_in: "पाली समाप्त हो रही है",
+            delete: "हटाएं"
+        }
+    };
+
+    // Current language state
+    let currentLanguage = 'en';
+
+    // Function to toggle language
+    function toggleLanguage() {
+        currentLanguage = currentLanguage === 'en' ? 'hi' : 'en';
+        
+        // Update all elements with data-translate attribute
+        document.querySelectorAll('[data-translate]').forEach(element => {
+            const key = element.getAttribute('data-translate');
+            element.textContent = translations[currentLanguage][key];
+        });
+
+        // Update title attributes
+        document.querySelectorAll('[data-translate-title]').forEach(element => {
+            const key = element.getAttribute('data-translate-title');
+            element.setAttribute('title', translations[currentLanguage][key]);
+        });
+
+        // Update select options
+        document.querySelectorAll('#reject-reason-select option').forEach(option => {
+            const key = option.getAttribute('data-translate');
+            if (key) {
+                option.textContent = translations[currentLanguage][key];
+            }
+        });
+
+        // Update chart title and labels
+        const chart = Chart.getChart('barChart');
+        if (chart) {
+            chart.options.plugins.title.text = translations[currentLanguage].zone_performance;
+            chart.data.datasets[0].label = translations[currentLanguage].zone_summary;
+            chart.options.scales.y.title.text = translations[currentLanguage].values;
+            chart.options.scales.x.title.text = translations[currentLanguage].zones;
+            chart.update();
+        }
+
+        // Update translate button text
+        const translateBtn = document.querySelector('.translate-btn span');
+        translateBtn.textContent = translations[currentLanguage][currentLanguage === 'en' ? 'translate_to_hindi' : 'translate_to_english'];
+
+        // Update shift label
+        const shiftLabel = document.querySelector('.shift-label');
+        if (shiftLabel) {
+            const currentShift = document.getElementById('current-shift-data')?.dataset.value || "{{ current_shift|default:'None' }}";
+            shiftLabel.innerHTML = `<i class="fas fa-clock"></i> ${translations[currentLanguage].current_shift} ${currentShift}`;
+        }
+    }
+
+    // Existing JavaScript
+    function closeSuccessPopup() {
+        document.getElementById('success-popup').style.display = 'none';
+        window.location.reload();
+    }
+
+    function getTimeUntilShiftEnd(shiftEndTime) {
+        if (!shiftEndTime || typeof shiftEndTime !== 'string') {
+            console.error('Invalid shift end time:', shiftEndTime);
+            return 0;
+        }
+       
+        const now = new Date();
+       
+        try {
+            let hours, minutes, seconds = 0;
+           
+            if (shiftEndTime.toLowerCase().includes('a.m.') || shiftEndTime.toLowerCase().includes('p.m.') ||
+                shiftEndTime.toLowerCase().includes('am') || shiftEndTime.toLowerCase().includes('pm')) {
+               
+                const timeStr = shiftEndTime.toLowerCase();
+                const isPM = timeStr.includes('p.m.') || timeStr.includes('pm');
+               
+                const timeParts = timeStr.split(/\s+/)[0];
+                const timeComponents = timeParts.split(':');
+               
+                hours = parseInt(timeComponents[0], 10);
+                if (isPM && hours !== 12) {
+                    hours += 12;
+                }
+                if (!isPM && hours === 12) {
+                    hours = 0;
+                }
+               
+                minutes = timeComponents.length > 1 ? parseInt(timeComponents[1], 10) : 0;
+            } else {
+                const parts = shiftEndTime.split(':');
+                if (parts.length < 2) {
+                    console.error('Invalid time format:', shiftEndTime);
+                    return 0;
+                }
+               
+                hours = parseInt(parts[0], 10);
+                minutes = parseInt(parts[1].split('.')[0], 10);
+                seconds = parts.length > 2 ? parseInt(parts[2], 10) : 0;
+            }
+           
+            const endTime = new Date();
+            endTime.setHours(hours);
+            endTime.setMinutes(minutes);
+            endTime.setSeconds(seconds);
+           
+            const timeDiff = endTime - now;
+            return timeDiff > 0 ? timeDiff : 0;
+        } catch (error) {
+            console.error('Error parsing shift end time:', error);
+            return 0;
+        }
+    }
+    
+    function updateCountdown(shiftEndTime) {
+        if (!shiftEndTime || typeof shiftEndTime !== 'string') {
+            console.warn('Invalid shift end time for countdown update:', shiftEndTime);
+            return;
+        }
+    
+        const timeRemaining = getTimeUntilShiftEnd(shiftEndTime);
+    
+        if (timeRemaining > 0 && timeRemaining <= 120000) {
+            const minutes = Math.floor(timeRemaining / 60000);
+            const seconds = Math.floor((timeRemaining % 60000) / 1000);
+    
+            const formattedTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    
+            const countdownElement = document.getElementById('shift-countdown');
+            if (countdownElement) {
+                countdownElement.textContent = `${translations[currentLanguage].shift_ending_in} ${formattedTime}`;
+                countdownElement.classList.remove('hidden');
+            } else {
+                const navbarCenter = document.querySelector('.navbar-center');
+                if (navbarCenter) {
+                    const countdownSpan = document.createElement('span');
+                    countdownSpan.id = 'shift-countdown';
+                    countdownSpan.className = 'shift-countdown-alert';
+                    countdownSpan.textContent = `${translations[currentLanguage].shift_ending_in} ${formattedTime}`;
+                    navbarCenter.appendChild(countdownSpan);
+                }
+            }
+            if (timeRemaining <= 5000) {
+                const finishButton = document.getElementById('send-acknowledgment-btn');
+                if (finishButton && !finishButton.disabled) {
+                    finishButton.click();
+                    finishButton.disabled = true;
+    
+                    setTimeout(() => {
+                        window.location.href = '/logout/';
+                    }, 2000);
+                }
+            }
+        }
+    }
+    
+    function startShiftEndMonitor(shiftAEnd, shiftBEnd, currentShift) {
+        console.log("Starting shift monitor with:", {
+            shiftAEnd: shiftAEnd,
+            shiftBEnd: shiftBEnd,
+            currentShift: currentShift
+        });
+       
+        let shiftEndTime;
+        if (currentShift === "A" && shiftAEnd) {
+            shiftEndTime = shiftAEnd;
+        } else if (currentShift === "B" && shiftBEnd) {
+            shiftEndTime = shiftBEnd;
+        } else {
+            console.warn("No valid shift end time found. Current shift:", currentShift);
+            return;
+        }
+       
+        console.log("Using shift end time:", shiftEndTime);
+       
+        const timer = setInterval(() => {
+            updateCountdown(shiftEndTime);
+           
+            if (getTimeUntilShiftEnd(shiftEndTime) <= 0) {
+                clearInterval(timer);
+                window.location.href = '/logout/';
+            }
+        }, 1000);
+       
+        window.shiftEndMonitorTimer = timer;
+    }
+    
+    document.addEventListener('DOMContentLoaded', function () {
+        const currentShiftElement = document.getElementById('current-shift-data');
+        const shiftAEndElement = document.getElementById('shift-a-end-data');
+        const shiftBEndElement = document.getElementById('shift-b-end-data');
+       
+        let currentShift = "{{ current_shift|default:'None' }}";
+        let shiftAEnd = "{{ shift_times.shift_A_end|default:'' }}";
+        let shiftBEnd = "{{ shift_times.shift_B_end|default:'' }}";
+
+        if (currentShiftElement && shiftAEndElement && shiftBEndElement) {
+            currentShift = currentShiftElement.dataset.value;
+            shiftAEnd = shiftAEndElement.dataset.value;
+            shiftBEnd = shiftBEndElement.dataset.value;
+        }
+       
+        console.log("Current shift:", currentShift);
+        console.log("Shift A end time:", shiftAEnd);
+        console.log("Shift B end time:", shiftBEnd);
+    
+        const navbar = document.querySelector('.navbar');
+        if (navbar) {
+            const navbarLeft = navbar.querySelector('.navbar-left');
+            const logoutBtn = navbar.querySelector('.logout-btn');
+    
+            const navbarCenter = document.createElement('div');
+            navbarCenter.className = 'navbar-center';
+            navbarCenter.innerHTML = `
+                <span class="datetime-display"><i class="fas fa-calendar-alt"></i> <span id="current-datetime"></span></span>
+                <span class="shift-label"><i class="fas fa-clock"></i> ${translations[currentLanguage].current_shift} ${currentShift}</span>
+            `;
+    
+            if (logoutBtn) {
+                navbar.insertBefore(navbarCenter, logoutBtn);
+            } else {
+                navbar.appendChild(navbarCenter);
+            }
+            updateDateTime();
+        }
+       
+        if (currentShift && (currentShift === "A" || currentShift === "B")) {
+            startShiftEndMonitor(shiftAEnd, shiftBEnd, currentShift);
+        } else {
+            console.warn("Not starting shift monitor: Invalid shift data");
+            document.getElementById('shift-alert-popup').style.display = 'block';
+        }
+
+        function updateDateTime() {
+            const now = new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+            
+            const dateStr = now.toLocaleDateString(undefined, dateOptions);
+            const timeStr = now.toLocaleTimeString(undefined, timeOptions);
+            
+            document.getElementById('current-datetime').textContent = `${dateStr} ${timeStr}`;
+            
+            setTimeout(updateDateTime, 1000);
+        }
+    
+        const imagesGrid = document.getElementById('images-grid');
+        if (imagesGrid) {
+            const imageCount = imagesGrid.querySelectorAll('.image-container').length;
+            imagesGrid.classList.remove('one-image', 'two-images', 'three-images', 'four-images');
+            if (imageCount === 1) imagesGrid.classList.add('one-image');
+            else if (imageCount === 2) imagesGrid.classList.add('two-images');
+            else if (imageCount === 3) imagesGrid.classList.add('three-images');
+            else if (imageCount >= 4) imagesGrid.classList.add('four-images');
+        }
+    
+        const editCheckBtn = document.getElementById('edit-checksheets-btn');
+        const checksheetContainer = document.querySelector('.checksheet-container');
+        const checksheetsTable = document.getElementById('checksheets-table');
+        const backBtn = document.getElementById('back-btn');
+        const selectedChecksheetId = "{{ selected_checksheet.id }}";
+    
+        if (editCheckBtn) {
+            editCheckBtn.addEventListener('click', function () {
+                checksheetContainer.classList.add('hidden');
+                checksheetsTable.classList.remove('hidden');
+                editCheckBtn.classList.add('hidden');
+    
+                fetch(`/get_today_checksheets/?checksheet_id=${selectedChecksheetId}&checksheet_name=${encodeURIComponent('{{ selected_checksheet.name }}')}&line=${encodeURIComponent('{{ selected_checksheet.line }}')}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        let tableBody = document.getElementById('checksheets-body');
+                        tableBody.innerHTML = "";
+    
+                        if (data.length === 0) {
+                            tableBody.innerHTML = `<tr><td colspan='4'>${translations[currentLanguage].no_data}</td></tr>`;
+                        } else {
+                            data.forEach(checksheet => {
+                                let statusText = Object.entries(checksheet.status_data)
+                                    .map(([key, value]) => `${key}: ${value}`)
+                                    .join(", ");
+    
+                                let row = `<tr id="row-${checksheet.id}">
+                                    <td>${checksheet.id}</td>
+                                    <td>${statusText}</td>
+                                    <td>${new Date(checksheet.timestamp).toLocaleString()}</td>
+                                    <td>
+                                        <button class="delete-entry" data-id="${checksheet.id}">
+                                            ${translations[currentLanguage].delete}
+                                        </button>
+                                    </td>
+                                </tr>`;
+                                tableBody.innerHTML += row;
+                            });
+                        }
+                    })
+                    .catch(error => console.error("Error fetching data:", error));
+            });
+        }
+    
+        if (backBtn) {
+            backBtn.addEventListener('click', function () {
+                checksheetContainer.classList.remove('hidden');
+                checksheetsTable.classList.add('hidden');
+                editCheckBtn.classList.remove('hidden');
+            });
+        }
+    
+        document.addEventListener('click', function (event) {
+            if (event.target.classList.contains('delete-entry')) {
+                const entryId = event.target.getAttribute('data-id');
+    
+                fetch(`/delete_checksheet/${entryId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById(`row-${entryId}`).remove();
+                        } else {
+                            alert(translations[currentLanguage].delete_error);
+                        }
+                    })
+                    .catch(error => console.error("Error deleting entry:", error));
+            }
+        });
+    
+        window.toggleZone = function (element) {
+            const checkbox = element.querySelector('.zone-check');
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                element.classList.toggle('selected', checkbox.checked);
+            }
+        };
+    
+        const numberInputs = document.querySelectorAll('.zone-item input[type="number"]');
+        numberInputs.forEach(input => {
+            const zoneItem = input.closest('.zone-item');
+    
+            input.addEventListener('input', () => {
+                if (input.value) {
+                    zoneItem.classList.add('selected');
+                } else {
+                    zoneItem.classList.remove('selected');
+                }
+            });
+        });
+    
+        function isAnyZoneSelected() {
+            const checkboxZones = document.querySelectorAll('.zone-check:checked');
+            const numberZones = document.querySelectorAll('.zone-input');
+    
+            for (let input of numberZones) {
+                if (input.value && input.value.trim() !== '') {
+                    return true;
+                }
+            }
+    
+            return checkboxZones.length > 0;
+        }
+    
+        document.getElementById('checksheet-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+        
+            const rejectReason = document.getElementById('reject_reason');
+        
+            if (!rejectReason || !rejectReason.value) {
+                if (!isAnyZoneSelected()) {
+                    document.getElementById('zone-alert-popup').style.display = 'block';
+                    return;
+                }
+            }
+        
+            const formData = new FormData(this);
+            formData.append('shift', "{{ current_shift }}");
+        
+            if (offlineUtils.isOnline()) {
+                // Online: Submit directly to the server
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('success-popup').style.display = 'block';
+                        this.reset();
+                        document.querySelectorAll('.zone-item').forEach(zone => {
+                            zone.classList.remove('selected');
+                        });
+                        // Sync any offline submissions
+                        offlineUtils.syncOfflineSubmissions();
+                    } else {
+                        return response.text().then(text => {
+                            console.error('Error:', text);
+                            throw new Error('Form submission failed: ' + response.status);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // If submission fails due to network error, save locally
+                    offlineUtils.saveFormDataLocally(formData);
+                    offlineUtils.showOfflineSaveMessage();
+                    this.reset();
+                    document.querySelectorAll('.zone-item').forEach(zone => {
+                        zone.classList.remove('selected');
+                    });
+                });
+            } else {
+                // Offline: Save to localStorage
+                offlineUtils.saveFormDataLocally(formData);
+                offlineUtils.showOfflineSaveMessage();
+                this.reset();
+                document.querySelectorAll('.zone-item').forEach(zone => {
+                    zone.classList.remove('selected');
+                });
+            }
+        });
+    
+        document.getElementById('send-acknowledgment-btn').addEventListener('click', function () {
+            fetch('/send_acknowledgments/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    checksheet_id: '{{ selected_checksheet.id }}',
+                    shift: "{{ current_shift }}"
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('ack-success-popup').style.display = 'block';
+                } else {
+                    document.getElementById('ack-error-popup').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('ack-error-popup').style.display = 'block';
+            });
+        });
+    
+        window.closeAckPopup = function () {
+            document.getElementById('ack-success-popup').style.display = 'none';
+            document.getElementById('ack-error-popup').style.display = 'none';
+            window.location.href = "{% url 'operator_dashboard' %}";
+        };
+    
+        window.handleRejectReason = function () {
+            document.getElementById('reject-reason-modal').style.display = 'block';
+        };
+    
+        window.closeRejectReasonModal = function () {
+            document.getElementById('reject-reason-modal').style.display = 'none';
+            document.getElementById('reject-reason-select').value = '';
+            document.getElementById('reject-zone-select').value = '';
+        };
+    
+        window.saveRejectReason = function () {
+            const reason = document.getElementById('reject-reason-select').value;
+            const zone = document.getElementById('reject-zone-select').value;
+           
+            if (!reason || !zone) {
+                document.getElementById('alert-popup').style.display = 'block';
+                return;
+            }
+    
+            let rejectInput = document.getElementById('reject_reason');
+            if (!rejectInput) {
+                rejectInput = document.createElement('input');
+                rejectInput.type = 'hidden';
+                rejectInput.id = 'reject_reason';
+                rejectInput.name = 'reject_reason';
+                document.getElementById('checksheet-form').appendChild(rejectInput);
+            }
+            rejectInput.value = `${reason} - Zone ${zone}`;
+    
+            closeRejectReasonModal();
+        };
+    
+        window.closeAlertPopup = function () {
+            document.getElementById('alert-popup').style.display = 'none';
+        };
+    
+        window.closeZoneAlertPopup = function () {
+            document.getElementById('zone-alert-popup').style.display = 'none';
+        };
+    
+        window.closeShiftAlertPopup = function () {
+            document.getElementById('shift-alert-popup').style.display = 'none';
+        };
+    
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeRejectReasonModal();
+                closeAlertPopup();
+                closeZoneAlertPopup();
+                closeAckPopup();
+                closeShiftAlertPopup();
+            }
+        });
+    
+        const labels = {{ chart_labels|safe }};
+const values = {{ chart_values|safe }};
+       
+const ctx = document.getElementById('barChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: translations[currentLanguage].zone_summary,
+            data: values,
+            backgroundColor: [
+                'rgba(59, 130, 246, 0.6)',
+                'rgba(16, 185, 129, 0.6)',
+                'rgba(239, 68, 68, 0.6)',
+                'rgba(245, 158, 11, 0.6)',
+                'rgba(139, 92, 246, 0.6)',
+                'rgba(234, 88, 12, 0.6)',
+                'rgba(34, 197, 94, 0.6)',
+            ],
+            borderColor: [
+                'rgba(59, 130, 246, 1)',
+                'rgba(16, 185, 129, 1)',
+                'rgba(239, 68, 68, 1)',
+                'rgba(245, 158, 11, 1)',
+                'rgba(139, 92, 246, 1)',
+                'rgba(234, 88, 12, 1)',
+                'rgba(34, 197, 94, 1)',
+            ],
+            borderWidth: 1,
+            // Make bars narrower by setting barPercentage and categoryPercentage
+            barPercentage: 0.6,
+            categoryPercentage: 0.7
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    color: '#FFFFFF' // White color for legend labels
+                }
+            },
+            title: {
+                display: true,
+                text: translations[currentLanguage].zone_performance,
+                color: '#FFFFFF' // White color for chart title
+            },
+            datalabels: {
+                anchor: 'end',
+                align: 'top',
+                formatter: Math.round,
+                font: {
+                    weight: 'bold'
+                },
+                color: '#FFFFFF',
+                offset: 0,
+                padding: 4
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: translations[currentLanguage].values,
+                    color: '#FFFFFF' // White color for y-axis title
+                },
+                ticks: {
+                    color: '#FFFFFF' // White color for y-axis tick labels
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)' // Subtle grid lines
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: translations[currentLanguage].zones,
+                    color: '#FFFFFF' // White color for x-axis title
+                },
+                ticks: {
+                    color: '#FFFFFF' // White color for x-axis tick labels
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)' // Subtle grid lines
+                }
+            }
+        },
+        // Add some padding to prevent cutting off the heading
+        layout: {
+            padding: {
+                top: 20
+            }
+        }
+    },
+    plugins: [ChartDataLabels]
+});
+    });
+    
+    function checkServerTime() {
+        fetch('/check-server-time/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Server time check:", data);
+           
+            const currentShiftElement = document.getElementById('current-shift-data');
+            const currentShiftInDom = currentShiftElement ? currentShiftElement.dataset.value : null;
+           
+            if (data.current_time_shift && data.current_time_shift !== currentShiftInDom) {
+                console.log(`Shift changed from ${currentShiftInDom} to ${data.current_time_shift}`);
+               
+                const shiftLabel = document.querySelector('.shift-label');
+                if (shiftLabel) {
+                    shiftLabel.innerHTML = `<i class="fas fa-clock"></i> ${translations[currentLanguage].current_shift} ${data.current_time_shift}`;
+                }
+               
+                if (currentShiftElement) {
+                    currentShiftElement.dataset.value = data.current_time_shift;
+                }
+               
+                if (window.shiftEndMonitorTimer) {
+                    clearInterval(window.shiftEndMonitorTimer);
+                }
+               
+                const shiftAEnd = data.shift_a_end;
+                const shiftBEnd = data.shift_b_end;
+                startShiftEndMonitor(shiftAEnd, shiftBEnd, data.current_time_shift);
+            }
+           
+            if (data.shift_changed) {
+                const finishButton = document.getElementById('send-acknowledgment-btn');
+                if (finishButton && !finishButton.disabled) {
+                    finishButton.click();
+                    finishButton.disabled = true;
+                   
+                    setTimeout(() => {
+                        window.location.href = '/logout/';
+                    }, 2000);
+                } else {
+                    window.location.href = '/logout/';
+                }
+            }
+        })
+        .catch(error => console.error('Error checking server time:', error));
+    }
+    
+    setInterval(checkServerTime, 1000);
+    
+    document.body.classList.add('fill-checksheet');
+</script>
+{% endif %}
+{% endblock %}

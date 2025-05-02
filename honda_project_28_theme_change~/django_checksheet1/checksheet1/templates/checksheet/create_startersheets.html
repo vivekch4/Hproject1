@@ -1,0 +1,976 @@
+{% extends 'checksheet/base.html' %}
+{% block title %}Create Startersheet{% endblock %}
+{% block content %}
+<style>
+
+
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 16px;
+    }
+    
+    /* Header styling */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.3rem 0;
+        margin-bottom: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .page-title {
+        color: var(--text-light);
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .back-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .back-button:hover {
+        background-color: #e2e8f0
+        color: #334155;
+    }
+    
+    /* Form container */
+    .form-container {
+        
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+    }
+    body.white-mode .form-container {
+        box-shadow: 0 4px 10px rgb(0 0 0 / 25%);
+    }
+    
+    /* Form layout */
+    .form-layout {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 30px;
+    }
+    
+    /* Left column for basic inputs */
+    .basic-inputs {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    /* Form group styling */
+    .form-group {
+        margin-bottom: 0;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: var(--text-light);
+        font-size: 0.875rem;
+    }
+    
+    /* Input styling */
+    .form-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: var(--text-light);
+        background-color: unset;
+        transition: all 0.2s;
+        height: 36px;
+        box-sizing: border-box;
+    }
+    body.white-mode .form-input::placeholder{
+        color:var(--text-light);
+
+    }
+    .form-input:focus {
+        outline: none;
+        
+        box-shadow: 0 0 0 1px var(--accent-color);
+    }
+    
+    /* File input styling */
+    .file-input-container {
+        margin-top: 6px;
+    }
+    
+    .file-input {
+        display: none;
+    }
+    
+    .file-input-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px dashed rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.875rem;
+        color: var(--text-light);
+        height: 36px;
+        box-sizing: border-box;
+    }
+    
+    .file-input-label:hover {
+        border-color: var(--accent-color-solid);
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Parameter inputs styling */
+    .parameter-inputs-container {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .parameter-inputs {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 12px;
+        padding: 16px;
+        background: rgb(44 38 38 / 5%);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .parameter-input-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 4px;
+        border: 1.5px solid rgb(161 161 161 / 82%);
+        transition: all 0.2s;
+    }
+    
+    .parameter-input-container:hover {
+        border-color: var(--accent-color);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .parameter-header {
+        display: grid;
+        grid-template-columns: 36px 1fr auto;
+        gap: 8px;
+        align-items: center;
+    }
+    
+    .parameter-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background-color: rgb(161 161 161 / 82%);
+        border-radius: 50%;
+        color: var(--text-light);
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+    
+    .parameter-type-select {
+        padding: 8px 12px;
+        border: 1px solid rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        background-color: unset;
+        color: var(--text-light);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        height: 36px;
+    }
+    
+    .parameter-type-select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+    
+    .min-max-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 4px;
+    }
+    
+    /* Parameter inputs title */
+    .parameter-inputs-title {
+        font-weight: 500;
+        margin-bottom: 10px;
+        color: var(--text-light);
+        font-size: 0.9375rem;
+        padding: 12px 16px;
+        border-radius: 8px 8px 0 0;
+        border-bottom: 1px solid rgb(161 161 161 / 82%);
+    }
+    
+    /* Submit button styling */
+    .submit-btn {
+        background-color: var(--accent-color);
+        color: var(--text-light);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+    }
+    
+    .submit-btn:hover {
+        border:1.5px solid var(--accent-color-solid);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 10px var(--accent-color);
+    }
+    
+    /* Confirmation Modal styling */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal {
+        padding: 2rem;
+        background-color: #1e293b;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+        animation: fadeIn 0.3s ease forwards;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .modal-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .modal-icon {
+        color: #3b82f6;
+        font-size: 1.5rem;
+        margin-right: 0.75rem;
+    }
+    
+    .modal-title {
+        color: #ffffff;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .modal-content {
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .modal-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+    
+    .modal-button {
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        border: none;
+    }
+    
+    .modal-cancel {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .modal-cancel:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .modal-confirm {
+        background: linear-gradient(45deg, #3b82f6, #2563eb);
+        color: white;
+    }
+    
+    .modal-confirm:hover {
+        background: linear-gradient(45deg, #2563eb, #1d4ed8);
+    }
+    
+    /* Unit row */
+    .unit-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .check-method-container {
+        margin-bottom: 10px;
+    }
+    
+    .check-method-textarea {
+        width: 100%;
+        min-height: 60px;
+        padding: 8px 12px;
+        border: 1px solid rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: white;
+        background-color: unset;
+        transition: all 0.2s;
+        resize: vertical;
+    }
+    body.white-mode .check-method-textarea::placeholder {
+       
+        color: var(--text-light);
+        
+    }
+    
+    .check-method-textarea:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+    /* Placeholder styling for inputs and textareas */
+    .form-input::placeholder,
+    .check-method-textarea::placeholder {
+        color: white;
+       
+    }
+    /* Style for disabled inputs */
+    .form-input:disabled,
+    .form-input[disabled],
+    .custom-select-toggle:disabled {
+        background-color: #e5e7eb;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+    
+    /* Custom select dropdown styles */
+    .custom-select-container {
+        position: relative;
+        width: 100%;
+    }
+    
+    .custom-select-toggle {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        background-color: unset;
+        color: var(--text-light);
+        cursor: pointer;
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.875rem;
+        height: 36px;
+        box-sizing: border-box;
+        transition: all 0.2s;
+    }
+    
+    .custom-select-toggle:focus {
+        outline: none;
+        border-color: var(--accent-color-solid);
+        box-shadow: 0 0 0 1px var(--accent-color);
+    }
+    
+    .custom-select-toggle:after {
+        content: '\25BC';
+        font-size: 0.7em;
+    }
+    
+    .custom-select-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 200px;
+        overflow-y: auto;
+        background-color: #1e293b;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        z-index: 1000;
+        display: none;
+    }
+    body.white-mode .custom-select-dropdown {
+        
+        background-color: white;
+        
+    }
+    
+    .custom-select-dropdown.show {
+        display: block;
+    }
+    
+    .custom-select-search {
+        width: 100%;
+        padding: 8px 12px;
+        border: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        box-sizing: border-box;
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        font-size: 0.875rem;
+    }
+    
+    .custom-select-search:focus {
+        outline: none;
+        border-bottom-color: #3b82f6;
+    }
+    
+    .custom-select-options {
+        max-height: 150px;
+        overflow-y: auto;
+    }
+    
+    .custom-select-option {
+        padding: 8px 12px;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.875rem;
+    }
+    body.white-mode .custom-select-option {
+       color:var(--text-light)
+    }
+    
+    .custom-select-option:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .custom-select-option.selected {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Hidden input for form submission */
+    .custom-select-input {
+        display: none;
+    }
+    
+    /* Checkbox label */
+    .checkbox-label {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.875rem;
+        margin-left: 8px;
+    }
+    
+    /* Text input container for checkbox label */
+    .text-input-container {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .form-layout {
+            grid-template-columns: 1fr;
+        }
+    
+        .parameter-inputs {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="page-container">
+    <div class="header">
+        <h2 class="page-title">Create New Startersheet</h2>
+        <div class="header-actions">
+            <button type="button" class="submit-btn" id="submit-btn">
+                <i class="fas fa-plus"></i>
+                Create Startersheet
+            </button>
+            <a href="javascript:history.back()" class="back-button">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <form id="startersheet-form" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-layout">
+                <!-- Left column for basic inputs -->
+                <div class="basic-inputs">
+                    <div class="form-group">
+                        <label class="form-label" for="startersheet_name">Startersheet Name</label>
+                        <input type="text" id="startersheet_name" name="name" required
+                               class="form-input" placeholder="Enter startersheet name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="line">Production Line</label>
+                        <select id="line" name="line" required class="form-input">
+                            <option value="line_1">Line 1</option>
+                            <option value="line_2">Line 2</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="parameter_count">Number of Parameters</label>
+                        <input type="number" id="parameter_count" name="zone_count" min="1" required
+                               class="form-input" placeholder="Enter number of parameters">
+                    </div>
+                </div>
+               
+                <!-- Right column for parameter inputs -->
+                <div class="parameter-inputs-container">
+                    <div class="parameter-inputs-title">Parameter Inputs</div>
+                    <div id="parameter_inputs" class="parameter-inputs"></div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <i class="fas fa-question-circle modal-icon"></i>
+            <h3 class="modal-title">Confirm Startersheet Creation</h3>
+        </div>
+        <div class="modal-content">
+            Are you sure you want to create this Startersheet? This action cannot be undone.
+        </div>
+        <div class="modal-buttons">
+            <button id="cancelBtn" class="modal-button modal-cancel">Cancel</button>
+            <button id="confirmBtn" class="modal-button modal-confirm">Create Startersheet</button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    // Units array for the custom select
+    const UNITS = ["", "kg", "g", "mg", "l", "ml", "m", "cm", "mm", "km", "m²", "m³", "pascal", "bar", "psi", "N", "kN", "°C", "°F", "A", "V", "W", "kW", "Hz", "rpm", "s", "min", "h", "%"];
+   
+    // Function to create a custom searchable select
+    function createCustomSelect(container, name, index) {
+        // Create the custom select container
+        const customSelectContainer = document.createElement("div");
+        customSelectContainer.className = "custom-select-container";
+       
+        // Create the hidden input for form submission
+        const hiddenInput = document.createElement("input");
+        hiddenInput.type = "hidden";
+        hiddenInput.name = name;
+        hiddenInput.className = "custom-select-input";
+        customSelectContainer.appendChild(hiddenInput);
+       
+        // Create the toggle button
+        const toggleButton = document.createElement("button");
+        toggleButton.type = "button";
+        toggleButton.className = "custom-select-toggle";
+        toggleButton.textContent = "Select Unit";
+        customSelectContainer.appendChild(toggleButton);
+       
+        // Create the dropdown container
+        const dropdown = document.createElement("div");
+        dropdown.className = "custom-select-dropdown";
+       
+        // Create the search input
+        const searchInput = document.createElement("input");
+        searchInput.type = "text";
+        searchInput.className = "custom-select-search";
+        searchInput.placeholder = "Search units...";
+        dropdown.appendChild(searchInput);
+       
+        // Create the options container
+        const optionsContainer = document.createElement("div");
+        optionsContainer.className = "custom-select-options";
+       
+        // Add the options
+        UNITS.forEach(unit => {
+            const option = document.createElement("div");
+            option.className = "custom-select-option";
+            option.textContent = unit || "None";
+            option.dataset.value = unit;
+           
+            option.addEventListener("click", () => {
+                // Update the hidden input and toggle button
+                hiddenInput.value = unit;
+                toggleButton.textContent = unit || "Select Unit";
+               
+                // Close the dropdown
+                dropdown.classList.remove("show");
+               
+                // Enable/disable custom unit input based on selection
+                const customUnitInput = container.querySelector(`input[name="zone_custom_unit_${index}"]`);
+                if (customUnitInput) {
+                    if (unit) {
+                        customUnitInput.disabled = true;
+                        customUnitInput.value = '';
+                    } else {
+                        customUnitInput.disabled = false;
+                    }
+                }
+               
+                // Add selected class to this option and remove from others
+                optionsContainer.querySelectorAll('.custom-select-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+            });
+           
+            optionsContainer.appendChild(option);
+        });
+       
+        dropdown.appendChild(optionsContainer);
+        customSelectContainer.appendChild(dropdown);
+       
+        // Toggle dropdown on button click
+        toggleButton.addEventListener("click", () => {
+            dropdown.classList.toggle("show");
+            if (dropdown.classList.contains("show")) {
+                searchInput.focus();
+            }
+        });
+       
+        // Filter options based on search input
+        searchInput.addEventListener("input", () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            optionsContainer.querySelectorAll(".custom-select-option").forEach(option => {
+                const text = option.textContent.toLowerCase();
+                option.style.display = text.includes(searchTerm) ? "block" : "none";
+            });
+        });
+       
+        // Close dropdown when clicking outside
+        document.addEventListener("click", (event) => {
+            if (!customSelectContainer.contains(event.target)) {
+                dropdown.classList.remove("show");
+            }
+        });
+       
+        return customSelectContainer;
+    }
+   
+    // Function to toggle between dropdown and custom unit
+    function toggleUnitInputs(unitSelect, customUnitInput) {
+        // Custom unit input event listener
+        customUnitInput.addEventListener('input', function() {
+            if (this.value) {
+                // If something is typed in custom unit, disable dropdown
+                unitSelect.querySelector('.custom-select-toggle').disabled = true;
+                unitSelect.querySelector('.custom-select-input').value = '';
+                unitSelect.querySelector('.custom-select-toggle').textContent = 'Select Unit';
+                unitSelect.style.opacity = '0.7';
+            } else {
+                // If custom unit is cleared, enable dropdown
+                unitSelect.querySelector('.custom-select-toggle').disabled = false;
+                unitSelect.style.opacity = '1';
+            }
+        });
+    }
+
+    function toggleParameterInputs(select, container) {
+        const minMaxRow = container.querySelector('.min-max-row');
+        const unitRow = container.querySelector('.unit-row');
+        let checkboxContainer = container.querySelector('.checkbox-container');
+        let textInputContainer = container.querySelector('.text-input-container');
+        
+        if (select.value === 'checkbox') {
+            // Hide min/max inputs and unit row for checkbox type
+            minMaxRow.style.display = 'none';
+            unitRow.style.display = 'none';
+            
+            // Create checkbox default container if it doesn't exist
+            if (!checkboxContainer) {
+                checkboxContainer = document.createElement('div');
+                checkboxContainer.className = 'checkbox-container';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = `zone_default_${container.querySelector('input[type="text"]').name.split('_')[1]}`;
+                checkbox.id = `checkbox_${container.querySelector('input[type="text"]').name}`;
+                
+                const label = document.createElement('label');
+                label.className = 'checkbox-label';
+                label.htmlFor = checkbox.id;
+                label.textContent = 'Default checked';
+                
+                checkboxContainer.appendChild(checkbox);
+                checkboxContainer.appendChild(label);
+                container.insertBefore(checkboxContainer, unitRow);
+            }
+            checkboxContainer.style.display = 'flex';
+            
+            // Create text input container for checkbox label if it doesn't exist
+            if (!textInputContainer) {
+                textInputContainer = document.createElement('div');
+                textInputContainer.className = 'text-input-container';
+                
+                const textLabel = document.createElement('label');
+                textLabel.className = 'form-label';
+                textLabel.textContent = 'Standard';
+                
+                const textInput = document.createElement('input');
+                textInput.type = 'text';
+                textInput.name = `zone_checkbox_label_${container.querySelector('input[type="text"]').name.split('_')[1]}`;
+                textInput.className = 'form-input';
+                textInput.placeholder = 'Enter text to display next to checkbox';
+                
+                textInputContainer.appendChild(textLabel);
+                textInputContainer.appendChild(textInput);
+                container.insertBefore(textInputContainer, container.querySelector('.check-method-container'));
+            }
+            textInputContainer.style.display = 'block';
+        } else {
+            // Show min/max inputs and unit row for non-checkbox types
+            minMaxRow.style.display = 'grid';
+            unitRow.style.display = 'grid';
+            
+            // Hide checkbox and text input containers if they exist
+            if (checkboxContainer) {
+                checkboxContainer.style.display = 'none';
+            }
+            if (textInputContainer) {
+                textInputContainer.style.display = 'none';
+            }
+        }
+    }
+
+    // Dynamic parameter inputs based on the parameter count
+    document.getElementById("parameter_count").addEventListener("input", function() {
+        let count = parseInt(this.value) || 0;
+        let parameterInputs = document.getElementById("parameter_inputs");
+        parameterInputs.innerHTML = "";
+    
+        for (let i = 0; i < count; i++) {
+            let container = document.createElement("div");
+            container.className = "parameter-input-container";
+            
+            // Create parameter header with number, name input, and type select
+            let paramHeader = document.createElement("div");
+            paramHeader.className = "parameter-header";
+            
+            let number = document.createElement("div");
+            number.className = "parameter-number";
+            number.textContent = `${i + 1}`;
+    
+            let input = document.createElement("input");
+            input.type = "text";
+            input.name = `zone_${i}`;
+            input.className = "form-input";
+            input.placeholder = `Parameter ${i + 1} name`;
+            input.required = true;
+    
+            let select = document.createElement("select");
+            select.name = `zone_type_${i}`;
+            select.className = "parameter-type-select";
+            select.required = true;
+            let options = ["int", "float", "checkbox"];
+            options.forEach(type => {
+                let option = document.createElement("option");
+                option.value = type;
+                option.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+                select.appendChild(option);
+            });
+            
+            paramHeader.appendChild(number);
+            paramHeader.appendChild(input);
+            paramHeader.appendChild(select);
+            
+            container.appendChild(paramHeader);
+    
+            // Create min/max row
+            let minMaxRow = document.createElement("div");
+            minMaxRow.className = "min-max-row";
+    
+            // Add min and max range inputs
+            let minInput = document.createElement("input");
+            minInput.type = "number";
+            minInput.name = `zone_min_${i}`;
+            minInput.className = "form-input";
+            minInput.placeholder = "Min Value";
+    
+            let maxInput = document.createElement("input");
+            maxInput.type = "number";
+            maxInput.name = `zone_max_${i}`;
+            maxInput.className = "form-input";
+            maxInput.placeholder = "Max Value";
+    
+            minMaxRow.appendChild(minInput);
+            minMaxRow.appendChild(maxInput);
+            
+            container.appendChild(minMaxRow);
+            
+            // Create unit row
+            let unitRow = document.createElement("div");
+            unitRow.className = "unit-row";
+            
+            // Add unit label
+            let unitLabel = document.createElement("label");
+            unitLabel.className = "form-label";
+            unitLabel.textContent = "Unit";
+            
+            // Create a container for the label and select
+            let unitSelectContainer = document.createElement("div");
+            unitSelectContainer.className = "unit-select-container";
+            unitSelectContainer.appendChild(unitLabel);
+            
+            // Create custom select for units
+            const customSelect = createCustomSelect(container, `zone_unit_${i}`, i);
+            unitSelectContainer.appendChild(customSelect);
+            
+            // Add custom unit input
+            let customUnitInput = document.createElement("input");
+            customUnitInput.type = "text";
+            customUnitInput.name = `zone_custom_unit_${i}`;
+            customUnitInput.className = "form-input";
+            customUnitInput.placeholder = "Or enter custom unit";
+            
+            let customUnitLabel = document.createElement("label");
+            customUnitLabel.className = "form-label";
+            customUnitLabel.textContent = "Custom Unit";
+            
+            let customUnitContainer = document.createElement("div");
+            customUnitContainer.className = "custom-unit-container";
+            customUnitContainer.appendChild(customUnitLabel);
+            customUnitContainer.appendChild(customUnitInput);
+            
+            unitRow.appendChild(unitSelectContainer);
+            unitRow.appendChild(customUnitContainer);
+            
+            container.appendChild(unitRow);
+            
+            // Setup toggle between dropdown and custom unit
+            toggleUnitInputs(customSelect, customUnitInput);
+            
+            // Create check method container
+            let checkMethodContainer = document.createElement("div");
+            checkMethodContainer.className = "check-method-container";
+            
+            let checkMethodLabel = document.createElement("label");
+            checkMethodLabel.className = "form-label";
+            checkMethodLabel.textContent = "Check Method";
+            
+            let checkMethodTextarea = document.createElement("textarea");
+            checkMethodTextarea.name = `zone_check_method_${i}`;
+            checkMethodTextarea.className = "check-method-textarea";
+            checkMethodTextarea.placeholder = "Enter check method details";
+            
+            checkMethodContainer.appendChild(checkMethodLabel);
+            checkMethodContainer.appendChild(checkMethodTextarea);
+            
+            container.appendChild(checkMethodContainer);
+    
+            // Create file input container
+            let fileContainer = document.createElement("div");
+            fileContainer.className = "file-input-container";
+    
+            let fileLabel = document.createElement("label");
+            fileLabel.className = "file-input-label";
+            fileLabel.innerHTML = `<i class="fas fa-cloud-upload-alt"></i><span>Upload parameter image</span>`;
+    
+            let fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.name = `zone_image_${i}`;
+            fileInput.accept = "image/*";
+            fileInput.className = "file-input";
+    
+            fileLabel.appendChild(fileInput);
+            fileContainer.appendChild(fileLabel);
+            
+            container.appendChild(fileContainer);
+            
+            parameterInputs.appendChild(container);
+            
+            // Add event listener for type selection and initialize
+            select.addEventListener('change', () => toggleParameterInputs(select, container));
+            toggleParameterInputs(select, container);
+    
+            fileInput.addEventListener('change', function() {
+                const fileName = this.files[0]?.name || 'Upload parameter image';
+                this.previousElementSibling.textContent = fileName;
+            });
+        }
+    });
+
+    document.getElementById("submit-btn").addEventListener("click", function(event) {
+        // Prevent form submission initially
+        event.preventDefault();
+       
+        // Show confirmation modal
+        document.getElementById("confirmModal").style.display = "flex";
+    });
+
+ 
+    document.getElementById("confirmBtn").addEventListener("click", function() {
+        // Before submitting the form, enable any disabled fields to ensure their values are submitted
+        const form = document.getElementById("startersheet-form");
+        const disabledElements = form.querySelectorAll('button:disabled, input:disabled');
+       
+        // Enable all disabled elements to ensure their values are submitted
+        disabledElements.forEach(element => {
+            element.disabled = false;
+        });
+       
+        // Submit the form
+        form.submit();
+    });
+
+    document.getElementById("cancelBtn").addEventListener("click", function() {
+        // Hide the modal if the user cancels
+        document.getElementById("confirmModal").style.display = "none";
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,1067 @@
+{% extends 'checksheet/base.html' %}
+{% block title %}Upload & Assign POC Documents{% endblock %}
+{% block content %}
+<style>
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0;
+    }
+    
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.3rem;
+        margin-bottom: 0;
+        border-bottom: 1px solid rgb(161 161 161 / 82%);
+    }
+    
+    .page-title {
+        color: var(--text-light);
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .search-container {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .search-input-container {
+        position: relative;
+        max-width: 400px;
+        width: 100%;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 8px 16px 8px 36px;
+        border: 1px solid rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 1px var(--accent-color-solid);
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    /* Table container */
+    .table-responsive {
+        overflow-x: auto;
+        width: 100%;
+        background-color: unset;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    /* POC Table Styling */
+    .poc-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+    
+    .poc-table thead {
+        background: var(--accent-color);
+        border:1.5px solid var(--accent-color-solid);
+
+    }
+    body.white-mode .poc-table thead {
+        background: var(--accent-color-solid);
+        
+    }
+    
+    .poc-table th {
+        padding: 12px 16px;
+        text-align: center;
+        font-weight: 500;
+        color: var(--text-light);
+        font-size: 0.875rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        white-space: nowrap;
+        position: relative;
+    }
+    body.white-mode .poc-table th {
+       
+        color: white;
+       
+    }
+    
+    
+    .poc-table th span {
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .poc-table th span:hover:after {
+        content: attr(title);
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 100%;
+        background: #1e293b;
+        color: #ffffff;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        z-index: 10;
+        white-space: normal;
+        max-width: 200px;
+        word-wrap: break-word;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .poc-table td {
+        padding: 12px 16px;
+        text-align: center;
+        border-bottom: 1px solid rgb(161 161 161 / 82%);
+        color: var(--text-light);
+        font-size: 0.875rem;
+        font-weight: 400;
+        vertical-align: middle;
+    }
+    
+    .poc-table tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Column widths */
+    .poc-table th:first-child,
+    .poc-table td:first-child {
+        width: 60px;
+        text-align: left;
+    }
+    
+    .poc-table th:nth-child(2),
+    .poc-table td:nth-child(2) {
+        width: 300px;
+        text-align: left;
+    }
+    
+    .poc-table th:nth-child(n+3),
+    .poc-table td:nth-child(n+3) {
+        width: 120px;
+        min-width: 80px;
+        max-width: 80px;
+    }
+    
+    /* Checkbox styling */
+    .poc-table input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s ease;
+        margin: 0 auto;
+        display: block;
+    }
+    body.white-mode .poc-table input[type="checkbox"] {
+      
+        background-color: rgb(46 42 42 / 10%);
+    border: 2px solid rgb(60 60 60 / 30%);
+       
+    }
+    
+    
+    .poc-table input[type="checkbox"]:checked {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+    }
+    body.white-mode .poc-table input[type="checkbox"]:checked {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color-solid);
+    }
+    
+    .poc-table input[type="checkbox"]:checked::after {
+        content: '';
+        position: absolute;
+        left: 4px;
+        top: 0px;
+        width: 5px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+    
+    .poc-table input[type="checkbox"]:hover {
+        border-color: #60a5fa;
+    }
+    
+    /* File upload styling */
+    .file-input-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .file-display {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .pdf-link {
+        display: inline-flex;
+        align-items: center;
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+    
+    .pdf-link i {
+        margin-right: 6px;
+        color: #ef4444;
+    }
+    
+    .pdf-link:hover {
+        text-decoration: underline;
+    }
+    
+    .custom-file-input {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .custom-file-input input[type="file"] {
+        width: 0.1px;
+        height: 0.1px;
+        opacity: 0;
+        overflow: hidden;
+        position: absolute;
+        z-index: -1;
+    }
+    
+    .custom-file-label {
+        display: inline-flex;
+        align-items: center;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: var(--text-light);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .custom-file-label:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: var(text-light);
+    }
+    
+    .custom-file-label i {
+        margin-right: 4px;
+    }
+    
+    /* File size error message */
+    .file-error {
+        color: #ef4444;
+        font-size: 0.75rem;
+        margin-top: 4px;
+        display: none;
+    }
+    
+    /* Button styles */
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    
+    .submit-btn {
+        display: inline-flex;
+        align-items: center;
+        background-color: var(--accent-color);
+        color: var(--text-light);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .submit-btn:hover {
+        border:1.5px solid var(--accent-color-solid);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 10px var(--accent-color);
+    }
+    
+    .submit-btn i {
+        margin-right: 6px;
+    }
+    
+    .assign-btn {
+        display: inline-flex;
+        align-items: center;
+        background-color: #3b82f6;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .assign-btn:hover {
+        background-color: #2563eb;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+    }
+    
+    .assign-btn i {
+        margin-right: 6px;
+    }
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    body.white-mode .back-button {
+        background-color: #f1f5f9;
+        color: #64748b;
+    }
+    .back-button:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+    }
+    body.white-mode .back-button:hover {
+        background-color: #e2e8f0;
+        color: #334155;
+    }
+
+
+    
+    
+    .delete-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color:rgba(255, 255, 255, 0.7); 
+        color: var(--text-light);
+        padding: 6px;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        margin-left: 8px;
+    }
+    
+    .delete-btn:hover {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+    
+   
+    
+    /* Popup styling */
+    .popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    
+    .popup-box {
+        background: #1e293b;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .popup-box p {
+        margin-bottom: 16px;
+        font-size: 0.875rem;
+    }
+    
+    .popup-buttons {
+        margin-top: 10px;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .popup-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .save-btn {
+        background: #10b981;
+        color: white;
+    }
+    
+    .save-btn:hover {
+        background: #059669;
+    }
+    
+    .cancel-btn {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .cancel-btn:hover {
+        background: #dc2626;
+    }
+    
+    /* Footer info */
+    .table-footer {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 12px 16px;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.875rem;
+        color: #64748b;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+    
+    /* No results */
+    .no-results {
+        padding: 20px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.5);
+        font-style: italic;
+        width: 100%;
+    }
+    
+    /* Updated PDF viewer styles */
+    .fullpage-pdf-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 2000;
+        display: none;
+        flex-direction: column;
+    }
+    
+    .pdf-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        background-color: #1e293b;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .pdf-title-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .pdf-title-container i {
+        color: #ef4444;
+    }
+    
+    #pdfDocumentTitle {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #ffffff;
+        margin: 0;
+    }
+    
+    .pdf-close-btn {
+        background: none;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.7);
+        transition: all 0.2s;
+    }
+    
+    .pdf-close-btn:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+    }
+    
+    .pdf-content {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    #pdfViewer {
+        width: 100%;
+        height: 100%;
+    }
+    
+    .page-container.hidden {
+        display: none;
+    }
+    
+    /* Media queries */
+    @media (max-width: 640px) {
+        .page-container {
+            padding: 0;
+        }
+        
+        .poc-table th,
+        .poc-table td {
+            padding: 8px 12px;
+        }
+        
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .buttons-container {
+            width: 100%;
+            justify-content: flex-end;
+        }
+    }
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 350px;
+    }
+    
+    .toast-message {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        animation: slideIn 0.5s ease forwards;
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    
+    .toast-success {
+        background: #059669;
+        color: white;
+        border-left: 5px solid #047857;
+    }
+    
+    .toast-error {
+        background: #7f1d1d;
+        color: white;
+        border-left: 5px solid #600;
+    }
+    
+    .toast-icon {
+        margin-right: 12px;
+        font-size: 1.2rem;
+    }
+    
+    .toast-content {
+        flex: 1;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+
+    </style>
+
+<div class="page-container">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="header">
+            <h2 class="page-title">Upload & Assign OPS Documents</h2>
+            <div class="buttons-container">
+                <button type="submit" name="save_poc" class="submit-btn">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <a href="javascript:history.back()" class="back-button">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Search container -->
+        <div class="search-container">
+            <div class="search-input-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="pdfSearch" class="search-input" placeholder="Search by PDF name...">
+            </div>
+        </div>
+        
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="poc-table">
+                <thead>
+                    <tr>
+                        <th>S. No.</th>
+                        <th>PDF</th>
+                        {% for startersheet in startersheets %}
+                            <th><span title="{{ startersheet.name }}">{{ startersheet.name }}</span></th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody id="pocTableBody">
+                    <!-- Existing POC Files -->
+                    {% for poc in poc_files %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <div class="file-input-container">
+                                    {% if poc.pdf %}
+                                        <div class="file-display">
+                                            <a href="javascript:void(0);" class="pdf-link" data-pdf-url="{{ poc.pdf.url }}" data-pdf-name="{{ poc.pdf.name|slice:'9:' }}">
+                                                <i class="fas fa-file-pdf"></i>
+                                                {{ poc.pdf.name|slice:"9:" }}
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                    <div class="custom-file-input">
+                                        <input type="file" name="pdf_{{ poc.id }}" id="pdf_{{ poc.id }}" accept=".pdf">
+                                        <label for="pdf_{{ poc.id }}" class="custom-file-label">
+                                            <i class="fas fa-upload"></i> {% if poc.pdf %}Update File{% else %}Choose File{% endif %}
+                                        </label>
+                                        <button type="button" class="delete-btn" data-poc-id="{{ poc.id }}">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                    <div class="file-error" id="error-pdf_{{ poc.id }}">File size exceeds 5MB limit</div>
+                                </div>
+                            </td>
+                            {% for startersheet in startersheets %}
+                                <td>
+                                    <input type="checkbox"
+                                           name="poc_{{ poc.id }}_startersheets"
+                                           value="{{ startersheet.id }}"
+                                           {% if startersheet in poc.assigned_startersheets.all %}checked{% endif %}>
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    
+                    <!-- New POC Inputs -->
+                    {% for i in remaining_inputs %}
+                        <tr>
+                            <td>{{ poc_files|length|add:i|add:1 }}</td>
+                            <td>
+                                <div class="file-input-container">
+                                    <div class="custom-file-input">
+                                        <input type="hidden" id="maxFileSize" value="5242880">
+                                        <input type="file" name="new_pdf_{{ i }}" id="new_pdf_{{ i }}" accept=".pdf">
+                                        <label for="new_pdf_{{ i }}" class="custom-file-label">
+                                            <i class="fas fa-upload"></i> Choose File
+                                        </label>
+                                    </div>
+                                    <div class="file-error" id="error-new_pdf_{{ i }}">File size exceeds 5MB limit</div>
+                                </div>
+                            </td>
+                            {% for startersheet in startersheets %}
+                                <td>
+                                    <input type="checkbox"
+                                           name="new_poc_{{ i }}_startersheets"
+                                           value="{{ startersheet.id }}">
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="table-footer">
+                <span>Total OPS Files: {{ poc_files|length }}</span>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Custom Confirmation Popup -->
+<div id="confirmPopup" class="popup-overlay">
+    <div class="popup-box">
+        <p>You have unsaved changes. Do you want to save them?</p>
+        <div class="popup-buttons">
+            <button id="popupYes" class="popup-btn save-btn">Yes</button>
+            <button id="popupNo" class="popup-btn cancel-btn">No</button>
+        </div>
+    </div>
+</div>
+
+<!-- Full Page PDF Viewer -->
+<div id="fullPagePdfViewer" class="fullpage-pdf-container">
+    <div class="pdf-header">
+        <div class="pdf-title-container">
+            <i class="fas fa-file-pdf"></i>
+            <h3 id="pdfDocumentTitle">PDF Document</h3>
+        </div>
+        <button class="pdf-close-btn" title="Close PDF viewer">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="pdf-content">
+        <div id="pdfViewer"></div>
+    </div>
+</div>
+{% if messages %}
+<div class="toast-container">
+    {% for message in messages %}
+    {% with message.tags.split as tags_list %}
+        {% if 'ops' in tags_list %}
+        <div class="toast-message toast-success">
+            <div class="toast-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="toast-content">
+                {{ message }}
+            </div>
+        </div>
+        {% endif %}
+    {% endwith %}
+    {% endfor %}
+</div>
+{% endif %}
+<!-- Include PDF.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+<script>
+// Set up PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+document.addEventListener('DOMContentLoaded', function() {
+    const toastMessages = document.querySelectorAll('.toast-message');
+    
+    toastMessages.forEach(toast => {
+        // Display the toast for 5 seconds then fade out
+        setTimeout(() => {
+            toast.style.animation = 'fadeOut 0.5s ease forwards';
+            setTimeout(() => {
+                toast.remove();
+            }, 500);
+        }, 5000);
+    });
+});
+document.addEventListener('DOMContentLoaded', function() {
+    // PDF Search functionality
+    const pdfSearchInput = document.getElementById('pdfSearch');
+    if (pdfSearchInput) {
+        const tableRows = document.querySelectorAll('.poc-table tbody tr');
+        const tableContainer = document.querySelector('.table-responsive');
+       
+        let noResults = document.querySelector('.no-results');
+        if (!noResults && tableContainer) {
+            noResults = document.createElement('div');
+            noResults.className = 'no-results';
+            noResults.textContent = 'No PDFs found matching your search.';
+            noResults.style.display = 'none';
+            tableContainer.appendChild(noResults);
+        }
+       
+        pdfSearchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            let visibleCount = 0;
+           
+            tableRows.forEach(row => {
+                const pdfLink = row.querySelector('.pdf-link');
+                const pdfName = pdfLink ? pdfLink.getAttribute('data-pdf-name').toLowerCase() : '';
+                const fileInput = row.querySelector('input[type="file"]');
+                const fileLabel = row.querySelector('.custom-file-label');
+               
+                if (pdfName.includes(searchTerm) || (fileLabel && fileLabel.textContent.toLowerCase().includes(searchTerm))) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+           
+            // Show/hide no results message
+            if (noResults) {
+                noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+            }
+        });
+    }
+
+    // Fix for the file input display
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    const maxSizeInBytes = 5 * 1024 * 1024; // 5MB in bytes
+   
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            // Find the label that's a direct sibling of this input
+            const fileInputContainer = this.closest('.custom-file-input');
+            if (!fileInputContainer) return;
+           
+            const label = fileInputContainer.querySelector('.custom-file-label');
+            if (!label) return;
+           
+            const errorElement = document.getElementById(`error-${this.id}`);
+           
+            if (this.files && this.files.length > 0) {
+                const file = this.files[0];
+               
+                // Check file size
+                if (file.size > maxSizeInBytes) {
+                    if (errorElement) errorElement.style.display = 'block'; // Show error message
+                    this.value = ''; // Clear the input
+                   
+                    // Check if there's an existing file
+                    const hasExistingFile = fileInputContainer.closest('.file-input-container')?.querySelector('.file-display');
+                    label.innerHTML = `<i class="fas fa-upload"></i> ${hasExistingFile ? 'Update File' : 'Choose File'}`;
+                    return;
+                } else {
+                    if (errorElement) errorElement.style.display = 'none'; // Hide error message
+                }
+               
+                // Show filename in label
+                label.innerHTML = `<i class="fas fa-file"></i> ${file.name}`;
+            } else {
+                // Reset to default text
+                const hasExistingFile = fileInputContainer.closest('.file-input-container')?.querySelector('.file-display');
+                label.innerHTML = `<i class="fas fa-upload"></i> ${hasExistingFile ? 'Update File' : 'Choose File'}`;
+                if (errorElement) errorElement.style.display = 'none'; // Hide error message
+            }
+        });
+    });
+
+
+    // Improved PDF viewer using PDF.js
+    const pdfLinks = document.querySelectorAll('.pdf-link');
+    const fullPageViewer = document.getElementById('fullPagePdfViewer');
+    const pdfViewerContainer = document.getElementById('pdfViewer');
+    const pdfTitle = document.getElementById('pdfDocumentTitle');
+    const closePdfBtn = document.querySelector('.pdf-close-btn');
+    const pageContainer = document.querySelector('.page-container');
+    
+    let pdfDoc = null;
+    let currentPage = 1;
+    let pdfCanvas = null;
+    let pdfContext = null;
+    
+    pdfLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const pdfUrl = this.getAttribute('data-pdf-url');
+            const pdfName = this.getAttribute('data-pdf-name');
+            
+            // Clear previous canvas if any
+            pdfViewerContainer.innerHTML = '';
+            
+            // Show the PDF viewer
+            pageContainer.classList.add('hidden');
+            fullPageViewer.style.display = 'flex';
+            pdfTitle.textContent = pdfName || 'PDF Document';
+            
+            // Create canvas for PDF rendering
+            pdfCanvas = document.createElement('canvas');
+            pdfCanvas.className = 'pdf-canvas';
+            pdfViewerContainer.appendChild(pdfCanvas);
+            pdfContext = pdfCanvas.getContext('2d');
+            
+            // Load the PDF using PDF.js
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            loadingTask.promise.then(function(pdf) {
+                pdfDoc = pdf;
+                renderPage(1);
+            }).catch(function(error) {
+                console.error('Error loading PDF:', error);
+                pdfViewerContainer.innerHTML = `
+                    <div style="padding: 20px; text-align: center;">
+                        <h3>Error loading PDF</h3>
+                        <p>There was a problem loading the PDF file.</p>
+                        <p>Error details: ${error.message}</p>
+                        <p>Try downloading the file instead:</p>
+                        <a href="${pdfUrl}" target="_blank" class="submit-btn" style="display: inline-block; margin-top: 10px;">
+                            <i class="fas fa-download"></i> Download PDF
+                        </a>
+                    </div>
+                `;
+            });
+            
+            // Update browser history
+            history.pushState({viewingPdf: true}, '', window.location.href);
+        });
+    });
+    
+    function renderPage(pageNumber) {
+        if (!pdfDoc) return;
+        
+        pdfDoc.getPage(pageNumber).then(function(page) {
+            const viewport = page.getViewport({ scale: 1.5 });
+            
+            // Set canvas dimensions to match the PDF page
+            pdfCanvas.height = viewport.height;
+            pdfCanvas.width = viewport.width;
+            
+            // Center canvas in container and add scrolling if needed
+            pdfViewerContainer.style.overflow = 'auto';
+            
+            // Render PDF page into canvas context
+            const renderContext = {
+                canvasContext: pdfContext,
+                viewport: viewport
+            };
+            
+            page.render(renderContext);
+        });
+    }
+    
+    closePdfBtn.addEventListener('click', function() {
+        closePdfViewer();
+    });
+    
+    // Handle browser back button
+    window.addEventListener('popstate', function(event) {
+        if (fullPageViewer.style.display === 'flex') {
+            closePdfViewer();
+        }
+    });
+    
+    function closePdfViewer() {
+        // Hide PDF viewer and show main content
+        fullPageViewer.style.display = 'none';
+        pageContainer.classList.remove('hidden');
+        
+        // Clean up
+        pdfDoc = null;
+        pdfCanvas = null;
+        pdfContext = null;
+        pdfViewerContainer.innerHTML = '';
+    }
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+    let formChanged = false;
+    const popup = document.getElementById("confirmPopup");
+    let backButton = document.querySelector(".back-button");
+    let saveButton = document.querySelector('button[name="save_poc"]'); // Save button
+
+    // Detect changes in file inputs and checkboxes
+    document.querySelectorAll('input[type="file"], input[type="checkbox"]').forEach(input => {
+        input.addEventListener("change", function() {
+            formChanged = true;
+        });
+    });
+
+    // Show popup on back button click
+    backButton.addEventListener("click", function(event) {
+        if (formChanged) {
+            event.preventDefault(); // Stop immediate navigation
+            popup.style.display = "flex"; // Show popup
+        }
+    });
+
+    // Popup Yes (Click the Save button)
+    document.getElementById("popupYes").addEventListener("click", function() {
+        saveButton.click(); // Click the save button
+    });
+
+    // Popup No (Go back to previous page)
+    document.getElementById("popupNo").addEventListener("click", function() {
+        popup.style.display = "none"; // Hide popup
+        window.location.href = document.referrer; // Navigate back
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const pocId = this.dataset.pocId;
+
+            fetch(`/delete_poc/${pocId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload(); // Refresh the page to update the table
+                } else {
+                    alert('Failed to delete the PDF.');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+});
+</script>
+
+{% endblock %}

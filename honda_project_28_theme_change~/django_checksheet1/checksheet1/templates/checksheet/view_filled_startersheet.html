@@ -1,0 +1,783 @@
+{% extends 'checksheet/base.html' %}
+{% block title %}{{ sheet_name }} Sheet Details{% endblock %}
+{% load custom_tags %}
+{% block content %}
+<style>
+    .approval-hierarchy-table thead{
+        background-color: var(--accent-color);
+    }
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 16px;
+        min-height: calc(100vh - 64px);
+        animation: fadeIn 0.5s ease;
+    }
+    
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        margin-bottom: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .header:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--accent-color);
+    }
+
+    .page-title {
+        color: var(--text-light);
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: white;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: unset;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 16px;
+        margin-left:auto;
+        align-items: center;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        width: 100%;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .table-responsive:hover {
+        transform: translateY(-4px);
+    }
+
+    .checksheets-container {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .checksheets-container thead {
+        background-color: var(--accent-color);
+    }
+
+    .checksheets-container th {
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-light);
+        font-size: 0.875rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        white-space: nowrap;
+    }
+
+    .checksheets-container td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid rgb(161 161 161 /82%);
+        color: var(--text-light);
+        font-size: 0.875rem;
+        font-weight: 400;
+    }
+    body.white-mode .pagination {
+        background-color: #f8fafc;
+    }
+    body.white-mode .pagination span {
+        color: grey;
+    }
+
+    .checksheets-container tbody tr:hover {
+        background-color: rgba(59, 130, 246, 0.1);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .status-accepted {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.5);
+    }
+
+    .status-rejected {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+
+    .status-pending {
+        background-color: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.5);
+    }
+
+    .shift-badge {
+        display: inline-flex;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .shift-a {
+        background-color: rgba(79, 70, 229, 0.2);
+       
+        border: 1px solid rgba(79, 70, 229, 0.5);
+    }
+
+    .shift-b {
+        background-color: rgba(124, 58, 237, 0.2);
+      
+        border: 1px solid rgba(124, 58, 237, 0.5);
+    }
+
+    .shift-c {
+        background-color: rgba(16, 185, 129, 0.2);
+       
+        border: 1px solid rgba(16, 185, 129, 0.5);
+    }
+
+    .timestamp {
+        color: #ffffffb3;
+        font-size: 0.75rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin: 16px;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 20px;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        background:var(--accent-color);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    
+    .btn-secondary {
+        width: 36px;
+        height: 36px;
+        background-color: #f1f5f9;
+        color: #64748b;
+        box-shadow: 0 2px 4px rgba(100, 116, 139, 0.2);
+    }
+
+    .btn-secondary:hover {
+        background-color: #e2e8f0;
+        color: #334155;
+        box-shadow: 0 4px 6px rgba(100, 116, 139, 0.3);
+    }
+
+    .btn i {
+        margin-right: 6px;
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+        color: #ffffffe0;
+    }
+
+    .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #ffffffb3;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 16px;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.875rem;
+        color: #ffffffe0;
+    }
+
+    .pagination-info {
+        font-weight: 500;
+    }
+
+    .modal {
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 0.75rem;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        animation: fadeIn 0.3s ease forwards;
+    }
+
+    .close {
+        float: right;
+        cursor: pointer;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #64748b;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #334155;
+        font-size: 0.875rem;
+    }
+
+    .form-group textarea {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        color: #334155;
+        transition: all 0.3s;
+        background-color: rgba(255, 255, 255, 0.1);
+        resize: vertical;
+    }
+
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    .cancel-button {
+        padding: 8px 20px;
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .cancel-button:hover {
+        background-color: #e2e8f0;
+        color: #334155;
+        transform: translateY(-2px);
+    }
+
+    .submit-button {
+        padding: 8px 20px;
+        background: linear-gradient(45deg, #ef4444, #dc2626);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+    }
+
+    .submit-button:hover {
+        background: linear-gradient(45deg, #dc2626, #b91c1c);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+    }
+
+    .approval-hierarchy-section {
+        margin-bottom: 30px;
+        background-color: rgba(255, 255, 255, 0.05);
+        padding: 20px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .accept-button, .reject-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        border-radius: 4px;
+        background:var(--accent-color);
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: none;
+        color:var(--text-light);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .back-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+   
+    .back-button:hover {
+        background-color: #e2e8f0;
+        color: #334155;
+        transform: scale(1.05);
+    }
+
+    .approval-hierarchy-section h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.125rem;
+        color: #ffffffe0;
+        font-weight: 600;
+    }
+
+    .approval-hierarchy-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .approval-hierarchy-table th,
+    .approval-hierarchy-table td {
+        padding: 12px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: left;
+        color: var(--text-light);
+        font-size: 0.875rem;
+    }
+    .approval-hierarchy-table td {
+        border-bottom:1px solid rgb(161 161 161 /82%)
+    }
+
+    .approval-hierarchy-table th {
+        background-color: rgba(255, 255, 255, 0.1);
+        font-weight: 600;
+    }
+
+    .approval-hierarchy-table tr:hover {
+        background-color: rgba(59, 130, 246, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        .page-container {
+            padding: 12px;
+        }
+
+        .header {
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .checksheets-container th,
+        .checksheets-container td {
+            padding: 8px 12px;
+        }
+    }
+</style>
+
+
+<div class="page-container">
+    <div class="header">
+        <h2 class="page-title">{{ sheet_name }} Sheet Details</h2>
+        
+        <div class="header-actions">
+            {% if filled_entries %}
+            {% for entry in filled_entries %}
+          
+            <div class="action-buttons">
+                {% if entry.approval_status == "pending" and user.id == entry.assigned_level_1_approver_id %}
+                    <form method="post" action="{% url 'approve_startersheet' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="sheet_id" value="{{ entry.id }}">
+                        <input type="hidden" name="action" value="approve">
+                        <input type="hidden" name="level" value="1">
+                        <button type="submit" class="accept-button">Accept</button>
+                    </form>
+                    <form method="post" action="{% url 'approve_startersheet' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="sheet_id" value="{{ entry.id }}">
+                        <input type="hidden" name="action" value="reject">
+                        <input type="hidden" name="level" value="1">
+                        <button type="submit" class="reject-button">Reject</button>
+                    </form>
+                {% elif entry.approval_status == "level_1_approved" and user.id == entry.assigned_level_2_approver_id %}
+                    <form method="post" action="{% url 'approve_startersheet' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="sheet_id" value="{{ entry.id }}">
+                        <input type="hidden" name="action" value="approve">
+                        <input type="hidden" name="level" value="2">
+                        <button type="submit" class="accept-button">Accept</button>
+                    </form>
+                    <form method="post" action="{% url 'approve_startersheet' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="sheet_id" value="{{ entry.id }}">
+                        <input type="hidden" name="action" value="reject">
+                        <input type="hidden" name="level" value="2">
+                        <button type="submit" class="reject-button">Reject</button>
+                    </form>
+                {% elif entry.approval_status == "level_2_approved" and user.role == "admin" %}
+                    <form method="post" action="{% url 'approve_startersheet' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="sheet_id" value="{{ entry.id }}">
+                        <input type="hidden" name="action" value="approve">
+                        <input type="hidden" name="level" value="3">
+                        <button type="submit" class="accept-button">Accept</button>
+                    </form>
+                    <form method="post" action="{% url 'approve_startersheet' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="sheet_id" value="{{ entry.id }}">
+                        <input type="hidden" name="action" value="reject">
+                        <input type="hidden" name="level" value="3">
+                        <button type="submit" class="reject-button">Reject</button>
+                    </form>
+                {% endif %}
+            </div>
+            {% endfor%}
+
+            {% endif %}
+        </div>
+        <div class="action-buttons">
+            <a href="{% url 'acknowledgment_list' %}" class="back-button">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    </div>
+
+    {% if filled_entries %}
+        <!-- Table with horizontal scroll container -->
+        <div class="table-responsive">
+            <table class="checksheets-container">
+                <thead>
+                    <tr>
+                        <th>Zone Name</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                        <th>Value</th>
+                        <th>Shift</th>
+                        <th>Timestamp</th>
+                        <th>Acknowledgment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in filled_entries %}
+                        {% for key, value in entry.status_data.items %}
+                        <tr>
+                            <td>{{ key }}</td>
+                            <td>{{ parameter_thresholds|get_item:key|get_item:"min" }}</td>
+                            <td>{{ parameter_thresholds|get_item:key|get_item:"max" }}</td>
+                            <td>
+                                {% if parameter_thresholds|get_item:key %}
+                                    {% with min_value=parameter_thresholds|get_item:key|get_item:"min" max_value=parameter_thresholds|get_item:key|get_item:"max" %}
+                                        {{ value }}  
+                                        {% if min_value and max_value %}
+                                            {% if min_value == "Yes" and max_value == "Yes" and value == "Yes" %}
+                                                <span class="status-badge status-accepted">OK</span>
+                                            {% else %}
+                                            {% with value_float=value|to_float min_float=min_value|to_float max_float=max_value|to_float %}
+                                            {% if value_float != None and min_float != None and max_float != None and value_float >= min_float and value_float <= max_float %}
+                                                <span class="status-badge status-accepted">OK</span>
+                                            {% else %}
+                                                <span class="status-badge status-rejected">NG</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                            {% endif %}
+                                        {% else %}
+                                            {{ value }}
+                                        {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                    {{ value }}
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if entry.shift == "A" %}
+                                    <span class="shift-badge shift-a">Shift A</span>
+                                {% elif entry.shift == "B" %}
+                                    <span class="shift-badge shift-b">Shift B</span>
+                                {% elif entry.shift == "C" %}
+                                    <span class="shift-badge shift-c">Shift C</span>
+                                {% endif %}
+                            </td>
+                            <td class="timestamp">{{ entry.timestamp|to_ist }}</td>
+                            <td>
+                                {% if entry.acknowledgment == "Yes" %}
+                                    <span class="status-badge status-accepted">Accepted</span>
+                                {% elif entry.acknowledgment == "Rej" %}
+                                    <span class="status-badge status-rejected">Rejected</span>
+                                {% else %}
+                                    <span class="status-badge status-pending">Pending</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="pagination">
+                <div class="pagination-info">
+                    <span>Total Entries: {{ filled_entries|length }}</span>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <p>No data available</p>
+        </div>
+    {% endif %}
+    
+    {% comment %} <div class="action-buttons">
+        <a href="{% url 'acknowledgment_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div> {% endcomment %}
+</div>
+<div id="rejection-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Rejection Reason</h3>
+        <form id="rejection-form" method="post" action="{% url 'approve_startersheet' %}">
+            {% csrf_token %}
+            <input type="hidden" id="modal-sheet-id" name="sheet_id" value="">
+            <input type="hidden" id="modal-level" name="level" value="">
+            <input type="hidden" name="action" value="reject">
+            
+            <div class="form-group">
+                <label for="rejection-reason">Please provide a reason for rejection:</label>
+                <textarea id="rejection-reason" name="rejection_reason" rows="4" required></textarea>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="cancel-button">Cancel</button>
+                <button type="submit" class="submit-button">Submit Rejection</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="approval-hierarchy-section">
+    <h3>Approval Hierarchy</h3>
+    <div class="table-responsive">
+        <table class="approval-hierarchy-table">
+            <thead>
+                <tr>
+                    <th>Level</th>
+                    <th>Assigned To</th>
+                    <th>Status</th>
+                    <th>Action By</th>
+                    <th>Timestamp</th>
+                    <th>Rejection Reason</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if approval_hierarchy.level1 %}
+                <tr>
+                    <td>Level 1</td>
+                    <td>{{ approval_hierarchy.level1.assigned_to }}</td>
+                    <td>
+                        {% if approval_hierarchy.level1.status == "Approved" %}
+                            <span class="status-badge status-accepted">Approved</span>
+                        {% elif approval_hierarchy.level1.status == "Rejected" %}
+                            <span class="status-badge status-rejected">Rejected</span>
+                        {% else %}
+                            <span class="status-badge status-pending">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ approval_hierarchy.level1.action_by|default:"-" }}</td>
+                    <td>{{ approval_hierarchy.level1.timestamp|to_ist|default:"-" }}</td>
+                    <td>
+                        {% if approval_hierarchy.level1.status == "Rejected" and rejection_info %}
+                            {{ rejection_info.reason|default:"-" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                
+                {% if approval_hierarchy.level2 %}
+                <tr>
+                    <td>Level 2</td>
+                    <td>{{ approval_hierarchy.level2.assigned_to }}</td>
+                    <td>
+                        {% if approval_hierarchy.level2.status == "Approved" %}
+                            <span class="status-badge status-accepted">Approved</span>
+                        {% elif approval_hierarchy.level2.status == "Rejected" %}
+                            <span class="status-badge status-rejected">Rejected</span>
+                        {% else %}
+                            <span class="status-badge status-pending">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ approval_hierarchy.level2.action_by|default:"-" }}</td>
+                    <td>{{ approval_hierarchy.level2.timestamp|to_ist|default:"-" }}</td>
+                    <td>
+                        {% if approval_hierarchy.level2.status == "Rejected" and rejection_info %}
+                            {{ rejection_info.reason|default:"-" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                
+                {% if approval_hierarchy.level3 %}
+                <tr>
+                    <td>Level 3</td>
+                    <td>{{ approval_hierarchy.level3.assigned_to }}</td>
+                    <td>
+                        {% if approval_hierarchy.level3.status == "Approved" %}
+                            <span class="status-badge status-accepted">Approved</span>
+                        {% elif approval_hierarchy.level3.status == "Rejected" %}
+                            <span class="status-badge status-rejected">Rejected</span>
+                        {% else %}
+                            <span class="status-badge status-pending">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ approval_hierarchy.level3.action_by|default:"-" }}</td>
+                    <td>{{ approval_hierarchy.level3.timestamp|to_ist|default:"-" }}</td>
+                    <td>
+                        {% if approval_hierarchy.level3.status == "Rejected" and rejection_info %}
+                            {{ rejection_info.reason|default:"-" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<script>
+    // Add this to your existing JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        // Modal functionality
+        const modal = document.getElementById('rejection-modal');
+        const rejectButtons = document.querySelectorAll('.reject-button');
+        const closeBtn = document.querySelector('.close');
+        const cancelBtn = document.querySelector('.cancel-button');
+        const modalSheetId = document.getElementById('modal-sheet-id');
+        const modalLevel = document.getElementById('modal-level');
+        
+        // Replace the form submission with modal opening
+        rejectButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Get data from the parent form
+                const form = this.closest('form');
+                const sheetId = form.querySelector('input[name="sheet_id"]').value;
+                const level = form.querySelector('input[name="level"]').value;
+                
+                // Set modal form values
+                modalSheetId.value = sheetId;
+                modalLevel.value = level;
+                
+                // Show modal
+                modal.style.display = 'flex';
+            });
+        });
+        
+        // Close modal functions
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+        
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+        
+        // Close modal if clicked outside content
+        window.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+    });
+</script>
+
+{% endblock %}

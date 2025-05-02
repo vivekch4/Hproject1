@@ -1,0 +1,623 @@
+{% extends 'checksheet/base.html' %}
+{% block title %}Fill Checksheet Request{% endblock %}
+{% block content %}
+<style>
+    .sidebar-toggle {
+        display: none !important;
+    }
+    body{
+        background-image:linear-gradient(270deg, rgb(19 19 41 / 71%) 6.5%, rgb(13 18 45) 93.2%) !important;
+    }
+    .settings-float{
+        display:none;
+    }
+    .user-info {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        padding: 0.75rem 1rem !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+        transition: all 0.2s ease !important;
+        border:unset !important;
+    }
+    .user-name{
+        color:white!important;
+    }
+    .logout-btn {
+        padding: 0.5rem 1.25rem !important;
+        background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 10px !important;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
+    }
+    .user-role{
+        color:white!important;
+    }
+    .navbar{
+        background:rgba(19, 19, 41, 0.85) !important;
+    }
+    .content-inner{
+        background:unset !important;
+    }
+    /* Hide sidebar for this page only */
+    body.fill-checksheet .sidebar {
+        display: none !important;
+    }
+   
+    body.fill-checksheet .content,
+    body.fill-checksheet .navbar {
+        margin-left: 0 !important;
+        width: 100% !important;
+        left: 0 !important;
+    }
+   
+    body.fill-checksheet .menu-toggle {
+        display: none !important;
+    }
+
+    /* General container and layout */
+    .content-inner {
+        padding: 0rem;
+    }
+
+    .page-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 16px;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        margin-bottom: 16px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .page-title {
+        color: #ffffff;
+        font-size: 1.125rem;
+        font-weight: 600;
+    }
+
+    .back-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .back-button:hover {
+        background-color: #f1f5f9;
+        color: #334155;
+    }
+
+    /* New layout with flexbox */
+    .content-layout {
+        display: flex;
+        gap: 24px;
+    }
+
+    .images-section {
+        flex: 0 0 300px;
+    }
+
+    .form-section {
+        flex: 1;
+    }
+
+    /* Images grid layout */
+    .images-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 12px;
+        height: 100%;
+    }
+
+    .image-container {
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+        height: 150px;
+    }
+
+    .image-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .no-image {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        background: #f8fafc;
+        border: 1px dashed #e2e8f0;
+        border-radius: 4px;
+        color: #64748b;
+    }
+
+    .no-image i {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
+   
+    .no-image p {
+        font-size: 0.75rem;
+    }
+
+    /* Checksheet header */
+    .checksheet-header {
+        margin-bottom: 20px;
+    }
+
+    .checksheet-title {
+        color: #1e293b;
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    /* Fixed data section */
+    .fixed-data-section {
+        border-radius: 4px;
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+
+    .fixed-data-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+    }
+
+    .data-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .data-label {
+        font-size: 0.75rem;
+        color: white;
+        font-weight: 500;
+    }
+
+    .data-value {
+        padding: 8px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        color: #ffffff;
+        font-weight: 500;
+    }
+
+    /* Zones list */
+    .zones-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+        padding: 16px;
+        border-radius: 4px;
+        border: 1px solid rgba(255,255,255,0.1);
+        margin-bottom: 20px;
+    }
+
+    .zone-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 12px;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .zone-item:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .zone-label {
+        font-weight: 500;
+        color: #ffffff;
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+
+    .zone-input {
+        padding: 8px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        transitionRAS: all 0.2s;
+        width: 100%;
+        height: 36px;
+        box-sizing: border-box;
+        background: unset;
+        color: white;
+    }
+
+    .zone-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+
+    .zone-check-container {
+        width: 24px;
+        height: 24px;
+        position: relative;
+    }
+
+    .zone-check {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    .checkbox-custom {
+        display: block;
+        width: 24px;
+        height: 24px;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        background-color: #fff;
+        transition: all 0.2s;
+        position: relative;
+    }
+
+    .zone-check:checked + .checkbox-custom {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+    }
+
+    .zone-check:checked + .checkbox-custom:after {
+        content: '';
+        position: absolute;
+        top: 5px;
+        left: 9px;
+        width: 6px;
+        height: 12px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+
+    /* Checkbox container zone item */
+    .zone-item.checkbox-zone {
+        cursor: pointer;
+    }
+
+    /* Action buttons */
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+    }
+
+    .save-btn {
+        background-color: #3b82f6;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+    }
+
+    .save-btn:hover {
+        background-color: #2563eb;
+    }
+
+    .back-btn {
+        padding: 8px 12px;
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+        height: 36px;
+    }
+
+    .back-btn:hover {
+        background-color: #e2e8f0;
+        color: #1e293b;
+    }
+
+    /* Success popup */
+    .success-popup {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #10b981;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        text-align: center;
+    }
+
+    .success-popup h3 {
+        color: white;
+        margin: 0 0 20px 0;
+        font-size: 1.2rem;
+    }
+
+    .success-popup button {
+        background-color: white;
+        color: #10b981;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .success-popup button:hover {
+        background-color: #f1f5f9;
+    }
+
+    /* Error message */
+    .error-message {
+        display: none;
+        background-color: #ef4444;
+        color: white;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .content-layout {
+            flex-direction: column;
+        }
+       
+        .images-section {
+            flex: none;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+       
+        .zones-list {
+            grid-template-columns: 1fr;
+        }
+       
+        .fixed-data-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- Add fill-checksheet class to body -->
+<script>
+    document.body.classList.add('fill-checksheet');
+</script>
+
+<div class="page-container">
+    <div class="header">
+        <h2 class="page-title">Fill Checksheet Request</h2>
+        <div class="action-buttons">
+            <button type="submit" form="checksheet-form" class="save-btn">
+                <i class="fas fa-save"></i> Save
+            </button>
+            <a href="{% url "operator_dashboard" %}" class="back-button">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="checksheet-container">
+        <form method="POST" id="checksheet-form">
+            {% csrf_token %}
+            <div class="error-message" id="form-error-message">
+                Please fill in all required fields before submitting.
+            </div>
+           
+            <div class="content-layout">
+                <!-- Images section on the left -->
+                <div class="images-section">
+                    <div class="images-grid">
+                        {% if images %}
+                            {% for image in images %}
+                                <div class="image-container">
+                                    <img src="{{ image.image.url }}" alt="Checksheet Image">
+                                </div>
+                            {% empty %}
+                                {% for i in "0123" %}
+                                    <div class="no-image">
+                                        <i class="fas fa-image"></i>
+                                        <p>No image</p>
+                                    </div>
+                                {% endfor %}
+                            {% endfor %}
+                        {% else %}
+                            {% for i in "0123" %}
+                                <div class="no-image">
+                                    <i class="fas fa-image"></i>
+                                    <p>No image</p>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+               
+                <!-- Form section on the right -->
+                <div class="form-section">
+                    <!-- Fixed Data Section -->
+                    <div class="fixed-data-section">
+                        <div class="fixed-data-grid">
+                            <div class="data-item">
+                                <label class="data-label">Checksheet</label>
+                                <div class="data-value">{{ form_request.checksheet.name }}</div>
+                            </div>
+                            <div class="data-item">
+                                <label class="data-label">Line</label>
+                                <div class="data-value">{{ form_request.line }}</div>
+                            </div>
+                            <div class="data-item">
+                                <label class="data-label">User</label>
+                                <div class="data-value">{{ form_request.user.username }}</div>
+                            </div>
+                            
+                            <div class="data-item">
+                                <label class="data-label">Shift</label>
+                                <div class="data-value">{{ form_request.get_shift_display }}</div>
+                            </div>
+                            <div class="data-item">
+                                <label class="data-label">Date</label>
+                                <div class="data-value">{{ form_request.date }}</div>
+                            </div>
+                        </div>
+                    </div>
+               
+                    <!-- Zone Inputs -->
+                    <div class="zones-list">
+                        {% for zone in zones %}
+                            <div class="zone-item">
+                                <label class="zone-label" for="zone_{{ zone.id }}">{{ zone.name }}</label>
+                                <input type="number" id="zone_{{ zone.id }}" name="zone_{{ zone.id }}" class="zone-input" min="0">
+                            </div>
+                        {% endfor %}
+                        <div class="zone-item">
+                            <label class="zone-label" for="completely_reject">Completely Reject</label>
+                            <input type="number" id="completely_reject" name="completely_reject" class="zone-input" min="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Success notification popup -->
+    <div id="success-popup" class="success-popup">
+        <h3>Form Saved Successfully!</h3>
+        <button id="success-ok-btn">OK</button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('checksheet-form');
+        const successPopup = document.getElementById('success-popup');
+        const successOkBtn = document.getElementById('success-ok-btn');
+        const formErrorMessage = document.getElementById('form-error-message');
+
+        // Form validation
+        function validateForm() {
+            let isValid = true;
+            const inputs = document.querySelectorAll('.zone-input');
+            inputs.forEach(input => {
+                if (!input.value.trim() || parseInt(input.value) < 0) {
+                    input.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    input.classList.remove('input-error');
+                }
+            });
+            if (!isValid) {
+                formErrorMessage.style.display = 'block';
+                setTimeout(() => {
+                    formErrorMessage.style.display = 'none';
+                }, 5000);
+            }
+            return isValid;
+        }
+
+        // Form submission handling
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            if (!validateForm()) {
+                return;
+            }
+
+            // Submit form via fetch
+            fetch(window.location.href, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessPopup();
+                } else {
+                    formErrorMessage.textContent = data.error || 'Error saving data!';
+                    formErrorMessage.style.display = 'block';
+                    setTimeout(() => {
+                        formErrorMessage.style.display = 'none';
+                    }, 5000);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                formErrorMessage.textContent = 'Error saving data!';
+                formErrorMessage.style.display = 'block';
+                setTimeout(() => {
+                    formErrorMessage.style.display = 'none';
+                }, 5000);
+            });
+        });
+
+        // Success popup handler
+        function showSuccessPopup() {
+            successPopup.style.display = 'block';
+        }
+
+        // OK button handler for success popup
+        successOkBtn.addEventListener('click', function() {
+            window.location.href = "{% url 'operator_dashboard' %}";
+        });
+
+        // Toggle checkbox function (if still needed)
+        function toggleCheckbox(id) {
+            const checkbox = document.getElementById(id);
+            checkbox.checked = !checkbox.checked;
+        }
+    });
+</script>
+{% endblock %}

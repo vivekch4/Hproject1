@@ -1,0 +1,1537 @@
+{% extends 'checksheet/base.html' %}
+{% block title %}All CheckSheets{% endblock %}
+{% block content %}
+<style>
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0;
+    }
+    
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.3rem;
+        margin-bottom: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    body.white-mode .header {
+        border-bottom: 1px solid #e2e8f0;
+    }
+    body.white-mode .user-dropdown{
+        background-color: #ffffff;
+    }
+
+    body.white-mode .user-dropdown-title {
+        color:unset;
+    }
+    body.white-mode .assign-users-submit{
+        background:var(--accent-color-solid);
+        color:white;
+    }
+    body.white-mode .user-dropdown-search{
+        border: 1px solid var(--accent-color-solid);
+        color:unset;
+    }
+    body.white-mode .user-dropdown-close{
+        background-color: #f1f5f9;
+        color: #64748b;
+    }
+    body.white-mode .user-checkbox-label{
+        color:unset;
+    }
+   
+    body.white-mode .create-btn:hover{
+        
+        border: 1.5px solid var(--accent-color-solid);
+    }
+    
+    .page-title {
+        color: #ffffff;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    body.white-mode .page-title {
+        color: #1e293b;
+    }
+    
+    .search-container {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .search-input-container {
+        position: relative;
+        max-width: 400px;
+        width: 100%;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 8px 16px 8px 36px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    body.white-mode .search-input {
+        border: 1px solid var(--accent-color);
+        color:unset;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    body.white-mode .search-icon {
+        color: #94a3b8;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+        width: 100%;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .checksheets-container {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .checksheets-container thead {
+        background: var(--accent-color);
+        border: 1.5px solid var(--accent-color-solid);
+    }
+    
+    .checksheets-container th {
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 500;
+        color: var(--text-light);
+        font-size: 0.875rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    
+    .checksheets-container th i {
+        margin-left: 5px;
+        color: var(--text-light);
+    }
+    
+    .checksheets-container th i.fa-sort-up,
+    .checksheets-container th i.fa-sort-down {
+        color: #3b82f6;
+    }
+    
+    .checksheets-container td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.875rem;
+        font-weight: 400;
+    }
+    
+    body.white-mode .checksheets-container td {
+        color: unset;
+        background:white;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    body.white-mode .detail-modal-close {
+      
+        
+        background-color: #f1f5f9;
+        color: #64748b;
+        
+    }
+    body.white-mode 
+    .detail-modal {
+        background: white;
+      
+    }
+    .detail-images-grid {
+        display: grid
+    ;
+        grid-template-columns: repeat(4, 1fr);
+        /* gap: 0; */
+    }
+    img.detail-image {
+        width: 100%;
+        height: 85px;
+        object-fit: contain;
+    }
+    body.white-mode .detail-modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-light);
+    }
+
+    body.white-mode .detail-section-title {
+       
+        color: var(--text-light);
+    }
+  
+    
+    .checksheets-container tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    body.white-mode .checksheets-container tbody tr:hover {
+        background-color: #f8fafc;
+    }
+    
+    .content-cell {
+        max-width: 180px;
+    }
+    
+    .zone-chips,
+    .user-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .zone-chip,
+    .user-chip {
+        display: inline-flex;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #ffffff;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    body.white-mode .zone-chip,
+    body.white-mode .user-chip {
+        
+        color: unset;
+      
+    }
+    
+    .poc-links {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .poc-link {
+        display: inline-flex;
+        align-items: center;
+        color: #3b82f6;
+        text-decoration: none;
+        font-size: 0.75rem;
+        max-width: 180px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .poc-link i {
+        margin-right: 4px;
+        font-size: 0.75rem;
+    }
+    
+    .poc-link:hover {
+        text-decoration: underline;
+    }
+    
+    .empty-text {
+        color: rgba(255, 255, 255, 0.5);
+        font-style: italic;
+        font-size: 0.75rem;
+    }
+    
+    .table-image {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .table-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .checksheet-name {
+        color: #ffffff;
+        font-weight: 500;
+        text-decoration: none;
+    }
+    
+    .checksheet-name:hover {
+        color: #60a5fa;
+        text-decoration: underline;
+    }
+
+    body.white-mode .checksheet-name {
+        color: unset;
+        font-weight: 500;
+        text-decoration: none;
+    }
+    
+    body.white-mode .checksheet-name:hover {
+        color: ;
+        
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .action-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        text-decoration: none;
+        transition: all 0.2s;
+        color: rgba(255, 255, 255, 0.7);
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .action-button:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        
+        transform: translateY(-2px);
+    }
+    
+    .assi {
+        color: #10b981;
+    }
+    
+    .assi:hover {
+        background-color: rgba(16, 185, 129, 0.2);
+    }
+    
+    .acti {
+        color: #3b82f6;
+    }
+    
+    .acti:hover {
+        background-color: rgba(59, 130, 246, 0.2);
+    }
+    
+    .create-btn {
+        display: inline-flex;
+        align-items: center;
+        background-color: var(--accent-color);
+        color: var(--text-light);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .create-btn:hover {
+        border:1.5px solid var(--accent-color-solid);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+    }
+    
+    .create-btn i {
+        margin-right: 6px;
+    }
+    
+    .image-column {
+        width: 60px;
+        text-align: center;
+    }
+    
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+        border: 1px dashed rgba(255, 255, 255, 0.2);
+    }
+    
+    .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.7);
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+    
+    body.white-mode .pagination {
+        background-color: #f8fafc;
+    }
+    
+
+    
+    .pagination-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .no-results {
+        padding: 20px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.5);
+        font-style: italic;
+        width: 100%;
+    }
+    
+    .user-dropdown {
+        position: fixed;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px;
+        max-width: 90vw;
+        max-height: 80vh;
+        background-color: #1e293b;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        padding: 20px;
+        display: none;
+        overflow-y: auto;
+    }
+    
+    .user-dropdown-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+    }
+    
+    .user-dropdown-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .user-dropdown-title {
+        font-weight: 600;
+        color: #ffffff;
+        font-size: 1rem;
+    }
+    
+    .user-dropdown-close {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+    }
+    
+    .user-dropdown-close:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+    }
+    
+    .user-dropdown-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .user-checkbox-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 6px;
+        border-radius: 4px;
+    }
+    
+    .user-checkbox-item:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .user-checkbox-item input[type="checkbox"] {
+        margin-right: 10px;
+    }
+    
+    .user-checkbox-label {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        cursor: pointer;
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .user-role {
+        margin-left: auto;
+        font-size: 0.75rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+    
+    .assign-users-submit {
+        margin-top: 16px;
+        background-color: #3b82f6;
+        color: var(--text-light);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .assign-users-submit:hover {
+        background-color: #2563eb;
+        transform: translateY(-2px);
+    }
+    
+    .edit-users-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+    body.white-mode .edit-users-btn {
+       color :unset;
+    }
+    
+    .edit-users-btn:hover {
+        background-color: rgba(59, 130, 246, 0.2);
+    }
+    
+    .edit-users-btn i {
+        font-size: 0.75rem;
+    }
+    
+    .user-dropdown-search-container {
+        position: relative;
+        margin-bottom: 12px;
+    }
+    
+    .user-dropdown-search {
+        width: 100%;
+        padding: 8px 8px 8px 32px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .user-dropdown-search:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+    
+    .detail-modal {
+        position: fixed;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 800px;
+        max-width: 90vw;
+        max-height: 80vh;
+        background-color: #1e293b;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        padding: 20px;
+        display: none;
+        overflow-y: auto;
+    }
+    
+    .detail-modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+    }
+    
+    .detail-modal-header {
+    , 255, 0.1);
+    }
+    
+    .detail-modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #ffffff;
+    }
+    
+    .detail-modal-close {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left:auto;
+        border-radius: 4px;
+    }
+    
+    .detail-modal-close:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+    }
+    
+    .detail-section {
+        margin-bottom: 20px;
+    }
+    
+    .detail-section-title {
+        font-size: 1rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 8px;
+    }
+    
+    .detail-content {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        padding: 16px;
+    }
+    
+    .detail-zone-chips,
+    .detail-user-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    
+    .view-all-chip {
+        display: inline-flex;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    
+    .image-slider {
+        position: relative;
+        width: 200px;
+        height: 150px;
+        overflow: hidden;
+    }
+    
+    .image-slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        object-fit: cover;
+    }
+    
+    .image-slide.active {
+        opacity: 1;
+    }
+    
+    .image-preview-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        cursor: zoom-out;
+    }
+    
+    .image-preview-container {
+        max-width: 90%;
+        max-height: 90%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .image-preview {
+        max-width: 100%;
+        max-height: 80vh;
+        object-fit: contain;
+    }
+    
+    .preview-navigation {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    
+    .preview-nav-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        padding: 10px 20px;
+        margin: 0 10px;
+        cursor: pointer;
+        border-radius: 5px;
+        color: #ffffff;
+        transition: all 0.2s;
+    }
+    
+    .preview-nav-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 350px;
+    }
+    
+    .toast-message {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        animation: slideIn 0.5s ease forwards;
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    
+    .toast-success {
+        background: #059669;
+        color: white;
+        border-left: 5px solid #047857;
+    }
+    
+    .toast-error {
+        background: #7f1d1d;
+        color: white;
+        border-left: 5px solid #600;
+    }
+    
+    .toast-icon {
+        margin-right: 12px;
+        font-size: 1.2rem;
+    }
+    
+    .toast-content {
+        flex: 1;
+    }
+    
+    .hidden-data.zones-data,
+    .hidden-data.users-data {
+        display: none;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+    
+</style>
+
+
+<div class="page-container">
+    <div class="header">
+        <h2 class="page-title">All CheckSheets</h2>
+        <div class="header-actions">
+            <a href="{% url 'create_checksheet' %}" class="create-btn">
+                <i class="fas fa-plus"></i> Create
+            </a>
+           
+        </div>
+    </div>
+
+    {% if checksheets %}
+        <div class="search-container">
+            <div class="search-input-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="checksheetSearch" class="search-input" placeholder="Search by checksheet name or assigned user...">
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="checksheets-container">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="name">Name <i class="fas fa-sort"></i></th>
+                        <th class="sortable" data-sort="zones">Zones <i class="fas fa-sort"></i></th>
+                        <th class="sortable" data-sort="line">Line <i class="fas fa-sort"></i></th>
+                        <th class="sortable" data-sort="users">Assigned Users <i class="fas fa-sort"></i></th>
+                        
+                        <th >Created By </th>
+                        <th >Created On </th>
+                        <th>Level 1</th>
+                        <th>Level 2</th>
+                        <th>Level 3</th>
+                        <th class="image-column">Image</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="checksheetTableBody">
+                    {% for checksheet in checksheets %}
+                    <tr data-id="{{ checksheet.id }}">
+                        <td>
+                            <a href="javascript:void(0);" class="checksheet-name" onclick="showDetailModal({{ checksheet.id }})">
+                                {{ checksheet.name }}
+                            </a>
+                        </td>
+                        <td class="content-cell">
+                            <div class="zone-chips">
+                                {% with zones=checksheet.zones.all %}
+                                    {% if zones|length > 0 %}
+                                        {% for zone in zones|slice:":2" %}
+                                            <span class="zone-chip">{{ zone.name }}</span>
+                                        {% endfor %}
+                                        {% if zones|length > 2 %}
+                                            <span class="view-all-chip">. . .</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="empty-text">No zones</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                            <!-- Store all zones in hidden div -->
+                            <div class="hidden-data zones-data">
+                                {% for zone in checksheet.zones.all %}
+                                    <span class="zone-data">{{ zone.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="content-cell">
+                            {{checksheet.line}}
+                        </td>
+                        <td class="content-cell">
+                            <div class="user-chips">
+                                {% with users=checksheet.assigned_users.all %}
+                                    {% if users|length > 0 %}
+                                        {% for user in users|slice:":2" %}
+                                            <span class="user-chip">{{ user.username }}</span>
+                                        {% endfor %}
+                                        {% if users|length > 2 %}
+                                            <span class="view-all-chip">. . .</span>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endwith %}
+                                <button class="edit-users-btn" onclick="toggleUserDropdown('{{ checksheet.id }}')">
+                                    <i class="fas fa-{% if checksheet.assigned_users.all %}pencil-alt{% else %}user-plus{% endif %}"></i>
+                                    {% if not checksheet.assigned_users.all %}Assign Users{% endif %}
+                                </button>
+                            </div>
+                            <!-- Store all users in hidden div -->
+                            <div class="hidden-data users-data">
+                                {% for user in checksheet.assigned_users.all %}
+                                    <span class="user-data">{{ user.username }}</span>
+                                {% endfor %}
+                            </div>
+                            <div class="user-dropdown" id="user-dropdown-{{ checksheet.id }}" style="display: none;">
+                                <div class="user-dropdown-header">
+                                    <span class="user-dropdown-title">Assign Users</span>
+                                    <button type="button" class="user-dropdown-close" onclick="toggleUserDropdown('{{ checksheet.id }}')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="user-dropdown-search-container">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterUsers('{{ checksheet.id }}', this.value)">
+                                </div>
+                                <form method="post" action="{% url 'assign_users' 'checksheet' checksheet.id %}" class="user-dropdown-form">
+                                    {% csrf_token %}
+                                    <div class="user-list" id="user-list-{{ checksheet.id }}">
+                                    {% for user in all_users %}
+                                        {% if user.role != 'admin' %}
+                                            <div class="user-checkbox-item" data-username="{{ user.username|lower }}">
+                                                <label class="user-checkbox-label">
+                                                    <input type="checkbox" name="user_ids" value="{{ user.id }}" 
+                                                    {% if user in checksheet.assigned_users.all %}checked{% endif %}>
+                                                    {{ user.username }}
+                                                    <span class="user-role">{{ user.role }}</span>
+                                                </label>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                    </div>
+                                    <button type="submit" class="assign-users-submit">Save Changes</button>
+                                </form>
+                            </div>
+                        </td>
+                        <td class="content-cell">
+                            {{checksheet.created_by.username}}
+                        </td>
+                        <td class="content-cell">
+                            {{checksheet.created_on|date:"Y-m-d"}}
+                        </td>
+                        <!-- Level 1 Approver Column -->
+                        <td class="content-cell">
+                            <div class="approver-chips">
+                                {% if checksheet.level_1_approver %}
+                                    <span class="approval-chip">{{ checksheet.level_1_approver.username }}</span>
+                                {% else %}
+                                    <span class="empty-text">Not assigned</span>
+                                {% endif %}
+                                <button class="edit-users-btn" onclick="toggleApproverDropdown('level1-{{ checksheet.id }}')">
+                                    <i class="fas fa-{% if checksheet.level_1_approver %}pencil-alt{% else %}user-plus{% endif %}"></i>
+                                    {% if not checksheet.level_1_approver %}Assign{% endif %}
+                                </button>
+                            </div>
+                            <!-- Level 1 Approver Dropdown -->
+                            <div class="user-dropdown" id="approver-dropdown-level1-{{ checksheet.id }}" style="display: none;">
+                                <div class="user-dropdown-header">
+                                    <span class="user-dropdown-title">Assign Level 1 Approver</span>
+                                    <button type="button" class="user-dropdown-close" onclick="toggleApproverDropdown('level1-{{ checksheet.id }}')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="user-dropdown-search-container">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterApprovers('level1-{{ checksheet.id }}', this.value)">
+                                </div>
+                                <form method="post" action="{% url 'assign_approver' 'checksheet' checksheet.id 'level1' %}" class="user-dropdown-form">
+                                    {% csrf_token %}
+                                    {% for user in all_users %}
+                                        <div class="user-radio-item">
+                                            <label class="user-radio-label">
+                                                <input type="radio" name="approver_id" value="{{ user.id }}" 
+                                                {% if user == checksheet.level_1_approver %}checked{% endif %}>
+                                                {{ user.username }}
+                                                <span class="user-role">{{ user.role }}</span>
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                    <button type="submit" class="assign-users-submit">Save Changes</button>
+                                </form>
+                            </div>
+                        </td>
+                        <!-- Level 2 Approver Column -->
+                        <td class="content-cell">
+                            <div class="approver-chips">
+                                {% if checksheet.level_2_approver %}
+                                    <span class="approval-chip">{{ checksheet.level_2_approver.username }}</span>
+                                {% else %}
+                                    <span class="empty-text">Not assigned</span>
+                                {% endif %}
+                                <button class="edit-users-btn" onclick="toggleApproverDropdown('level2-{{ checksheet.id }}')">
+                                    <i class="fas fa-{% if checksheet.level_2_approver %}pencil-alt{% else %}user-plus{% endif %}"></i>
+                                    {% if not checksheet.level_2_approver %}Assign{% endif %}
+                                </button>
+                            </div>
+                            <!-- Level 2 Approver Dropdown -->
+                            <div class="user-dropdown" id="approver-dropdown-level2-{{ checksheet.id }}" style="display: none;">
+                                <div class="user-dropdown-header">
+                                    <span class="user-dropdown-title">Assign Level 2 Approver</span>
+                                    <button type="button" class="user-dropdown-close" onclick="toggleApproverDropdown('level2-{{ checksheet.id }}')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="user-dropdown-search-container">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterApprovers('level2-{{ checksheet.id }}', this.value)">
+                                </div>
+                                <form method="post" action="{% url 'assign_approver' 'checksheet' checksheet.id 'level2' %}" class="user-dropdown-form">
+                                    {% csrf_token %}
+                                    {% for user in all_users %}
+                                        <div class="user-radio-item">
+                                            <label class="user-radio-label">
+                                                <input type="radio" name="approver_id" value="{{ user.id }}" 
+                                                {% if user == checksheet.level_2_approver %}checked{% endif %}>
+                                                {{ user.username }}
+                                                <span class="user-role">{{ user.role }}</span>
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                    <button type="submit" class="assign-users-submit">Save Changes</button>
+                                </form>
+                            </div>
+                        </td>
+                        <!-- Level 3 Approval (Admin Radio Button) -->
+                        <td class="content-cell">
+                            <form method="post" action="{% url 'toggle_level3_approval' 'checksheet' checksheet.id %}" class="approval-radio">
+                                {% csrf_token %}
+                                <label>
+                                    <input type="radio" name="require_level_3" value="True" 
+                                    {% if checksheet.require_level_3_approval %}checked{% endif %} 
+                                    onchange="this.form.submit()">
+                                    Yes
+                                </label>
+                                <label>
+                                    <input type="radio" name="require_level_3" value="False" 
+                                    {% if not checksheet.require_level_3_approval %}checked{% endif %} 
+                                    onchange="this.form.submit()">
+                                    No
+                                </label>
+                            </form>
+                        </td>
+                        
+                        <td class="image-column">
+                            <div class="table-image">
+                                {% with checksheet.images.all as images %}
+                                {% if images %}
+                                    <div class="image-slider" data-checksheet-id="{{ checksheet.id }}">
+                                        {% for image in images %}
+                                            <img src="{{ image.image.url }}" 
+                                                 alt="CheckSheet Image {{ forloop.counter }}" 
+                                                 class="image-slide {% if forloop.first %}active{% endif %}"
+                                                 data-slide-index="{{ forloop.counter0 }}"
+                                                 data-full-image="{{ image.image.url }}">
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p>No images available</p>
+                                {% endif %}
+                                {% endwith %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'update_checksheet' checksheet.id %}" class="action-button assi" title="Update">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'add_zone' checksheet.id %}" class="action-button acti" title="Add Zone">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div id="noResults" class="no-results" style="display: none;">
+                No checksheets found matching your search.
+            </div>
+            <div class="pagination">
+                <div class="pagination-info">
+                    <span>Total CheckSheets: <span id="checksheetCount">{{ checksheets|length }}</span></span>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <p>No CheckSheets available</p>
+        </div>
+    {% endif %}
+</div>
+{% if messages %}
+<div class="toast-container">
+    {% for message in messages %}
+    {% with message.tags.split as tags_list %}
+        {% if 'checksheet_creation' in tags_list or 'checksheet_update' in tags_list or 'zone_add' in tags_list%}
+        <div class="toast-message toast-success">
+            <div class="toast-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="toast-content">
+                {{ message }}
+            </div>
+        </div>
+        {% endif %}
+    {% endwith %}
+    {% endfor %}
+</div>
+{% endif %}
+
+<div id="imagePreviewOverlay" class="image-preview-overlay">
+    <div class="image-preview-container">
+        <img id="imagePreview" class="image-preview" src="" alt="Image Preview">
+        <div class="preview-navigation">
+            <button id="prevImageBtn" class="preview-nav-btn">Previous</button>
+            <button id="nextImageBtn" class="preview-nav-btn">Next</button>
+        </div>
+    </div>
+</div>
+<!-- Backdrop for user dropdown -->
+<div class="user-dropdown-backdrop" id="userDropdownBackdrop"></div>
+<!-- Full Page PDF Viewer -->
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+<script>
+    
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+document.addEventListener('DOMContentLoaded', function() {
+    const toasts = document.querySelectorAll('.toast-message');
+    toasts.forEach(toast => {
+        setTimeout(() => {
+            toast.style.animation = 'fadeOut 0.5s ease forwards';
+            setTimeout(() => {
+                
+                toast.remove();
+            }, 500);
+        }, 5000);
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Table search functionality
+    const searchInput = document.getElementById('checksheetSearch');
+    const tableBody = document.getElementById('checksheetTableBody');
+    const noResults = document.getElementById('noResults');
+    const checksheetCount = document.getElementById('checksheetCount');
+    
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const rows = tableBody.querySelectorAll('tr');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                // Get checksheet name from the first td element (name column)
+                const nameElement = row.querySelector('.checksheet-name');
+                // Get assigned users from the user chips in the third column
+                const userChips = row.querySelectorAll('.user-chip');
+                
+                // Extract the text contents
+                const checksheetName = nameElement ? nameElement.textContent.toLowerCase() : '';
+                const assignedUsers = Array.from(userChips).map(chip => chip.textContent.toLowerCase()).join(' ');
+                
+                // Check if the search term matches either name or assigned users
+                if (checksheetName.includes(searchTerm) || assignedUsers.includes(searchTerm)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Show/hide no results message
+            if (visibleCount === 0 && rows.length > 0) {
+                noResults.style.display = 'block';
+            } else {
+                noResults.style.display = 'none';
+            }
+            
+            // Update the count display
+            if (checksheetCount) {
+                checksheetCount.textContent = visibleCount;
+            }
+        });
+    }
+
+    // Sorting functionality
+    const sortableHeaders = document.querySelectorAll('.sortable');
+    let currentSort = {
+        column: null,
+        direction: 'asc'
+    };
+
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const column = this.dataset.sort;
+            const direction = currentSort.column === column && currentSort.direction === 'asc' ? 'desc' : 'asc';
+            
+            // Update sort icons
+            sortableHeaders.forEach(h => {
+                const icon = h.querySelector('i');
+                icon.className = 'fas fa-sort';
+            });
+            
+            const icon = this.querySelector('i');
+            icon.className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'}`;
+            
+            // Sort the table
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+            rows.sort((a, b) => {
+                let aValue, bValue;
+                
+                switch(column) {
+                    case 'name':
+                        aValue = a.querySelector('.checksheet-name').textContent;
+                        bValue = b.querySelector('.checksheet-name').textContent;
+                        break;
+                    case 'zones':
+                        aValue = a.querySelector('.zone-chips').textContent;
+                        bValue = b.querySelector('.zone-chips').textContent;
+                        break;
+                    case 'users':
+                        aValue = Array.from(a.querySelectorAll('.user-chip')).map(chip => chip.textContent).join(' ');
+                        bValue = Array.from(b.querySelectorAll('.user-chip')).map(chip => chip.textContent).join(' ');
+                        break;
+                    case 'ops':
+                        aValue = Array.from(a.querySelectorAll('.pdf-link')).map(link => link.textContent.trim()).join(' ');
+                        bValue = Array.from(b.querySelectorAll('.pdf-link')).map(link => link.textContent.trim()).join(' ');
+                        break;
+                }
+                
+                if (direction === 'asc') {
+                    return aValue.localeCompare(bValue);
+                } else {
+                    return bValue.localeCompare(aValue);
+                }
+            });
+            
+            // Reorder the table rows
+            rows.forEach(row => tableBody.appendChild(row));
+            
+            currentSort = { column, direction };
+        });
+    });
+    
+ 
+    
+    
+    
+    
+});
+function initImageSliders() {
+    const sliders = document.querySelectorAll('.image-slider');
+    const imagePreviewOverlay = document.getElementById('imagePreviewOverlay');
+    const imagePreview = document.getElementById('imagePreview');
+    const prevImageBtn = document.getElementById('prevImageBtn');
+    const nextImageBtn = document.getElementById('nextImageBtn');
+    
+    let currentPreviewImages = [];
+    let currentPreviewIndex = 0;
+
+    // Image Slider Logic (previous implementation)
+    sliders.forEach(slider => {
+        const slides = slider.querySelectorAll('.image-slide');
+        
+        if (slides.length <= 0) return;
+        
+        let currentSlideIndex = 0;
+        
+        function changeSlide() {
+            slides[currentSlideIndex].classList.remove('active');
+            currentSlideIndex = (currentSlideIndex + 1) % slides.length;
+            slides[currentSlideIndex].classList.add('active');
+        }
+        
+        slider.intervalId = setInterval(changeSlide, 2000);
+
+        // Preview Logic
+        slides.forEach(slide => {
+            slide.addEventListener('click', function() {
+                // Collect all image sources for this slider
+                currentPreviewImages = Array.from(slides).map(s => s.getAttribute('data-full-image'));
+                
+                // Set initial preview image
+                currentPreviewIndex = Array.from(slides).indexOf(this);
+                imagePreview.src = currentPreviewImages[currentPreviewIndex];
+                
+                // Show overlay
+                imagePreviewOverlay.style.display = 'flex';
+            });
+        });
+    });
+
+    // Close preview when clicking outside image
+    imagePreviewOverlay.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.style.display = 'none';
+        }
+    });
+
+    // Navigation buttons
+    prevImageBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        currentPreviewIndex = (currentPreviewIndex - 1 + currentPreviewImages.length) % currentPreviewImages.length;
+        imagePreview.src = currentPreviewImages[currentPreviewIndex];
+    });
+
+    nextImageBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        currentPreviewIndex = (currentPreviewIndex + 1) % currentPreviewImages.length;
+        imagePreview.src = currentPreviewImages[currentPreviewIndex];
+    });
+
+    // Optional: Close with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && imagePreviewOverlay.style.display === 'flex') {
+            imagePreviewOverlay.style.display = 'none';
+        }
+    });
+}
+
+// Initialize image sliders when DOM is loaded
+document.addEventListener('DOMContentLoaded', initImageSliders);
+
+function toggleUserDropdown(checksheetId) {
+    const allDropdowns = document.querySelectorAll('.user-dropdown');
+    const backdrop = document.getElementById('userDropdownBackdrop');
+    
+    allDropdowns.forEach(dropdown => {
+        if (dropdown.id !== `user-dropdown-${checksheetId}`) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    const dropdown = document.getElementById(`user-dropdown-${checksheetId}`);
+    const isOpening = dropdown.style.display === 'none';
+    
+    dropdown.style.display = isOpening ? 'block' : 'none';
+    backdrop.style.display = isOpening ? 'block' : 'none';
+    
+    if (isOpening) {
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    } else {
+        document.body.style.overflow = ''; // Restore scrolling
+    }
+}
+
+function filterUsers(checksheetId, searchTerm) {
+    searchTerm = searchTerm.toLowerCase();
+    const userItems = document.querySelectorAll(`#user-list-${checksheetId} .user-checkbox-item`);
+    let visibleCount = 0;
+    
+    userItems.forEach(item => {
+        const username = item.getAttribute('data-username');
+        if (username.includes(searchTerm)) {
+            item.style.display = '';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    let noResultsMsg = document.getElementById(`no-user-results-${checksheetId}`);
+    if (visibleCount === 0) {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.id = `no-user-results-${checksheetId}`;
+            noResultsMsg.className = 'no-results';
+            noResultsMsg.textContent = 'No users found matching your search.';
+            document.getElementById(`user-list-${checksheetId}`).appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'block';
+    } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+    }
+}
+
+document.addEventListener('click', function(event) {
+    const backdrop = document.getElementById('userDropdownBackdrop');
+    if (event.target === backdrop) {
+        const allDropdowns = document.querySelectorAll('.user-dropdown');
+        allDropdowns.forEach(dropdown => {
+            dropdown.style.display = 'none';
+        });
+        backdrop.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+});
+
+// Detail modal functions
+function showDetailModal(checksheetId) {
+    const row = document.querySelector(`tr[data-id="${checksheetId}"]`);
+    if (!row) return;
+    
+    const name = row.querySelector('.checksheet-name').textContent.trim();
+    
+    // Get ALL zones from the hidden data
+    const zonesData = row.querySelector('.zones-data');
+    const zones = zonesData ? Array.from(zonesData.querySelectorAll('.zone-data')).map(zone => zone.textContent.trim()) : [];
+    
+    // Get ALL users from the hidden data
+    const usersData = row.querySelector('.users-data');
+    const users = usersData ? Array.from(usersData.querySelectorAll('.user-data')).map(user => user.textContent.trim()) : [];
+    
+    // Get ALL images from the image slider
+    const imageSlider = row.querySelector('.image-slider');
+    const images = imageSlider ? Array.from(imageSlider.querySelectorAll('.image-slide')).map(slide => {
+        return {
+            url: slide.getAttribute('data-full-image'),
+            alt: slide.getAttribute('alt')
+        };
+    }) : [];
+    
+    // Populate modal
+    document.getElementById('detailModalTitle').textContent = name;
+    
+    // Build content HTML
+    let contentHTML = `
+        <div class="detail-section">
+            <h3 class="detail-section-title">Zones</h3>
+            <div class="detail-zone-chips">
+                ${zones.length > 0 ? 
+                    zones.map(zone => `<span class="zone-chip">${zone}</span>`).join('') : 
+                    '<span class="empty-text">No zones</span>'}
+            </div>
+        </div>
+        
+        <div class="detail-section">
+            <h3 class="detail-section-title">Assigned Users</h3>
+            <div class="detail-user-chips">
+                ${users.length > 0 ? 
+                    users.map(user => `<span class="user-chip">${user}</span>`).join('') : 
+                    '<span class="empty-text">No users assigned</span>'}
+            </div>
+        </div>
+        
+        <div class="detail-section">
+        <h3 class="detail-section-title">Images</h3>
+        <div class="detail-images-grid">
+            ${images.length > 0 ? 
+                images.map((image) => `
+                    <div class="detail-image-container">
+                        <img src="${image.url}" 
+                            alt="${image.alt}" 
+                            class="detail-image">
+                    </div>
+                `).join('') : 
+                '<span class="empty-text">No images available</span>'}
+        </div>
+    `;
+    
+    document.getElementById('detailModalContent').innerHTML = contentHTML;
+    
+    // Show modal
+    document.getElementById('detailModal').style.display = 'block';
+    document.getElementById('detailModalBackdrop').style.display = 'block';
+    
+    // Initialize image slider in modal
+    initImageSliders();
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').style.display = 'none';
+    document.getElementById('detailModalBackdrop').style.display = 'none';
+}
+
+// Close detail modal when clicking outside
+document.getElementById('detailModalBackdrop').addEventListener('click', closeDetailModal);
+
+// Prevent modal close when clicking inside the modal
+document.getElementById('detailModal').addEventListener('click', function(event) {
+    event.stopPropagation();
+});
+
+
+
+function toggleApproverDropdown(approverType) {
+    // Close all other dropdowns first
+    const allDropdowns = document.querySelectorAll('.user-dropdown');
+    allDropdowns.forEach(dropdown => {
+        if (dropdown.id !== `approver-dropdown-${approverType}`) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Toggle the current dropdown
+    const dropdown = document.getElementById(`approver-dropdown-${approverType}`);
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
+
+// Function to filter users in approver dropdowns
+function filterApprovers(approverType, query) {
+    const dropdown = document.getElementById(`approver-dropdown-${approverType}`);
+    const items = dropdown.querySelectorAll('.user-radio-item');
+    
+    query = query.toLowerCase();
+    items.forEach(item => {
+        const username = item.querySelector('label').textContent.toLowerCase();
+        if (username.includes(query)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+</script>
+
+<!-- Detail Modal -->
+<div class="detail-modal-backdrop" id="detailModalBackdrop"></div>
+<div class="detail-modal" id="detailModal">
+    <div class="detail-modal-header">
+        <h2 class="detail-modal-title" id="detailModalTitle">CheckSheet Details</h2>
+        <button class="detail-modal-close" onclick="closeDetailModal()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="detail-content" id="detailModalContent">
+        <!-- Content will be populated by JavaScript -->
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,450 @@
+{% extends 'checksheet/base.html' %}
+
+{% block title %}Operator Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    .content {
+       
+    }
+    body{
+        background-image:linear-gradient(270deg, rgb(19 19 41 / 71%) 6.5%, rgb(13 18 45) 93.2%) !important;
+    }
+    .settings-float{
+        display:none;
+    }
+    .user-info {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        padding: 0.75rem 1rem !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+        transition: all 0.2s ease !important;
+        border:unset !important;
+    }
+    .user-name{
+        color:white!important;
+    }
+    .logout-btn {
+        padding: 0.5rem 1.25rem !important;
+        background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 10px !important;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
+    }
+    .user-role{
+        color:white!important;
+    }
+    .navbar{
+        background:rgba(19, 19, 41, 0.85) !important;
+    }
+    .content-inner{
+        background:unset !important;
+    }
+    /* Dashboard specific styles */
+    .dashboard-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
+    
+    .dashboard-card {
+        background-color: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 200px;
+        height: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: #1e293b;
+        border: 2px solid transparent;
+        position: relative; /* Added to position the status indicator */
+    }
+    
+    /* Visual improvements for dashboard cards */
+    .dashboard-card:nth-child(1) {
+        background: linear-gradient(135deg, #1a4b87 0%, #2563eb 100%);
+        color: white;
+    }
+    
+    .dashboard-card:nth-child(2) {
+        background: linear-gradient(135deg, #7928ca 0%, #8657db 100%);
+        color: white;
+    }
+    
+    .dashboard-card:nth-child(3) {
+        background: #1abc9c;
+        color: white;
+    }
+    
+    .dashboard-card:nth-child(4) {
+        background: #e67e22;
+        color: white;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .dashboard-card i {
+        font-size: 3.5rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dashboard-card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .dashboard-heading {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #ffffff;
+        font-size: 1.75rem;
+        font-weight: 600;
+    }
+    
+    /* Hide sidebar for this page only */
+    body.operator-dashboard .sidebar {
+        display: none !important;
+    }
+    .sidebar-toggle{
+        display: none !important;
+    }
+    
+    body.operator-dashboard .content,
+    body.operator-dashboard .navbar {
+        margin-left: 0 !important;
+        width: 100% !important;
+        left: 0 !important;
+    }
+    
+    body.operator-dashboard .menu-toggle {
+        display: none !important;
+    }
+
+    /* Status indicators */
+    .status-indicator {
+        position: absolute;
+        bottom: -50px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-weight: 500;
+        font-size: 17px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        width: 100%;
+    }
+    
+    .status-pending {
+        color: #f97316;
+        animation: blink 1s infinite;
+        background-color: #f9731652;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .status-completed {
+        color: #22c55e;
+        background-color: #22c55e3b;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Improved styling for modals */
+    #checksheetModal > div,
+    #starterModal > div,
+    #backsheetModal > div {
+        background-image: linear-gradient(270deg, rgb(19 19 41 / 71%) 6.5%, rgb(13 18 45) 93.2%);
+        padding: 2rem;
+        border-radius: 1rem;
+        max-width: 90%;
+        width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    #checksheetModal a,
+    #starterModal a,
+    #backsheetModal a {
+        padding: 1rem;
+       
+        border-radius: 0.5rem;
+        text-decoration: none;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border:1px solid rgba(255,255,255,0.1)
+    }
+    
+    #checksheetModal a:hover,
+    #starterModal a:hover,
+    #backsheetModal a:hover {
+        
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Animation for status indicators */
+    @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+</style>
+
+<!-- Add operator-dashboard class to body -->
+<script>
+    document.body.classList.add('operator-dashboard');
+</script>
+
+<h1 class="dashboard-heading">Welcome, {{ request.user.username }}</h1>
+
+<div class="dashboard-container">
+    <!-- View POCs Card -->
+    <a href="{% url 'view_poc' %}" class="dashboard-card">
+        <i class="fa-solid fa-q"></i>
+        <div class="dashboard-card-title">Q-Gallery</div>
+    </a>
+    
+    <!-- Starter Sheet Card -->
+    <a href="#" class="dashboard-card"
+       id="starterBtn" >
+       <i class="fas fa-folder"></i>
+       <div class="dashboard-card-title">Starter Sheets</div>
+       <div id="starterStatus" class="status-indicator {% if  not has_filled_starter_sheet %}status-pending{% elif has_filled_starter_sheet %}status-completed{% endif %}" >
+            {% if not has_filled_starter_sheet %}Starter Sheet Pending{% elif has_filled_starter_sheet %}Starter Sheet Done{% endif %}
+       </div>
+    </a>
+
+    <!-- Checksheets Card -->
+    <a href="#" class="dashboard-card {% if not has_filled_starter_sheet %}disabled{% endif %}"
+       id="checksheetBtn" {% if not has_filled_starter_sheet %}style="pointer-events: none; opacity: 0.5;"{% endif %}>
+       <i class="fas fa-clipboard-check"></i>
+       <div class="dashboard-card-title">Checksheets</div>
+    </a>
+   
+    <a href="#" class="dashboard-card" id="backsheetBtn" style="display:none;">
+        <i class="fas fa-backward"></i>
+        <div class="dashboard-card-title">Back data</div>
+    </a>
+</div>
+
+<!-- Checksheets Modal -->
+<div id="backsheetModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style=" padding: 2rem; border-radius: 1rem; max-width: 90%; width: 500px; max-height: 80vh; overflow-y: auto;">
+        <div  style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin: 0; color: #ffffff;">Select Checksheet</h2>
+            <button onclick="closeModal('backsheetModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">&times;</button>
+        </div>
+        <div id="formRequestsContainer" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            {% for form_request in form_requests %}
+            <a href="{% url 'fill_checksheet_request' form_request.id %}" class="dashboard-card">
+                <i class="fas fa-file-alt" style="color: white;"></i>
+                <span style="font-weight: 500;"> {{ form_request.checksheet.name }}  </span>
+            </a>
+            {% empty %}
+            <p style="text-align: center; color: #64748b; padding: 1rem;">No available.</p>
+            {% endfor %}
+        </div>
+        
+    </div>
+</div>
+
+<div id="checksheetModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style=" padding: 2rem; border-radius: 1rem; max-width: 90%; width: 500px; max-height: 80vh; overflow-y: auto;">
+        <div  style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin: 0; color: #ffffff;">Select Checksheet</h2>
+            <button onclick="closeModal('checksheetModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">&times;</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            {% for checksheet in checksheets %}
+                <a href="{% url 'fill_checksheet_detail' checksheet.id %}" style="padding: 1rem;  border-radius: 0.5rem; text-decoration: none; color: #ffffff; display: flex; align-items: center; gap: 0.75rem; transition: all 0.2s ease;">
+                    <i class="fas fa-file-alt" style="color: #2563eb;"></i>
+                    <span style="font-weight: 500;">{{ checksheet.name }} - {{ checksheet.line }}</span>
+                </a>
+            {% empty %}
+                <p style="text-align: center; color: #64748b; padding: 1rem;">No checksheets available.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Startersheets Modal -->
+<div id="starterModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style=" padding: 2rem; border-radius: 1rem; max-width: 90%; width: 500px; max-height: 80vh; overflow-y: auto;">
+        <div  style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin: 0; color: #ffffff;">Select Starter Sheet</h2>
+            <button onclick="closeModal('starterModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">&times;</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            {% for Start in Starter %}
+                <a href="{% url 'fill_starter_sheet' Start.id %}" style="padding: 1rem;  border-radius: 0.5rem; text-decoration: none; color: #ffffff; display: flex; align-items: center; gap: 0.75rem; transition: all 0.2s ease;">
+                    <i class="fas fa-file-alt" style="color: #2563eb;"></i>
+                    <span style="font-weight: 500;">{{ Start.name }} - {{ Start.line }}</span>
+                </a>
+            {% empty %}
+                <p style="text-align: center; color: #64748b; padding: 1rem;">No starter sheets available.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('starterBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!this.classList.contains('disabled')) {
+            document.getElementById('starterModal').style.display = 'flex';
+        }
+    });
+   
+    document.getElementById('checksheetBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!this.classList.contains('disabled')) {
+            document.getElementById('checksheetModal').style.display = 'flex';
+        }
+    });
+   
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(e) {
+        const checksheetModal = document.getElementById('checksheetModal');
+        const starterModal = document.getElementById('starterModal');
+        const backsheetModal = document.getElementById('backsheetModal');
+        
+        if (e.target === checksheetModal) {
+            checksheetModal.style.display = 'none';
+        }
+        
+        if (e.target === starterModal) {
+            starterModal.style.display = 'none';
+        }
+        
+        if (e.target === backsheetModal) {
+            backsheetModal.style.display = 'none';
+        }
+    });
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        function updateStatusIndicators() {
+            const starterBtn = document.getElementById('starterBtn');
+            const checksheetBtn = document.getElementById('checksheetBtn');
+            
+            const starterStatus = document.getElementById('starterStatus');
+            
+            // Check if OPS is completed
+            const opsCompleted = !starterBtn.classList.contains('disabled') && 
+                                 starterBtn.style.pointerEvents !== 'none' && 
+                                 starterBtn.style.opacity !== '0.5';
+            
+            // Check if starter sheet is completed
+            const starterCompleted = !checksheetBtn.classList.contains('disabled') && 
+                                    checksheetBtn.style.pointerEvents !== 'none' && 
+                                    checksheetBtn.style.opacity !== '0.5';
+            
+            // Update OPS status
+            if (opsCompleted) {
+           
+                // Show starter status if OPS is completed
+                starterStatus.style.display = 'block';
+                
+                // Update starter status based on completion
+                if (starterCompleted) {
+                    starterStatus.classList.remove('status-pending');
+                    starterStatus.classList.add('status-completed');
+                    starterStatus.textContent = 'Done';
+                } else {
+                    starterStatus.classList.remove('status-completed');
+                    starterStatus.classList.add('status-pending');
+                    starterStatus.textContent = 'Pending';
+                }
+            } else {
+                opsStatus.classList.remove('status-completed');
+                opsStatus.classList.add('status-pending');
+                opsStatus.textContent = 'Pending';
+                
+                // Hide starter status if OPS is not completed
+                starterStatus.style.display = 'none';
+            }
+        }
+        
+        // Set up observers to watch for changes to button states
+        const starterBtn = document.getElementById('starterBtn');
+        const checksheetBtn = document.getElementById('checksheetBtn');
+        
+        const observer = new MutationObserver(function(mutations) {
+            updateStatusIndicators();
+        });
+        
+        // Observe both buttons for attribute changes
+        observer.observe(starterBtn, { attributes: true });
+        observer.observe(checksheetBtn, { attributes: true });
+        
+        // Initial update
+        updateStatusIndicators();
+
+        function fetchValidRequests() {
+            fetch("{% url 'fetch_valid_requests' %}")  // Update with your URL name
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.querySelector("#formRequestsContainer");
+                    container.innerHTML = ""; // Clear existing requests
+    
+                    if (data.form_requests.length > 0) {
+                        data.form_requests.forEach(req => {
+                            const link = document.createElement("a");
+                            link.href = `/fill_checksheet_request/${req.id}/`;
+                            link.classList.add("dashboard-card");
+                            link.innerHTML = `
+                                <i class="fas fa-file-alt" style="color: white;"></i>
+                                <span style="font-weight: 500; color:white;"> ${req.checksheet_aname} </span>
+                            `;
+                            container.appendChild(link);
+                        });
+                        document.querySelector("#backsheetBtn").style.display = "flex"; 
+                    } else {
+                        document.querySelector("#backsheetBtn").style.display = "none";
+                        container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 1rem;">No available.</p>`;
+                    }
+                })
+                .catch(error => console.error("Error fetching data:", error));
+        }
+    
+        setInterval(fetchValidRequests, 1000);  // Fetch every second
+    });
+    
+    document.getElementById('backsheetBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('backsheetModal').style.display = 'flex';
+    });
+</script>
+{% endblock %}

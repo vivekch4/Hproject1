@@ -1,0 +1,218 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #3949ab 0%, #1a237e 100%);
+            padding: 1rem;
+        }
+
+        .login-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 420px;
+            transition: all 0.3s ease;
+        }
+
+        .login-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .header h1 {
+            color: #1a237e;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 1.75rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1.25rem;
+            transition: all 0.3s ease;
+            color: #1e293b;
+            background-color: #f8fafc;
+            letter-spacing: 0.25em;
+            text-align: center;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3949ab;
+            background-color: white;
+            box-shadow: 0 0 0 4px rgba(57, 73, 171, 0.1);
+        }
+
+        input::placeholder {
+            color: #94a3b8;
+            letter-spacing: normal;
+
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #3949ab;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background: #283593;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(57, 73, 171, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .messages {
+            margin-top: 1.5rem;
+        }
+
+        .messages p {
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .messages p.success {
+            background-color: #f0fdf4;
+            color: #166534;
+            border: 1px solid #dcfce7;
+        }
+
+        .messages p.error {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fee2e2;
+        }
+
+        .resend-otp {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        .resend-otp a {
+            color: #3949ab;
+            text-decoration: none;
+            margin-left: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .resend-otp a:hover {
+            color: #283593;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 2rem;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="header">
+            <h1>Verify OTP</h1>
+            <p>Please enter the verification code sent to your email</p>
+        </div>
+       
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="otp">Enter Verification Code</label>
+                <input
+                    type="text"
+                    id="otp"
+                    name="otp"
+                    placeholder="Enter OTP"
+                    maxlength="6"
+                    pattern="[0-9]*"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    required
+                >
+            </div>
+            <button type="submit">Verify OTP</button>
+        </form>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    {% if message.tags == 'success' %}
+                        <p class="success">{{ message }}</p>
+                    {% else %}
+                        <p class="error">{{ message }}</p>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="resend-otp">
+            Didn't receive the code?
+            <a href="{% url 'forgot_password' %}">Resend OTP</a>
+        </div>
+    </div>
+</body>
+</html>

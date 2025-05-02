@@ -1,0 +1,1062 @@
+{% extends 'checksheet/base.html' %}
+{% block title %}Fill Checksheet{% endblock %}
+{% load static %}
+<script src="{% static 'js/offline.js' %}"></script>
+{% block content %}
+<style>
+    /* Base styles */
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+        background-color: #0f172a;
+        min-height: calc(100vh - 60px);
+    }
+    body{
+        background-image:linear-gradient(270deg, rgb(19 19 41 / 71%) 6.5%, rgb(13 18 45) 93.2%) !important;
+    }
+    .settings-float{
+        display:none;
+    }
+    .user-info {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        padding: 0.75rem 1rem !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+        transition: all 0.2s ease !important;
+        border:unset !important;
+    }
+    .user-name{
+        color:white!important;
+    }
+    .logout-btn {
+        padding: 0.5rem 1.25rem !important;
+        background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 10px !important;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
+    }
+    .user-role{
+        color:white!important;
+    }
+    .navbar{
+        background:rgba(19, 19, 41, 0.85) !important;
+    }
+    .content-inner{
+        background:unset !important;
+    }
+    
+    /* Header styling */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.3rem 24px;
+        margin-bottom: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 8px 8px 0 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .header:after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 120px;
+        height: 2px;
+        background-color: #3b82f6;
+    }
+    
+    .page-title {
+        color: #ffffff;
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .page-title:before {
+        content: '';
+        display: inline-block;
+        width: 6px;
+        height: 24px;
+        background-color: #3b82f6;
+        border-radius: 3px;
+    }
+    
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .back-button:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        transform: scale(1.05);
+    }
+    
+    /* Form container */
+    .form-container {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        overflow: hidden;
+    }
+    
+    /* Form layout */
+    .form-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+    
+    /* Form group styling */
+    .form-group {
+        margin-bottom: 0;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.95rem;
+    }
+    
+    /* Input and dropdown styling */
+    .form-input, .shift-dropdown {
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.1);
+        height: 50px;
+        box-sizing: border-box;
+    }
+    
+    .form-input:focus, .shift-dropdown:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+    
+    /* Table-based zone inputs styling */
+    .zone-inputs-container {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .zones-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    thead {
+        background: linear-gradient(to right, #4d4ae6, #3c7df4);
+    }
+    
+    .zones-table thead th {
+        padding: 14px 16px;
+        font-weight: 600;
+        color: white;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .zones-table tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        transition: background-color 0.2s;
+    }
+    
+    .zones-table tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .zones-table tbody tr:last-child {
+        border-bottom: none;
+    }
+    
+    .zones-table td {
+        padding: 14px 16px;
+        vertical-align: middle;
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .zone-id {
+        width: 50px;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .zone-name {
+        font-weight: 600;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .thumbnail-container {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .thumbnail-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    
+    .zone-range {
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+    }
+    
+    .zone-unit {
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .zone-method {
+        color: rgba(255, 255, 255, 0.7);
+        font-style: italic;
+    }
+    
+    /* Input field for zones */
+    .zone-input {
+        padding: 10px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        width: 100%;
+        font-size: 0.95rem;
+        color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.1);
+        transition: all 0.3s;
+    }
+    
+    .zone-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+    }
+    
+    /* Checkbox styling */
+    .zone-check-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .zone-check {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        border-radius: 3px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background-color: rgba(255, 255, 255, 0.1);
+        position: relative;
+    }
+    
+    .zone-check:checked {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+    }
+    
+    .zone-check:checked::after {
+        content: '';
+        position: absolute;
+        left: 4px;
+        top: 1px;
+        width: 5px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+    
+    /* Submit button */
+    .save-btn {
+        background-color: #3b82f6;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 40px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .save-btn:hover {
+        background-color: #2563eb;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 14px rgba(59, 130, 246, 0.3);
+    }
+    
+    .save-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .save-btn i {
+        font-size: 1rem;
+    }
+    
+    /* Zone inputs title */
+    .zone-inputs-title {
+        font-weight: 600;
+        margin-bottom: -16px;
+        color: #ffffff;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .zone-inputs-title i {
+        color: #3b82f6;
+        font-size: 1.1rem;
+    }
+    
+    /* Success popup */
+    .success-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #10b981;
+        color: white;
+        padding: 24px 32px;
+        border-radius: 10px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        display: none;
+        z-index: 1000;
+        font-size: 1rem;
+        font-weight: 500;
+        text-align: center;
+        min-width: 300px;
+    }
+    
+    .success-popup h3 {
+        margin-bottom: 15px;
+    }
+    
+    .success-popup button {
+        background: white;
+        color: #10b981;
+        border: none;
+        padding: 16px 40px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: all 0.2s ease;
+    }
+    
+    .success-popup button:hover {
+        background: #e6f7ff;
+        transform: translateY(-2px);
+    }
+    
+    /* Error styling */
+    .input-error {
+        border: 2px solid #ef4444 !important;
+    }
+    
+    .error-message {
+        color: #ef4444;
+        font-size: 0.85rem;
+        margin-top: 10px;
+        display: none;
+    }
+    
+    .shift-error {
+        background-color: rgba(239, 68, 68, 0.2);
+        padding: 5px;
+        border-radius: 6px;
+        margin-top: 3px;
+        font-size: 0.8rem;
+        color: #ef4444;
+        display: none;
+    }
+    
+    /* Shift tag */
+    .shift-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 14px;
+        background-color: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+        border-radius: 9999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-left: 12px;
+        border: 1px solid rgba(59, 130, 246, 0.5);
+    }
+    
+    /* Action buttons */
+    .action-buttons {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+    }
+    
+    /* Form actions section */
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 30px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 24px;
+    }
+    
+    /* Image modal */
+    .image-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .image-modal-content {
+        max-width: 90%;
+        max-height: 90vh;
+        margin: auto;
+        display: block;
+        animation: zoomIn 0.3s ease;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    @keyframes zoomIn {
+        from {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    /* Navbar styling */
+    .navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+        height: 60px;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .navbar-left {
+        flex: 1;
+    }
+    
+    .navbar-center {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        margin-right: 20px;
+    }
+    
+    /* Current time display */
+    .datetime-display {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.8);
+        background-color: rgba(255, 255, 255, 0.1);
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .datetime-display i {
+        color: #3b82f6;
+    }
+    
+    /* Current shift display */
+    .shift-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #ffffff;
+        background-color: rgba(59, 130, 246, 0.2);
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(59, 130, 246, 0.5);
+    }
+    
+    .shift-label i {
+        color: #3b82f6;
+    }
+    
+    /* Countdown timer styling */
+    .shift-countdown-alert {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #ef4444;
+        background-color: rgba(239, 68, 68, 0.2);
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.7;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+    
+    /* Sidebar and content adjustments */
+    body.operator-dashboard .sidebar {
+        display: none !important;
+    }
+    
+    body.operator-dashboard .content,
+    body.operator-dashboard .navbar {
+        margin-left: 0 !important;
+        width: 100% !important;
+        left: 0 !important;
+    }
+    
+    body.operator-dashboard .menu-toggle {
+        display: none !important;
+    }
+    
+    .sidebar-toggle {
+        display: none !important;
+    }
+    
+    .content {
+        padding: 1rem !important;
+    }
+    
+    .content-inner {
+        padding: 0rem !important;
+    }
+    
+    /* Language toggle button */
+    .language-toggle {
+        background-color: #10b981;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 40px;
+    }
+    
+    .language-toggle:hover {
+        background-color: #059669;
+        transform: translateY(-2px);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .zones-table {
+            display: block;
+            overflow-x: auto;
+        }
+    
+        .navbar-center {
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .zones-table {
+            font-size: 0.9rem;
+        }
+    
+        .zones-table td, .zones-table th {
+            padding: 10px 12px;
+        }
+    
+        .page-container {
+            padding: 12px;
+        }
+    
+        .form-container {
+            padding: 20px;
+        }
+    
+        .header {
+            padding: 16px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+    
+        .action-buttons {
+            width: 100%;
+            justify-content: space-between;
+        }
+    
+        .page-title {
+            font-size: 1.5rem;
+        }
+    
+        .navbar {
+            flex-wrap: wrap;
+            height: auto;
+            padding: 10px 15px;
+        }
+    
+        .navbar-left, .navbar-center {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    
+        .datetime-display, .shift-label, .shift-countdown-alert {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<!-- Add operator-dashboard class to body and translation logic -->
+
+
+{% if selected_startersheet %}
+<div class="page-container">
+    <div class="header">
+        <h2 class="page-title" data-translate="page_title">{{ selected_startersheet.name }}</h2>
+        <div class="action-buttons">
+            <button type="submit" form="starter-sheet-form" class="save-btn">
+                <i class="fas fa-save"></i> <span data-translate="save_progress">Save Progress</span>
+            </button>
+            <button id="language-toggle" class="language-toggle">हिन्दी</button>
+            <a href="{% url 'operator_dashboard' %}" class="back-button">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <form method="POST" id="starter-sheet-form">
+            {% csrf_token %}
+            <div class="error-message" id="form-error-message" data-translate="form_error_message">
+                Please fill in all required fields and check all boxes before submitting.
+            </div>
+            <div class="form-layout">
+                <!-- Right column for zone inputs as table -->
+                <div class="zone-inputs-container">
+                    <div class="zone-inputs-title">
+                        <i class="fas fa-sliders-h"></i> <span data-translate="parameter_inputs">Parameter Inputs</span>
+                    </div>
+                    
+                    <table class="zones-table">
+                        <thead>
+                            <tr>
+                                <th data-translate="parameter_name">Parameter Name</th>
+                                <th data-translate="standard">Standard</th>
+                                <th data-translate="method">Method</th>
+                                <th data-translate="input">Input</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for zone in zones %}
+                            <tr>
+                                <td class="zone-name">
+                                    {% if zone.image %}
+                                    <div class="thumbnail-container">
+                                        <img src="{{ zone.image.url }}" alt="{{ zone.name }}" class="zoomable-image">
+                                    </div>
+                                    {% endif %}
+                                    {{ zone.name }}
+                                </td>
+                                <td class="zone-range">
+                                    {% if zone.standard %}
+                                        {{ zone.standard }}
+                                    {% elif zone.min_value and zone.max_value and zone.unit %}
+                                        {{ zone.min_value }}-{{ zone.max_value }} {{ zone.unit }}
+                                    {% elif zone.min_value %}
+                                        Min: {{ zone.min_value }}
+                                    {% elif zone.max_value %}
+                                        Max: {{ zone.max_value }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="zone-method">{{ zone.check_method|default:"-" }}</td>
+                                <td>
+                                    {% if zone.type == "checkbox" %}
+                                        <div class="zone-check-container">
+                                            <input type="checkbox" name="zone_{{ zone.id }}" class="zone-check" required>
+                                            <span data-translate="ok">OK</span>
+                                        </div>
+                                    {% elif zone.type == "int" %}
+                                        <input type="number" name="zone_{{ zone.id }}" class="zone-input"
+                                               min="0" placeholder="Enter value" required>
+                                    {% elif zone.type == "float" %}
+                                        <input type="number" name="zone_{{ zone.id }}" class="zone-input"
+                                               step="0.01" placeholder="Enter value" required>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Image modal for zooming images -->
+    <div id="imageModal" class="image-modal">
+        <img class="image-modal-content" id="modalImage">
+    </div>
+
+    <!-- Success notification popup -->
+    <div id="success-popup" class="success-popup">
+        <h3 data-translate="form_saved_successfully">Form Saved Successfully!</h3>
+        <button id="success-ok-btn" data-translate="ok">OK</button>
+    </div>
+</div>
+
+<script>
+    document.body.classList.add('operator-dashboard');
+    document.addEventListener('DOMContentLoaded', function () {
+        // Translation object
+        const translations = {
+            en: {
+                page_title: "{{ selected_startersheet.name }}",
+                save_progress: "Save Progress",
+                parameter_inputs: "Parameter Inputs",
+                parameter_name: "Parameter Name",
+                standard: "Standard",
+                method: "Method",
+                input: "Input",
+                ok: "OK",
+                form_saved_successfully: "Form Saved Successfully!",
+                form_saved_offline: "Form Saved Offline - Will Sync When Online",
+                error_saving_data: "Error Saving Data!",
+                current_shift: "Current Shift",
+                form_error_message: "Please fill in all required fields and check all boxes before submitting."
+            },
+            hi: {
+                page_title: "{{ selected_startersheet.name }}",
+                save_progress: "प्रगति सहेजें",
+                parameter_inputs: "पैरामीटर इनपुट",
+                parameter_name: "पैरामीटर का नाम",
+                standard: "मानक",
+                method: "विधि",
+                input: "इनपुट",
+                ok: "ठीक है",
+                form_saved_successfully: "फॉर्म सफलतापूर्वक सहेजा गया!",
+                form_saved_offline: "फॉर्म ऑफलाइन सहेजा गया - ऑनलाइन होने पर सिंक होगा",
+                error_saving_data: "डेटा सहेजने में त्रुटि!",
+                current_shift: "वर्तमान पाली",
+                form_error_message: "कृपया सभी आवश्यक फ़ील्ड भरें और सभी बॉक्स चेक करें।"
+            }
+        };
+
+        let currentLanguage = 'en'; // Default language
+
+        // Add shift display to navbar
+        const currentShift = "{{ current_shift }}";
+        const navbar = document.querySelector('.navbar');
+        if (navbar) {
+            const navbarLeft = navbar.querySelector('.navbar-left');
+            const logoutBtn = navbar.querySelector('.logout-btn');
+            const navbarCenter = document.createElement('div');
+            navbarCenter.className = 'navbar-center';
+            navbarCenter.innerHTML = `
+                <span class="datetime-display"><i class="fas fa-calendar-alt"></i> <span id="current-datetime"></span></span>
+                <span class="shift-label"><i class="fas fa-clock"></i> <span data-translate="current_shift">Current Shift</span>: ${currentShift}</span>
+            `;
+            navbar.insertBefore(navbarCenter, logoutBtn);
+            updateDateTime();
+        }
+
+        // Function to update text based on language
+        function updateLanguage(lang) {
+            currentLanguage = lang;
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                element.textContent = translations[lang][key];
+            });
+            const toggleBtn = document.getElementById('language-toggle');
+            toggleBtn.textContent = lang === 'en' ? 'हिन्दी' : 'English';
+            document.documentElement.setAttribute('lang', lang);
+        }
+
+        // Initial language setup
+        updateLanguage(currentLanguage);
+
+        // Language toggle button event
+        document.getElementById('language-toggle').addEventListener('click', () => {
+            const newLang = currentLanguage === 'en' ? 'hi' : 'en';
+            updateLanguage(newLang);
+        });
+
+        // Update date and time
+        function updateDateTime() {
+            const now = new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+            const dateStr = now.toLocaleDateString(undefined, dateOptions);
+            const timeStr = now.toLocaleTimeString(undefined, timeOptions);
+            document.getElementById('current-datetime').textContent = `${dateStr} ${timeStr}`;
+            setTimeout(updateDateTime, 1000);
+        }
+
+        // Form handling
+        const form = document.getElementById("starter-sheet-form");
+        const modal = document.getElementById("imageModal");
+        const modalImg = document.getElementById("modalImage");
+        const images = document.querySelectorAll(".zoomable-image");
+        const successPopup = document.getElementById('success-popup');
+        const successOkBtn = document.getElementById('success-ok-btn');
+        const formErrorMessage = document.getElementById('form-error-message');
+
+        // Add animation to zone items
+        const zoneItems = document.querySelectorAll('.zone-item');
+        zoneItems.forEach((item, index) => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateY(20px)';
+            item.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            setTimeout(() => {
+                item.style.opacity = '1';
+                item.style.transform = 'translateY(0)';
+            }, 100 + (index * 50));
+        });
+
+        // Setup image modal
+        images.forEach(img => {
+            img.addEventListener("click", function() {
+                modal.style.display = "flex";
+                modalImg.src = this.src;
+                modalImg.style.opacity = 0;
+                setTimeout(() => {
+                    modalImg.style.opacity = 1;
+                    modalImg.style.transition = 'opacity 0.3s ease';
+                }, 10);
+            });
+        });
+
+        modal.addEventListener("click", function(e) {
+            if (e.target === modal) {
+                modal.style.display = "none";
+            }
+        });
+
+        // Success popup OK button handler
+        successOkBtn.addEventListener('click', function() {
+            window.location.href = "{% url 'operator_dashboard' %}";
+        });
+
+        // Load saved form data if any
+        if (localStorage.getItem("offlineFormData")) {
+            let savedData = JSON.parse(localStorage.getItem("offlineFormData"));
+            savedData.zones?.forEach(zone => {
+                let field = document.querySelector(`[name='zone_${zone.id}']`);
+                if (field) {
+                    if (field.type === "checkbox") {
+                        field.checked = zone.value === "Yes";
+                    } else {
+                        field.value = zone.value;
+                    }
+                }
+            });
+        }
+
+        // Add subtle highlight effect to form fields when focused
+        const formInputs = document.querySelectorAll('input, select');
+        formInputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.closest('.zone-item')?.classList.add('highlighted');
+            });
+            input.addEventListener('blur', () => {
+                input.closest('.zone-item')?.classList.remove('highlighted');
+            });
+        });
+
+        // Form validation function
+        function validateForm() {
+            let isValid = true;
+            const inputs = document.querySelectorAll(".zone-input");
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    input.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    input.classList.remove('input-error');
+                }
+            });
+            const checkboxes = document.querySelectorAll(".zone-check");
+            checkboxes.forEach(checkbox => {
+                if (!checkbox.checked) {
+                    checkbox.parentElement.classList.add('input-error');
+                    isValid = false;
+                } else {
+                    checkbox.parentElement.classList.remove('input-error');
+                }
+            });
+            if (!isValid) {
+                formErrorMessage.style.display = 'block';
+                setTimeout(() => {
+                    formErrorMessage.style.display = 'none';
+                }, 5000);
+            }
+            return isValid;
+        }
+
+        // Form submission handling
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            if (!validateForm()) {
+                return;
+            }
+            let zonesData = [];
+            const currentShift = "{{ current_shift }}";
+            const inputs = document.querySelectorAll(".zone-input, .zone-check");
+            inputs.forEach(input => {
+                let value = input.type === "checkbox" ? (input.checked ? "Yes" : "No") : input.value;
+                zonesData.push({ id: input.name.split("_")[1], value: value });
+            });
+            let formData = { shift: currentShift, zones: zonesData };
+            if (!navigator.onLine) {
+                localStorage.setItem("offlineFormData", JSON.stringify(formData));
+                showSuccessPopup("Form Saved Offline - Will Sync When Online", "#f59e0b");
+            } else {
+                sendFormDataToServer(formData);
+            }
+        });
+
+        // Listen for internet connection
+        window.addEventListener("online", function () {
+            if (localStorage.getItem("offlineFormData")) {
+                let savedData = JSON.parse(localStorage.getItem("offlineFormData"));
+                sendFormDataToServer(savedData);
+            }
+        });
+
+        // Helper function to send form data to server
+        function sendFormDataToServer(data) {
+            fetch(window.location.href, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === "Data saved successfully") {
+                    localStorage.removeItem("offlineFormData");
+                    showSuccessPopup("Form Saved Successfully!", "#10b981");
+                } else if (data.error === "Data already filled for this user, shift, line, and sheet today") {
+                    showSuccessPopup("Form already submitted for today!", "#10b981");
+                } else {
+                    showSuccessPopup("Error Saving Data!", "#ef4444");
+                }
+            })
+            .catch(error => {
+                console.error("Error saving data:", error);
+                showSuccessPopup("Error Saving Data!", "#ef4444");
+            });
+        }
+    
+        // Helper function to show success popup with OK button
+        function showSuccessPopup(message, color) {
+            const popup = document.getElementById('success-popup');
+            const currentLang = document.documentElement.getAttribute('lang') || 'en';
+            popup.querySelector('h3').textContent =
+                message === "Form already submitted for today!" ? 
+                (currentLang === 'hi' ? "आज के लिए फॉर्म पहले ही जमा किया जा चुका है!" : message) :
+                translations[currentLang][
+                    message.includes("Offline") ? 'form_saved_offline' :
+                    message.includes("Error") ? 'error_saving_data' :
+                    'form_saved_successfully'
+                ];
+            popup.style.backgroundColor = color;
+            popup.style.display = 'block';
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

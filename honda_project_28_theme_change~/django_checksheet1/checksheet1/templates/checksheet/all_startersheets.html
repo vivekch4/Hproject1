@@ -1,0 +1,1859 @@
+{% extends 'checksheet/base.html' %}
+{% block title %}All StarterSheet{% endblock %}
+{% block content %}
+<style>
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0;
+    }
+   
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.3rem;
+        margin-bottom: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+   
+    body.white-mode .header {
+        border-bottom: 1px solid #e2e8f0;
+    }
+   
+    .page-title {
+        color: #ffffff;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+   
+    body.white-mode .page-title {
+        color: #1e293b;
+    }
+   
+    .search-container {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+   
+    .search-input-container {
+        position: relative;
+        max-width: 400px;
+        width: 100%;
+    }
+   
+    .search-input {
+        width: 100%;
+        padding: 8px 16px 8px 36px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+   
+    body.white-mode .search-input {
+        border: 1px solid var(--accent-color);
+        color: unset;
+    }
+   
+    .search-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+   
+    .search-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, 0.7);
+    }
+   
+    body.white-mode .search-icon {
+        color: #94a3b8;
+    }
+   
+    /* Table container */
+    .table-responsive {
+        overflow-x: auto;
+        width: 100%;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+   
+    /* List View - Table Style */
+    .startersheets-container {
+        width: 100%;
+        border-collapse: collapse;
+    }
+   
+    .startersheets-container thead {
+        background: var(--accent-color);
+        border: 1.5px solid var(--accent-color-solid);
+    }
+    body.white-mode .startersheets-container thead {
+        background: var(--accent-color-solid);
+        border: 1.5px solid var(--accent-color-solid);
+    }
+   
+    .startersheets-container th {
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 500;
+        color: var(--text-light);
+        font-size: 0.875rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    body.white-mode .startersheets-container th {
+   
+        color: white;
+    
+    }
+    .startersheets-container th i {
+        margin-left: 5px;
+        color: var(--text-light);
+    }
+    body.white-mode .startersheets-container th i {
+        margin-left: 5px;
+        color: white;
+    }
+   
+    .startersheets-container th i.fa-sort-up,
+    .startersheets-container th i.fa-sort-down {
+        color: #3b82f6;
+    }
+   
+    .startersheets-container td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.875rem;
+        font-weight: 400;
+    }
+   
+    body.white-mode .startersheets-container td {
+        color: unset;
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+    }
+   
+    .startersheets-container tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+   
+    body.white-mode .startersheets-container tbody tr:hover {
+        background-color: #f8fafc;
+    }
+   
+    /* Content cells */
+    .content-cell {
+        max-width: 180px;
+    }
+   
+    /* Zone chips styling */
+    .zone-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+   
+    .zone-chip {
+        display: inline-flex;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #ffffff;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+   
+    body.white-mode .zone-chip {
+        color: unset;
+    }
+   
+    /* User chips styling */
+    .user-chips, .approver-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+   
+    .user-chip, .approval-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #ffffff;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+   
+    body.white-mode .user-chip,
+    body.white-mode .approval-chip {
+        color: unset;
+    }
+   
+    /* POC styling */
+    .poc-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+   
+    .pdf-link {
+        display: inline-flex;
+        align-items: center;
+        color: #ffffff;
+        text-decoration: none;
+        font-size: 0.75rem;
+        max-width: 180px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+   
+    body.white-mode .pdf-link {
+        color: #3b82f6;
+    }
+   
+    .pdf-link i {
+        margin-right: 4px;
+        font-size: 0.75rem;
+        color: #ef4444;
+    }
+   
+    .pdf-link:hover {
+        text-decoration: underline;
+    }
+   
+    .empty-text {
+        color: rgba(255, 255, 255, 0.5);
+        font-style: italic;
+        font-size: 0.75rem;
+    }
+   
+    body.white-mode .empty-text {
+        color: #94a3b8;
+    }
+   
+    .startersheet-name {
+        color: #ffffff;
+        font-weight: 500;
+        text-decoration: none;
+    }
+   
+    .startersheet-name:hover {
+        color: #60a5fa;
+        text-decoration: underline;
+    }
+   
+    body.white-mode .startersheet-name {
+        color: unset;
+        font-weight: 500;
+        text-decoration: none;
+    }
+   
+    body.white-mode .startersheet-name:hover {
+        color: #3b82f6;
+    }
+   
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+   
+    .action-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        text-decoration: none;
+        transition: all 0.2s;
+        color: rgba(255, 255, 255, 0.7);
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+   
+    {% comment %} .action-button:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        transform: translateY(-2px);
+    } {% endcomment %}
+   
+    .update-btn {
+        color: #10b981;
+    }
+   
+    .update-btn:hover {
+        background-color: rgba(16, 185, 129, 0.2);
+    }
+   
+    .add-zone-btn {
+        color: #3b82f6;
+    }
+   
+    .add-zone-btn:hover {
+        background-color: rgba(59, 130, 246, 0.2);
+    }
+   
+    .create-btn {
+        display: inline-flex;
+        align-items: center;
+        background-color: var(--accent-color);
+        color: var(--text-light);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    body.white-mode .create-btn {
+       
+        background-color: var(--accent-color-solid);
+        color: white;
+        
+    }
+    
+   
+    .create-btn:hover {
+        border:1.5px solid  var(--accent-color);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+    }
+   
+    .create-btn i {
+        margin-right: 6px;
+    }
+   
+    /* Empty state styling */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+        border: 1px dashed rgba(255, 255, 255, 0.2);
+    }
+   
+    body.white-mode .empty-state {
+        background-color: #f8fafc;
+        color: #64748b;
+        border: 1px dashed #e2e8f0;
+    }
+   
+    .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+   
+    body.white-mode .empty-state i {
+        color: #94a3b8;
+    }
+   
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.7);
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+   
+    body.white-mode .pagination {
+        background-color: #f8fafc;
+        color: #64748b;
+        border-top: 1px solid #e2e8f0;
+    }
+   
+    .pagination-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+   
+    /* No results */
+    .no-results {
+        padding: 20px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.5);
+        font-style: italic;
+        width: 100%;
+    }
+   
+    body.white-mode .no-results {
+        color: #94a3b8;
+    }
+   
+    /* User dropdown styling */
+    .user-dropdown {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px;
+        max-width: 90vw;
+        max-height: 80vh;
+        background-color: #1e293b;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        padding: 20px;
+        display: none;
+        overflow-y: auto;
+    }
+   
+    body.white-mode .user-dropdown {
+        background-color: #ffffff;
+    }
+   
+    .user-dropdown-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+    }
+   
+    .user-dropdown-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+   
+    body.white-mode .user-dropdown-header {
+        border-bottom: 1px solid #e2e8f0;
+    }
+   
+    .user-dropdown-title {
+        font-weight: 600;
+        color: #ffffff;
+        font-size: 1rem;
+    }
+   
+    body.white-mode .user-dropdown-title {
+        color: unset;
+    }
+   
+    .user-dropdown-close {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+    }
+   
+    body.white-mode .user-dropdown-close {
+        background-color: #f1f5f9;
+        color: #64748b;
+    }
+   
+    .user-dropdown-close:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+    }
+   
+    body.white-mode .user-dropdown-close:hover {
+        background-color: #e2e8f0;
+        color: #1e293b;
+    }
+   
+    .user-dropdown-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+   
+    .user-checkbox-item, .user-radio-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 6px;
+        border-radius: 4px;
+    }
+   
+    .user-checkbox-item:hover, .user-radio-item:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+   
+    body.white-mode .user-checkbox-item:hover,
+    body.white-mode .user-radio-item:hover {
+        background-color: #f8fafc;
+    }
+   
+    .user-checkbox-item input[type="checkbox"], .user-radio-item input[type="radio"] {
+        margin-right: 10px;
+    }
+   
+    .user-checkbox-label, .user-radio-label {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        cursor: pointer;
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+   
+    body.white-mode .user-checkbox-label,
+    body.white-mode .user-radio-label {
+        color: unset;
+    }
+   
+    .user-role {
+        margin-left: auto;
+        font-size: 0.75rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+   
+    .assign-users-submit {
+        margin-top: 16px;
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+   
+    body.white-mode .assign-users-submit {
+        background: var(--accent-color-solid);
+        
+    }
+   
+    .assign-users-submit:hover {
+        background-color: #2563eb;
+        transform: translateY(-2px);
+    }
+   
+    body.white-mode .assign-users-submit:hover {
+        
+    }
+   
+    .edit-users-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+   
+    body.white-mode .edit-users-btn {
+        color: unset;
+    }
+   
+    .edit-users-btn:hover {
+        background-color: rgba(59, 130, 246, 0.2);
+    }
+   
+    .edit-users-btn i {
+        font-size: 0.75rem;
+    }
+   
+    .user-dropdown-search-container {
+        position: relative;
+        margin-bottom: 12px;
+    }
+   
+    .user-dropdown-search {
+        width: 100%;
+        padding: 8px 8px 8px 32px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+   
+    body.white-mode .user-dropdown-search {
+        border: 1px solid var(--accent-color-solid);
+        color: unset;
+    }
+   
+    .user-dropdown-search:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+   
+    /* Approval radio styling */
+    .approval-radio {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+   
+    .approval-radio label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.875rem;
+    }
+   
+    body.white-mode .approval-radio label {
+        color: unset;
+    }
+   
+    .approval-radio input[type="radio"] {
+        margin-right: 4px;
+    }
+   
+    /* Detail modal */
+    .detail-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 800px;
+        max-width: 90vw;
+        max-height: 80vh;
+        background-color: #1e293b;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        padding: 20px;
+        display: none;
+        overflow-y: auto;
+    }
+   
+    body.white-mode .detail-modal {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+    }
+   
+    .detail-modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+    }
+   
+    .detail-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+   
+    body.white-mode .detail-modal-header {
+        border-bottom: 1px solid #e2e8f0;
+    }
+   
+    .detail-modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #ffffff;
+    }
+   
+    body.white-mode .detail-modal-title {
+        color: #1e293b;
+    }
+   
+    .detail-modal-close {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+    }
+   
+    body.white-mode .detail-modal-close {
+        color: #64748b;
+    }
+   
+    .detail-modal-close:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+    }
+   
+    body.white-mode .detail-modal-close:hover {
+        background-color: #e2e8f0;
+        color: #1e293b;
+    }
+   
+    .detail-section {
+        margin-bottom: 20px;
+    }
+   
+    .detail-section-title {
+        font-size: 1rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 8px;
+    }
+   
+    body.white-mode .detail-section-title {
+        color: #64748b;
+    }
+   
+    .detail-content {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        padding: 16px;
+    }
+   
+    body.white-mode .detail-content {
+        background-color: #f8fafc;
+    }
+   
+    .detail-zone-chips,
+    .detail-user-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+   
+    .view-all-chip {
+        display: inline-flex;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+   
+    /* PDF viewer */
+    #fullPagePdfViewer {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        z-index: 1000;
+        flex-direction: column;
+    }
+   
+    .pdf-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        background-color: #1e293b;
+        color: white;
+    }
+   
+    body.white-mode .pdf-header {
+        background-color: #ffffff;
+        color: #1e293b;
+    }
+   
+    #pdfDocumentTitle {
+        font-size: 1.25rem;
+        font-weight: 500;
+    }
+   
+    body.white-mode #pdfDocumentTitle {
+        color: #1e293b;
+    }
+   
+    .pdf-close-btn {
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        font-size: 1.25rem;
+    }
+   
+    body.white-mode .pdf-close-btn {
+        color: #64748b;
+    }
+   
+    .pdf-close-btn:hover {
+        color: rgba(255, 255, 255, 0.7);
+    }
+   
+    body.white-mode .pdf-close-btn:hover {
+        color: #1e293b;
+    }
+   
+    #pdfViewer {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        overflow: auto;
+        padding: 20px;
+    }
+   
+    /* Toast notifications */
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 350px;
+    }
+   
+    .toast-message {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        animation: slideIn 0.5s ease forwards;
+        opacity: 0;
+        transform: translateX(50px);
+    }
+   
+    .toast-success {
+        background: #059669;
+        color: white;
+        border-left: 5px solid #047857;
+    }
+   
+    body.white-mode .toast-success {
+        background: #10b981;
+        color: white;
+        border-left: 5px solid #059669;
+    }
+   
+    .toast-error {
+        background: #7f1d1d;
+        color: white;
+        border-left: 5px solid #600;
+    }
+   
+    body.white-mode .toast-error {
+        background: #ef4444;
+        color: white;
+        border-left: 5px solid #dc2626;
+    }
+   
+    .toast-icon {
+        margin-right: 12px;
+        font-size: 1.2rem;
+    }
+   
+    .toast-content {
+        flex: 1;
+    }
+   
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+   
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+   
+    /* For better spacing on mobile */
+    @media (max-width: 640px) {
+        .poc-links {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+       
+        .pdf-link {
+            max-width: 100%;
+        }
+    }
+   
+    .hidden-data.zones-data,
+    .hidden-data.users-data,
+    .hidden-data.pocs-data {
+        display: none;
+    }
+   
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+   
+    .table-responsive::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+   
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #3b82f6;
+        border-radius: 4px;
+    }
+   
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #2563eb;
+    }
+   
+    /* Firefox */
+    .table-responsive {
+        scrollbar-color: #1a1f2694 rgba(255, 255, 255, 0.1);
+        scrollbar-width: thin;
+    }
+</style>
+
+
+<div class="page-container">
+    <div class="header">
+        <h2 class="page-title">All StarterSheets</h2>
+        <div class="header-actions">
+        <a href="{% url 'create_startersheet' %}" class="create-btn">
+            <i class="fas fa-plus"></i> Create
+        </a>
+        <a href="{% url 'assign_poc_bulk' %}" class="create-btn">
+            <i class="fas fa-file"></i> Assign OPS
+        </a>
+    </div>
+    </div>
+
+    {% if Starter %}
+    <div class="search-container">
+        <div class="search-input-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="startersheetSearch" class="search-input" placeholder="Search by startersheet name or assigned user...">
+        </div>
+    </div>
+        <div class="table-responsive">
+            <table class="startersheets-container">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="name">Name <i class="fas fa-sort"></i></th>
+                        <th class="sortable" data-sort="parameters">Parameters <i class="fas fa-sort"></i></th>
+                        <th class="sortable" data-sort="line">Line <i class="fas fa-sort"></i></th>
+                        <th class="sortable" data-sort="users">Assigned Users <i class="fas fa-sort"></i></th>
+                        <th>Created By</th>
+                        <th>Created On</th>
+                        <th>Assigned OPS</th>
+                        <!-- New columns for approval levels -->
+                        <th>Level 1</th>
+                        <th>Level 2</th>
+                        <th>Level 3</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="startersheetTableBody">
+                    {% for startersheet in Starter %}
+                    <tr data-id="{{ startersheet.id }}">
+                        <td>
+                            <a href="javascript:void(0);" class="startersheet-name" onclick="showDetailModal({{ startersheet.id }})">
+                                {{ startersheet.name }}
+                            </a>
+                        </td>
+                        <td class="content-cell">
+                            <div class="zone-chips">
+                                {% with zones=startersheet.zones.all %}
+                                    {% if zones|length > 0 %}
+                                        {% for zone in zones|slice:":2" %}
+                                            <span class="zone-chip">{{ zone.name }}</span>
+                                        {% endfor %}
+                                        {% if zones|length > 2 %}
+                                            <span class="view-all-chip">. . .</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="empty-text">No zones</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                            <!-- Store all zones in hidden div -->
+                            <div class="hidden-data zones-data">
+                                {% for zone in startersheet.zones.all %}
+                                    <span class="zone-data">{{ zone.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="content-cell">
+                            {{startersheet.line}}
+                        </td>
+                        <td class="content-cell">
+                            <div class="user-chips">
+                                {% with users=startersheet.assigned_users.all %}
+                                    {% if users|length > 0 %}
+                                        {% for user in users|slice:":2" %}
+                                            <span class="user-chip">{{ user.username }}</span>
+                                        {% endfor %}
+                                        {% if users|length > 2 %}
+                                            <span class="view-all-chip">. . .</span>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endwith %}
+                                <button class="edit-users-btn" onclick="toggleUserDropdown('starter-{{ startersheet.id }}')">
+                                    <i class="fas fa-{% if startersheet.assigned_users.all %}pencil-alt{% else %}user-plus{% endif %}"></i>
+                                    {% if not startersheet.assigned_users.all %}Assign Users{% endif %}
+                                </button>
+                            </div>
+                            <!-- Store all users in hidden div -->
+                            <div class="hidden-data users-data">
+                                {% for user in startersheet.assigned_users.all %}
+                                    <span class="user-data">{{ user.username }}</span>
+                                {% endfor %}
+                            </div>
+                            <div class="user-dropdown" id="user-dropdown-starter-{{ startersheet.id }}" style="display: none;">
+                                <div class="user-dropdown-header">
+                                    <span class="user-dropdown-title">Assign Users</span>
+                                    <button type="button" class="user-dropdown-close" onclick="toggleUserDropdown('starter-{{ startersheet.id }}')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="user-dropdown-search-container">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterUsers('{{ startersheet.id }}', this.value)">
+                                </div>
+                                <form method="post" action="{% url 'assign_users' 'startersheet' startersheet.id %}" class="user-dropdown-form">
+                                    {% csrf_token %}
+                                    {% for user in all_users %}
+                                        {% if user.role != 'admin' %}
+                                            <div class="user-checkbox-item">
+                                                <label class="user-checkbox-label">
+                                                    <input type="checkbox" name="user_ids" value="{{ user.id }}"
+                                                    {% if user in startersheet.assigned_users.all %}checked{% endif %}>
+                                                    {{ user.username }}
+                                                    <span class="user-role">{{ user.role }}</span>
+                                                </label>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <button type="submit" class="assign-users-submit">Save Changes</button>
+                                </form>
+                            </div>
+                        </td>
+                        <td>
+                            {{startersheet.created_by.username}}
+                        </td>
+                        <td>
+                            {{startersheet.created_on|date:"Y-m-d"}}
+                        </td>
+                        <td class="content-cell">
+                            <div class="poc-links">
+                                {% with pocs=startersheet.assigned_pocs.all %}
+                                    {% if pocs|length > 0 %}
+                                        {% for poc in pocs|slice:":1" %}
+                                            <a href="javascript:void(0);" class="pdf-link" data-pdf-url="{{ poc.pdf.url }}" data-pdf-name="{{ poc.pdf.name|slice:'9:' }}">
+                                                <i class="fas fa-file-pdf"></i>
+                                                {{ poc.pdf.name|slice:"9:" }}
+                                            </a>
+                                        {% endfor %}
+                                        {% if pocs|length > 1 %}
+                                            <span class="view-all-chip">. . .</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="empty-text">No OPS assigned</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                            <!-- Store all POCs in hidden div -->
+                            <div class="hidden-data pocs-data">
+                                {% for poc in startersheet.assigned_pocs.all %}
+                                    <span class="poc-data"
+                                          data-pdf-url="{{ poc.pdf.url }}"
+                                          data-pdf-name="{{ poc.pdf.name|slice:'9:' }}">
+                                        {{ poc.pdf.name|slice:"9:" }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <!-- Level 1 Approver Column -->
+                        <td class="content-cell">
+                            <div class="approver-chips">
+                                {% if startersheet.level_1_approver %}
+                                    <span class="approval-chip">{{ startersheet.level_1_approver.username }}</span>
+                                {% else %}
+                                    <span class="empty-text">Not assigned</span>
+                                {% endif %}
+                                <button class="edit-users-btn" onclick="toggleApproverDropdown('level1-{{ startersheet.id }}')">
+                                    <i class="fas fa-{% if startersheet.level_1_approver %}pencil-alt{% else %}user-plus{% endif %}"></i>
+                                    {% if not startersheet.level_1_approver %}Assign{% endif %}
+                                </button>
+                            </div>
+                            <!-- Level 1 Approver Dropdown -->
+                            <div class="user-dropdown" id="approver-dropdown-level1-{{ startersheet.id }}" style="display: none;">
+                                <div class="user-dropdown-header">
+                                    <span class="user-dropdown-title">Assign Level 1 Approver</span>
+                                    <button type="button" class="user-dropdown-close" onclick="toggleApproverDropdown('level1-{{ startersheet.id }}')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="user-dropdown-search-container">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterApprovers('level1-{{ startersheet.id }}', this.value)">
+                                </div>
+                                <form method="post" action="{% url 'assign_approver' 'startersheet' startersheet.id 'level1' %}" class="user-dropdown-form">
+                                    {% csrf_token %}
+                                    {% for user in all_users %}
+                                        <div class="user-radio-item">
+                                            <label class="user-radio-label">
+                                                <input type="radio" name="approver_id" value="{{ user.id }}"
+                                                {% if user == startersheet.level_1_approver %}checked{% endif %}>
+                                                {{ user.username }}
+                                                <span class="user-role">{{ user.role }}</span>
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                    <button type="submit" class="assign-users-submit">Save Changes</button>
+                                </form>
+                            </div>
+                        </td>
+                        <!-- Level 2 Approver Column -->
+                        <td class="content-cell">
+                            <div class="approver-chips">
+                                {% if startersheet.level_2_approver %}
+                                    <span class="approval-chip">{{ startersheet.level_2_approver.username }}</span>
+                                {% else %}
+                                    <span class="empty-text">Not assigned</span>
+                                {% endif %}
+                                <button class="edit-users-btn" onclick="toggleApproverDropdown('level2-{{ startersheet.id }}')">
+                                    <i class="fas fa-{% if startersheet.level_2_approver %}pencil-alt{% else %}user-plus{% endif %}"></i>
+                                    {% if not startersheet.level_2_approver %}Assign{% endif %}
+                                </button>
+                            </div>
+                            <!-- Level 2 Approver Dropdown -->
+                            <div class="user-dropdown" id="approver-dropdown-level2-{{ startersheet.id }}" style="display: none;">
+                                <div class="user-dropdown-header">
+                                    <span class="user-dropdown-title">Assign Level 2 Approver</span>
+                                    <button type="button" class="user-dropdown-close" onclick="toggleApproverDropdown('level2-{{ startersheet.id }}')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="user-dropdown-search-container">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterApprovers('level2-{{ startersheet.id }}', this.value)">
+                                </div>
+                                <form method="post" action="{% url 'assign_approver' 'startersheet' startersheet.id 'level2' %}" class="user-dropdown-form">
+                                    {% csrf_token %}
+                                    {% for user in all_users %}
+                                        <div class="user-radio-item">
+                                            <label class="user-radio-label">
+                                                <input type="radio" name="approver_id" value="{{ user.id }}"
+                                                {% if user == startersheet.level_2_approver %}checked{% endif %}>
+                                                {{ user.username }}
+                                                <span class="user-role">{{ user.role }}</span>
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                    <button type="submit" class="assign-users-submit">Save Changes</button>
+                                </form>
+                            </div>
+                        </td>
+                        <!-- Level 3 Approval (Admin Radio Button) -->
+                        <td class="content-cell">
+                            <form method="post" action="{% url 'toggle_level3_approval' 'startersheet' startersheet.id %}" class="approval-radio">
+
+                                {% csrf_token %}
+                                <label>
+                                    <input type="radio" name="require_level_3" value="True"
+                                    {% if startersheet.require_level_3_approval %}checked{% endif %}
+                                    onchange="this.form.submit()">
+                                    Yes
+                                </label>
+                                <label>
+                                    <input type="radio" name="require_level_3" value="False"
+                                    {% if not startersheet.require_level_3_approval %}checked{% endif %}
+                                    onchange="this.form.submit()">
+                                    No
+                                </label>
+                            </form>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'update_startersheet' startersheet.id %}" class="action-button update-btn" title="Update">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'Add_start_zone' startersheet.id %}" class="action-button add-zone-btn" title="Add Zone">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div id="noResults" class="no-results" style="display: none;">
+                No startersheets found matching your search.
+            </div>
+            <div class="pagination">
+                <div class="pagination-info">
+                    <span>Total StarterSheets: <span id="startersheetCount">{{ Starter|length }}</span></span>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <p>No StarterSheets available</p>
+        </div>
+    {% endif %}
+</div>
+{% if messages %}
+<div class="toast-container">
+    {% for message in messages %}
+    {% with message.tags.split as tags_list %}
+        {% if 'StarterSheet_creation' in tags_list or 'StarterSheet_update' in tags_list or 'StarterSheet_zone' in tags_list%}
+        <div class="toast-message toast-success">
+            <div class="toast-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="toast-content">
+                {{ message }}
+            </div>
+        </div>
+        {% endif %}
+    {% endwith %}
+    {% endfor %}
+</div>
+{% endif %}
+<div id="fullPagePdfViewer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); z-index: 1000; flex-direction: column;">
+    <div class="pdf-header" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background-color: #1e293b; color: white;">
+        <h3 id="pdfDocumentTitle">PDF Document</h3>
+        <button class="pdf-close-btn" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.25rem;">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div id="pdfViewer" style="flex: 1; display: flex; justify-content: center; align-items: flex-start; overflow: auto; padding: 20px;">
+        <!-- PDF will be rendered here -->
+    </div>
+</div>
+<div class="detail-modal-backdrop" id="detailModalBackdrop" onclick="closeDetailModal()"></div>
+<div class="detail-modal" id="detailModal">
+    <div class="detail-modal-header">
+        <h2 class="detail-modal-title" id="detailModalTitle">StarterSheet Details</h2>
+        <button class="detail-modal-close" onclick="closeDetailModal()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="detail-content" id="detailModalContent">
+        <!-- Content will be populated by JavaScript -->
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+
+
+    function toggleUserDropdown(id) {
+        const dropdown = document.getElementById(`user-dropdown-${id}`);
+        const backdrop = document.querySelector('.user-dropdown-backdrop') || createBackdrop();
+       
+        if (dropdown.style.display === 'none' || !dropdown.style.display) {
+            dropdown.style.display = 'block';
+            backdrop.style.display = 'block';
+        } else {
+            dropdown.style.display = 'none';
+            backdrop.style.display = 'none';
+        }
+    }
+   
+    // Create backdrop if it doesn't exist
+    function createBackdrop() {
+        const backdrop = document.createElement('div');
+        backdrop.className = 'user-dropdown-backdrop';
+        backdrop.addEventListener('click', function() {
+            const openDropdowns = document.querySelectorAll('.user-dropdown[style="display: block;"]');
+            openDropdowns.forEach(dropdown => {
+                dropdown.style.display = 'none';
+            });
+            this.style.display = 'none';
+        });
+        document.body.appendChild(backdrop);
+        return backdrop;
+    }
+   
+    // Search functionality
+    document.getElementById('startersheetSearch').addEventListener('input', function() {
+        const searchText = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#startersheetTableBody tr');
+        let visibleCount = 0;
+       
+        rows.forEach(row => {
+            const name = row.querySelector('.startersheet-name').textContent.toLowerCase();
+            const users = Array.from(row.querySelectorAll('.user-chip')).map(chip => chip.textContent.toLowerCase());
+           
+            if (name.includes(searchText) || users.some(user => user.includes(searchText))) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+       
+        document.getElementById('startersheetCount').textContent = visibleCount;
+        document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
+    });
+   
+    // Auto-dismiss toast messages
+    document.addEventListener('DOMContentLoaded', function() {
+        const toasts = document.querySelectorAll('.toast-message');
+        toasts.forEach(toast => {
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.5s ease forwards';
+                setTimeout(() => {
+                    toast.remove();
+                }, 500);
+            }, 5000);
+        });
+    });
+   
+    // Detail modal functions
+       // Detail modal functions
+       function showDetailModal(startersheetId) {
+        const row = document.querySelector(`tr[data-id="${startersheetId}"]`);
+        if (!row) return;
+       
+        const name = row.querySelector('.startersheet-name').textContent.trim();
+       
+        // Get ALL zones from the hidden data
+        const zonesData = row.querySelector('.zones-data');
+        const zones = zonesData ? Array.from(zonesData.querySelectorAll('.zone-data')).map(zone => zone.textContent.trim()) : [];
+       
+        // Get ALL users from the hidden data
+        const usersData = row.querySelector('.users-data');
+        const users = usersData ? Array.from(usersData.querySelectorAll('.user-data')).map(user => user.textContent.trim()) : [];
+       
+        // Get ALL POCs from the hidden data
+        const pocsData = row.querySelector('.pocs-data');
+        const pocs = pocsData ? Array.from(pocsData.querySelectorAll('.poc-data')).map(poc => {
+            return {
+                name: poc.textContent.trim(),
+                url: poc.getAttribute('data-pdf-url')
+            };
+        }) : [];
+       
+        // Populate modal
+        document.getElementById('detailModalTitle').textContent = name;
+       
+        // Build content HTML
+        let contentHTML = `
+            <div class="detail-section">
+                <h3 class="detail-section-title">Parameters</h3>
+                <div class="detail-zone-chips">
+                    ${zones.length > 0 ?
+                        zones.map(zone => `<span class="zone-chip">${zone}</span>`).join('') :
+                        '<span class="empty-text">No zones</span>'}
+                </div>
+            </div>
+           
+            <div class="detail-section">
+                <h3 class="detail-section-title">Assigned Users</h3>
+                <div class="detail-user-chips">
+                    ${users.length > 0 ?
+                        users.map(user => `<span class="user-chip">${user}</span>`).join('') :
+                        '<span class="empty-text">No users assigned</span>'}
+                </div>
+            </div>
+           
+            <div class="detail-section">
+                <h3 class="detail-section-title">Assigned OPS</h3>
+                <div class="poc-links">
+                    ${pocs.length > 0 ?
+                        pocs.map(poc => `
+                            <a href="javascript:void(0);" class="pdf-link" data-pdf-url="${poc.url}" data-pdf-name="${poc.name}">
+                                <i class="fas fa-file-pdf"></i> ${poc.name}
+                            </a>`).join('') :
+                        '<span class="empty-text">No OPS assigned</span>'}
+                </div>
+            </div>
+        `;
+       
+        document.getElementById('detailModalContent').innerHTML = contentHTML;
+       
+        // Show modal
+        document.getElementById('detailModal').style.display = 'block';
+        document.getElementById('detailModalBackdrop').style.display = 'block';
+       
+        // Add event listeners to PDF links in the modal
+        attachPdfViewerEventListeners(document.getElementById('detailModalContent').querySelectorAll('.pdf-link'));
+    }
+   
+    function closeDetailModal() {
+        document.getElementById('detailModal').style.display = 'none';
+        document.getElementById('detailModalBackdrop').style.display = 'none';
+    }
+   
+    // Close detail modal when clicking outside
+    document.getElementById('detailModalBackdrop').addEventListener('click', closeDetailModal);
+   
+    // Prevent modal close when clicking inside the modal
+    document.getElementById('detailModal').addEventListener('click', function(event) {
+        event.stopPropagation();
+    });
+
+    function attachPdfViewerEventListeners(pdfLinks) {
+        const fullPageViewer = document.getElementById('fullPagePdfViewer');
+        const pdfViewerContainer = document.getElementById('pdfViewer');
+        const pdfTitle = document.getElementById('pdfDocumentTitle');
+        const pageContainer = document.querySelector('.page-container');
+       
+        pdfLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pdfUrl = this.getAttribute('data-pdf-url');
+                const pdfName = this.getAttribute('data-pdf-name');
+               
+                // Clear previous canvas if any
+                pdfViewerContainer.innerHTML = '';
+               
+                // Show the PDF viewer
+                pageContainer.classList.add('hidden');
+                fullPageViewer.style.display = 'flex';
+                pdfTitle.textContent = pdfName || 'PDF Document';
+               
+                // Create canvas for PDF rendering
+                const pdfCanvas = document.createElement('canvas');
+                pdfCanvas.className = 'pdf-canvas';
+                pdfViewerContainer.appendChild(pdfCanvas);
+                const pdfContext = pdfCanvas.getContext('2d');
+               
+                // Load the PDF using PDF.js
+                const loadingTask = pdfjsLib.getDocument(pdfUrl);
+                loadingTask.promise.then(function(pdf) {
+                    const pdfDoc = pdf;
+                    renderPage(pdfDoc, pdfCanvas, pdfContext, 1);
+                }).catch(function(error) {
+                    console.error('Error loading PDF:', error);
+                    pdfViewerContainer.innerHTML = `
+                        <div style="padding: 20px; text-align: center;">
+                            <h3>Error loading PDF</h3>
+                            <p>There was a problem loading the PDF file.</p>
+                            <p>Error details: ${error.message}</p>
+                            <p>Try downloading the file instead:</p>
+                            <a href="${pdfUrl}" target="_blank" class="submit-btn" style="display: inline-block; margin-top: 10px;">
+                                <i class="fas fa-download"></i> Download PDF
+                            </a>
+                        </div>
+                    `;
+                });
+               
+                // Update browser history
+                history.pushState({viewingPdf: true}, '', window.location.href);
+               
+                // Hide the detail modal when showing PDF
+                closeDetailModal();
+            });
+        });
+    }
+   
+    // Update renderPage to accept parameters rather than using globals
+    function renderPage(pdfDoc, canvas, context, pageNumber) {
+        if (!pdfDoc) return;
+       
+        pdfDoc.getPage(pageNumber).then(function(page) {
+            const viewport = page.getViewport({ scale: 1.5 });
+           
+            // Set canvas dimensions to match the PDF page
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+           
+            // Render PDF page into canvas context
+            const renderContext = {
+                canvasContext: context,
+                viewport: viewport
+            };
+           
+            page.render(renderContext);
+        });
+    }
+   
+    // Modify DOMContentLoaded event handler to use the new function
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initial setup for PDF links in the table
+        attachPdfViewerEventListeners(document.querySelectorAll('.pdf-link'));
+       
+        // Rest of the DOMContentLoaded code...
+        const fullPageViewer = document.getElementById('fullPagePdfViewer');
+        const pageContainer = document.querySelector('.page-container');
+        const closePdfBtn = document.querySelector('.pdf-close-btn');
+       
+        closePdfBtn.addEventListener('click', function() {
+            closePdfViewer();
+        });
+       
+        // Handle browser back button
+        window.addEventListener('popstate', function(event) {
+            if (fullPageViewer.style.display === 'flex') {
+                closePdfViewer();
+            }
+        });
+       
+        function closePdfViewer() {
+            // Hide PDF viewer and show main content
+            fullPageViewer.style.display = 'none';
+            pageContainer.classList.remove('hidden');
+           
+            // Clean up
+            const pdfViewerContainer = document.getElementById('pdfViewer');
+            pdfViewerContainer.innerHTML = '';
+        }
+    });
+document.addEventListener('DOMContentLoaded', function() {
+   
+    // Improved PDF viewer using PDF.js
+    const pdfLinks = document.querySelectorAll('.pdf-link');
+    const fullPageViewer = document.getElementById('fullPagePdfViewer');
+    const pdfViewerContainer = document.getElementById('pdfViewer');
+    const pdfTitle = document.getElementById('pdfDocumentTitle');
+    const closePdfBtn = document.querySelector('.pdf-close-btn');
+    const pageContainer = document.querySelector('.page-container');
+   
+    let pdfDoc = null;
+    let currentPage = 1;
+    let pdfCanvas = null;
+    let pdfContext = null;
+   
+    pdfLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const pdfUrl = this.getAttribute('data-pdf-url');
+            const pdfName = this.getAttribute('data-pdf-name');
+           
+            // Clear previous canvas if any
+            pdfViewerContainer.innerHTML = '';
+           
+            // Show the PDF viewer
+            pageContainer.classList.add('hidden');
+            fullPageViewer.style.display = 'flex';
+            pdfTitle.textContent = pdfName || 'PDF Document';
+           
+            // Create canvas for PDF rendering
+            pdfCanvas = document.createElement('canvas');
+            pdfCanvas.className = 'pdf-canvas';
+            pdfViewerContainer.appendChild(pdfCanvas);
+            pdfContext = pdfCanvas.getContext('2d');
+           
+            // Load the PDF using PDF.js
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            loadingTask.promise.then(function(pdf) {
+                pdfDoc = pdf;
+                renderPage(1);
+            }).catch(function(error) {
+                console.error('Error loading PDF:', error);
+                pdfViewerContainer.innerHTML = `
+                    <div style="padding: 20px; text-align: center;">
+                        <h3>Error loading PDF</h3>
+                        <p>There was a problem loading the PDF file.</p>
+                        <p>Error details: ${error.message}</p>
+                        <p>Try downloading the file instead:</p>
+                        <a href="${pdfUrl}" target="_blank" class="submit-btn" style="display: inline-block; margin-top: 10px;">
+                            <i class="fas fa-download"></i> Download PDF
+                        </a>
+                    </div>
+                `;
+            });
+           
+            // Update browser history
+            history.pushState({viewingPdf: true}, '', window.location.href);
+        });
+    });
+   
+    function renderPage(pageNumber) {
+        if (!pdfDoc) return;
+       
+        pdfDoc.getPage(pageNumber).then(function(page) {
+            const viewport = page.getViewport({ scale: 1.5 });
+           
+            // Set canvas dimensions to match the PDF page
+            pdfCanvas.height = viewport.height;
+            pdfCanvas.width = viewport.width;
+           
+            // Center canvas in container and add scrolling if needed
+            pdfViewerContainer.style.overflow = 'auto';
+           
+            // Render PDF page into canvas context
+            const renderContext = {
+                canvasContext: pdfContext,
+                viewport: viewport
+            };
+           
+            page.render(renderContext);
+        });
+    }
+   
+    closePdfBtn.addEventListener('click', function() {
+        closePdfViewer();
+    });
+   
+    // Handle browser back button
+    window.addEventListener('popstate', function(event) {
+        if (fullPageViewer.style.display === 'flex') {
+            closePdfViewer();
+        }
+    });
+   
+    function closePdfViewer() {
+        // Hide PDF viewer and show main content
+        fullPageViewer.style.display = 'none';
+        pageContainer.classList.remove('hidden');
+       
+        // Clean up
+        pdfDoc = null;
+        pdfCanvas = null;
+        pdfContext = null;
+        pdfViewerContainer.innerHTML = '';
+    }
+
+
+
+
+});
+function toggleUserDropdown(sheetId) {
+    // Close all other dropdowns first
+    const allDropdowns = document.querySelectorAll('.user-dropdown');
+    allDropdowns.forEach(dropdown => {
+        if (dropdown.id !== `user-dropdown-${sheetId}`) {
+            dropdown.style.display = 'none';
+        }
+    });
+   
+    // Toggle the current dropdown
+    const dropdown = document.getElementById(`user-dropdown-${sheetId}`);
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.user-dropdown') && !event.target.closest('.edit-users-btn')) {
+        const allDropdowns = document.querySelectorAll('.user-dropdown');
+        allDropdowns.forEach(dropdown => {
+            dropdown.style.display = 'none';
+        });
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('startersheetSearch');
+    const tableRows = document.querySelectorAll('.startersheets-container tbody tr');
+    const tableBody = document.getElementById('startersheetTableBody');
+    const noResults = document.getElementById('noResults');
+    const startersheetCount = document.getElementById('startersheetCount');
+   
+    // Search functionality
+    searchInput.addEventListener('keyup', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        let visibleCount = 0;
+       
+        tableRows.forEach(row => {
+            const startersheetName = row.querySelector('.startersheet-name').textContent.toLowerCase();
+            const assignedUsers = Array.from(row.querySelectorAll('.user-chip')).map(chip => chip.textContent.toLowerCase()).join(' ');
+           
+            if (startersheetName.includes(searchTerm) || assignedUsers.includes(searchTerm)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+       
+        if (visibleCount === 0) {
+            noResults.style.display = 'block';
+        } else {
+            noResults.style.display = 'none';
+        }
+       
+        startersheetCount.textContent = visibleCount;
+    });
+
+    // Sorting functionality
+    const sortableHeaders = document.querySelectorAll('.sortable');
+    let currentSort = {
+        column: null,
+        direction: 'asc'
+    };
+
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const column = this.dataset.sort;
+            const direction = currentSort.column === column && currentSort.direction === 'asc' ? 'desc' : 'asc';
+           
+            // Update sort icons
+            sortableHeaders.forEach(h => {
+                const icon = h.querySelector('i');
+                icon.className = 'fas fa-sort';
+            });
+           
+            const icon = this.querySelector('i');
+            icon.className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'}`;
+           
+            // Sort the table
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+            rows.sort((a, b) => {
+                let aValue, bValue;
+               
+                switch(column) {
+                    case 'name':
+                        aValue = a.querySelector('.startersheet-name').textContent;
+                        bValue = b.querySelector('.startersheet-name').textContent;
+                        break;
+                    case 'parameters':
+                        aValue = a.querySelector('.zone-chips').textContent;
+                        bValue = b.querySelector('.zone-chips').textContent;
+                        break;
+                    case 'users':
+                        aValue = Array.from(a.querySelectorAll('.user-chip')).map(chip => chip.textContent).join(' ');
+                        bValue = Array.from(b.querySelectorAll('.user-chip')).map(chip => chip.textContent).join(' ');
+                        break;
+                }
+               
+                if (direction === 'asc') {
+                    return aValue.localeCompare(bValue);
+                } else {
+                    return bValue.localeCompare(aValue);
+                }
+            });
+           
+            // Reorder the table rows
+            rows.forEach(row => tableBody.appendChild(row));
+           
+            currentSort = { column, direction };
+        });
+    });
+});
+function filterUsers(startersheetId, searchText) {
+    // Convert search text to lowercase for case-insensitive comparison
+    searchText = searchText.toLowerCase();
+   
+    // Get all user checkbox items in the current dropdown
+    const userItems = document.querySelectorAll(`#user-dropdown-starter-${startersheetId} .user-checkbox-item`);
+   
+    let visibleCount = 0;
+   
+    // Loop through each user item and show/hide based on search
+    userItems.forEach(item => {
+        const username = item.querySelector('label').textContent.toLowerCase();
+       
+        if (username.includes(searchText)) {
+            item.style.display = '';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+   
+    // Optionally, show a message if no results found
+    const noResultsMsg = document.querySelector(`#user-dropdown-starter-${startersheetId} .no-results-message`);
+   
+    if (!noResultsMsg && visibleCount === 0) {
+        // Create a "no results" message if it doesn't exist
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'no-results-message';
+        messageDiv.textContent = 'No users found matching your search.';
+        messageDiv.style.padding = '10px';
+        messageDiv.style.textAlign = 'center';
+        messageDiv.style.color = '#666';
+       
+        const form = document.querySelector(`#user-dropdown-starter-${startersheetId} .user-dropdown-form`);
+        form.appendChild(messageDiv);
+    } else if (noResultsMsg) {
+        // Show/hide existing message based on results
+        noResultsMsg.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+}
+document.addEventListener('DOMContentLoaded', function() {
+    const toastMessages = document.querySelectorAll('.toast-message');
+   
+    toastMessages.forEach(toast => {
+        // Display the toast for 5 seconds then fade out
+        setTimeout(() => {
+            toast.style.animation = 'fadeOut 0.5s ease forwards';
+            setTimeout(() => {
+                toast.remove();
+            }, 500);
+        }, 5000);
+    });
+});
+
+function toggleApproverDropdown(approverType) {
+    // Close all other dropdowns first
+    const allDropdowns = document.querySelectorAll('.user-dropdown');
+    allDropdowns.forEach(dropdown => {
+        if (dropdown.id !== `approver-dropdown-${approverType}`) {
+            dropdown.style.display = 'none';
+        }
+    });
+   
+    // Toggle the current dropdown
+    const dropdown = document.getElementById(`approver-dropdown-${approverType}`);
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
+
+// Function to filter users in approver dropdowns
+function filterApprovers(approverType, query) {
+    const dropdown = document.getElementById(`approver-dropdown-${approverType}`);
+    const items = dropdown.querySelectorAll('.user-radio-item');
+   
+    query = query.toLowerCase();
+    items.forEach(item => {
+        const username = item.querySelector('label').textContent.toLowerCase();
+        if (username.includes(query)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

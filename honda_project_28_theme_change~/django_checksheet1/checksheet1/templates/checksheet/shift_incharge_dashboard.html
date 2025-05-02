@@ -1,0 +1,177 @@
+{% extends 'checksheet/base.html' %}
+
+{% block title %} Dashboard{% endblock %}
+
+{% block content %}
+
+
+<style>
+    .dashboard {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    
+        width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+    /* Stats Cards Styles - Updated to white theme */
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.25rem;
+        width: 100%;
+    }
+    .content-inner {
+   
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 0rem !important;
+        height: 100%;
+    }
+    
+    .stat-card {
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+        position: relative;
+        color: white;
+        cursor: pointer; /* Add cursor pointer to indicate clickable */
+        text-decoration: none; /* Remove underline from links */
+    }
+
+    /* Specific card colors from the image */
+    .stat-card.dark-blue {
+        background: #1e3a5f;
+    }
+    
+    .stat-card.red {
+        background: #f05a67;
+    }
+    
+    .stat-card.green {
+        background: #56c080;
+    }
+    
+    .stat-card.blue {
+        background: #3498db;
+    }
+    
+    /* New card colors */
+    .stat-card.purple {
+        background: #8e44ad;
+    }
+    
+    .stat-card.orange {
+        background: #e67e22;
+    }
+    
+    .stat-card.teal {
+        background: #1abc9c;
+    }
+    
+    .stat-card.pink {
+        background: #e73ca3;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-icon {
+        width: 55px;
+        height: 55px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .stat-icon i {
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-content h3 {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-change {
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .stat-change.neutral {
+        color: rgba(255, 255, 255, 0.8);
+    }
+</style>
+<div class="dashboard">
+<div class="stats-container">
+    <a href="{% url 'acknowledgment_list' %}" class="stat-card purple">
+        <div class="stat-icon">
+            <i class="fas fa-clipboard-check"></i>
+        </div>
+        <div class="stat-content">
+            <h3>Accepted Checksheets</h3>
+            <p class="stat-value">{{ checksheet_acknowledged_count }}</p>
+        </div>
+    </a>
+    
+    <a href="{% url 'acknowledgment_list' %}" class="stat-card orange">
+        <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+            <h3>Pending Checksheets</h3>
+            <p class="stat-value">{{ checksheet_pending_count }}</p>
+        </div>
+    </a>
+    
+    <a href="{% url 'acknowledgment_list' %}" class="stat-card teal">
+        <div class="stat-icon">
+            <i class="fas fa-play-circle"></i>
+        </div>
+        <div class="stat-content">
+            <h3>Accepted Startersheets</h3>
+            <p class="stat-value">{{ startersheet_acknowledged_count }}</p>
+        </div>
+    </a>
+    
+    <a href="{% url 'acknowledgment_list' %}" class="stat-card pink">
+        <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+            <h3>Pending Startersheets</h3>
+            <p class="stat-value">{{ startersheet_pending_count }}</p>
+        </div>
+    </a>
+</div>
+</div>
+{% endblock %}

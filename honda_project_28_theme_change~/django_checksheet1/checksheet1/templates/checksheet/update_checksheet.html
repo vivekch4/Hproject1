@@ -1,0 +1,459 @@
+{% extends 'checksheet/base.html' %}
+{% block title %}Update Checksheet{% endblock %}
+{% block content %}
+<style>
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 16px;
+    }
+    option {
+        background: #1e293b;
+    }
+    body.white-mode option {
+        background: white;
+        color:var(--text-light)
+    }
+    /* Header styling */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.3rem 0;
+        margin-bottom: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .page-title {
+        color: var(--text-light);
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .back-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .back-button:hover {
+        background-color: #e2e8f0
+        color: #334155;
+    }
+    
+    /* Form container */
+    .form-container {
+        
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        max-height: calc(100vh - 120px);
+        overflow: auto;
+    }
+    body.white-mode .form-container {
+     
+        box-shadow: 0 4px 10px rgb(0 0 0 / 25%);
+     
+    }
+    
+    
+    /* Form layout */
+    .form-layout {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 20px;
+    }
+    
+    /* Left column for basic inputs */
+    .basic-inputs {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    /* Form group styling */
+    .form-group {
+        margin-bottom: 0;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: var(--text-light);
+        font-size: 0.875rem;
+    }
+    
+    /* Input styling */
+    .form-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1.5px solid rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: var(--text-light);
+        background-color: unset;
+        transition: all 0.2s;
+        height: 36px;
+        box-sizing: border-box;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        
+        box-shadow: 0 0 0 1px var(--accent-color);
+    }
+    
+    /* File input styling */
+    .file-input-container {
+        margin-top: 6px;
+    }
+    
+    .file-input {
+        display: none;
+    }
+    
+    .file-input-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px dashed rgb(161 161 161 / 82%);;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.875rem;
+        color: var(--text-light);
+        height: 36px;
+        box-sizing: border-box;
+        width: 100%;
+    }
+    
+    .file-input-label:hover {
+        border-color: var(--accent-color);
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Existing images styling - 2x2 grid */
+    .existing-images {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 10px;
+        width: 100%;
+    }
+    
+    .image-box {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        background-color: rgba(255, 255, 255, 0.05);
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .image-box:hover {
+        border-color: var(--accent-color);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .checksheet-image {
+        width: 100%;
+        height: 70px;
+        object-fit: contain;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Zone inputs styling */
+    .zone-inputs-container {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .zone-inputs {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 10px;
+        padding: 12px;
+        background: rgb(44 38 38 / 5%);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .zone-input-container {
+        display: grid
+    ;
+        grid-template-columns: 36px 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 16px;
+        background: rgb(102 102 102 / 9%);
+        border-bottom: 1px solid rgb(0 0 0 / 10%);
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+    .zone-input-container:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .zone-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background-color: rgb(161 161 161 / 82%);
+    
+        border-radius: 50%;
+        color: var(--text-light);
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+    
+    .zone-type-select {
+        padding: 8px 12px;
+        border: 1px solid rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        background-color: unset;
+        color: var(--text-light);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        height: 36px;
+    }
+    
+    .zone-type-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+    
+    /* Zone inputs title */
+    .zone-inputs-title {
+        font-weight: 500;
+        margin-bottom: 10px;
+        color: var(--text-light);
+        font-size: 0.9375rem;
+        padding: 12px 16px;
+        border-radius: 8px 8px 0 0;
+        border-bottom: 1px solid rgb(161 161 161 / 82%);
+    }
+    
+    /* Submit button styling */
+    .submit-btn {
+        background-color: var(--accent-color);
+        color: var(--text_light);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+    }
+    
+    .submit-btn:hover {
+        border: 1.5px solid var(--accent-color-solid);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 10px var(--accent-color);
+    }
+    
+    /* Success popup */
+    .success-popup {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #059669;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        display: none;
+        animation: slideIn 0.5s ease forwards;
+        z-index: 1000;
+        font-size: 0.875rem;
+        border-left: 5px solid #047857;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(50px);
+        }
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .form-layout {
+            grid-template-columns: 1fr;
+        }
+    
+        .zone-inputs {
+            grid-template-columns: 1fr;
+        }
+    
+        .existing-images {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+
+<div class="page-container">
+    <!-- Header with back and save buttons -->
+    <div class="header">
+        <h1 class="page-title">Update Checksheet</h1>
+        <div class="header-actions">
+           
+            <button type="submit" form="checksheet-form" class="submit-btn">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+            <a href="{% url 'all_checksheets' %}" class="back-button">
+                <i class="fas fa-times"></i> 
+            </a>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <form id="checksheet-form" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-layout">
+                <!-- Left column for basic inputs -->
+                <div class="basic-inputs">
+                    <div class="form-group">
+                        <label class="form-label" for="checksheet_name">Checksheet Name</label>
+                        <input type="text" id="checksheet_name" name="checksheet_name" required
+                               class="form-input" value="{{ checksheet.name }}" placeholder="Enter checksheet name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="line">Production Line</label>
+                        <select id="line" name="line" required class="form-input">
+                            <option value="line_1" {% if checksheet.line == "line_1" %}selected{% endif %}>Line 1</option>
+                            <option value="line_2" {% if checksheet.line == "line_2" %}selected{% endif %}>Line 2</option>
+                        </select>
+                    </div>
+
+                    <!-- Existing Images in a 2x2 grid -->
+                    <div class="form-group">
+                        <label class="form-label">Update Existing Images</label>
+                        <div class="existing-images">
+                            {% for image in images %}
+                                <div class="image-box">
+                                    {% if image %}
+                                        <img src="{{ image.image.url }}" alt="Checksheet Image" class="checksheet-image">
+                                    {% else %}
+                                        <div class="empty-image-box">Empty Slot</div>
+                                    {% endif %}
+                                    
+                                    <!-- File input for image replacement -->
+                                    <label for="checksheet_image_{{ forloop.counter }}" class="file-input-label">
+                                        <i class="fas fa-upload"></i>
+                                        {% if image %}
+                                            Replace
+                                        {% else %}
+                                            Upload
+                                        {% endif %}
+                                    </label>
+                                    <input type="file" id="checksheet_image_{{ forloop.counter }}" 
+                                           name="checksheet_image_{{ forloop.counter }}" 
+                                           accept="image/*" class="file-input">
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <!-- Right column for zone inputs -->
+                <div class="zone-inputs-container">
+                    <div class="zone-inputs-title">Zone Inputs</div>
+                    <div id="zone_inputs" class="zone-inputs">
+                        {% for zone in zones %}
+                        <div class="zone-input-container">
+                            <div class="zone-number">{{ forloop.counter }}</div>
+                            <input type="text" name="zone_{{ zone.id }}" value="{{ zone.name }}" 
+                                   class="form-input" placeholder="Zone name" required>
+                            <select name="zone_type_{{ zone.id }}" class="zone-type-select" required>
+                                <option value="text" {% if zone.input_type == "text" %}selected{% endif %}>Text</option>
+                                <option value="int" {% if zone.input_type == "int" %}selected{% endif %}>Int</option>
+                                <option value="float" {% if zone.input_type == "float" %}selected{% endif %}>Float</option>
+                                <option value="checkbox" {% if zone.input_type == "checkbox" %}selected{% endif %}>Checkbox</option>
+                            </select>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Success Popup -->
+<div id="success-popup" class="success-popup">
+    <h3>Checksheet Updated Successfully!</h3>
+</div>
+
+<script>
+    // Show file name when images are selected
+    document.querySelectorAll('.file-input').forEach(function(input) {
+        input.addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || 'Replace';
+            const label = this.previousElementSibling;
+            label.innerHTML = '<i class="fas fa-upload"></i> ' + (fileName.length > 8 ? fileName.substring(0, 8) + '...' : fileName);
+        });
+    });
+
+    // Show success popup if the form is submitted successfully
+    {% if success %}
+        window.onload = function() {
+            var successPopup = document.getElementById('success-popup');
+            successPopup.style.display = 'block'; // Show the popup
+            setTimeout(() => {
+                successPopup.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(() => {
+                    successPopup.style.display = 'none';
+                    successPopup.style.animation = '';
+                }, 300);
+            }, 3000);
+        };
+    {% endif %}
+</script>
+{% endblock %}

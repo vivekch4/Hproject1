@@ -1,0 +1,570 @@
+{% extends 'checksheet/base.html' %}
+{% block title %}Edit User{% endblock %}
+{% block content %}
+
+    <style>
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px;
+            min-height: calc(100vh - 64px);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        body.white-mode .page-container {
+            background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        body.white-mode .header {
+            background: white;
+        }
+        
+        .header:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        }
+        body.white-mode .header:before {
+          
+            background: var(--accent-color-solid);
+        }
+        
+        .page-title {
+            color: #0f172a;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        body.white-mode .page-title {
+            -webkit-text-fill-color: black;
+        }
+        
+        .page-title i {
+            color: #3b82f6;
+            font-size: 1.25rem;
+            -webkit-text-fill-color: var(--accent-color);
+        }
+        
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .back-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background-color: #f1f5f9;
+            color: #64748b;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .back-button:hover {
+            background-color: #e2e8f0;
+            color: #334155;
+            transform: scale(1.05);
+        }
+        
+        .form-container {
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            transition: transform 0.3s ease;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        body.white-mode .form-container {
+            background: white;
+        }
+        
+        .form-container:hover {
+            transform: translateY(-4px);
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #ffffffe0;
+            font-size: 0.875rem;
+        }
+        
+        body.white-mode .form-label {
+            color: #334155;
+        }
+        
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            color: white;
+            transition: all 0.3s;
+            background-color: rgba(255, 255, 255, 0.1);
+            height: 38px;
+            box-sizing: border-box;
+        }
+        
+        body.white-mode .form-input,
+        body.white-mode .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            color: black;
+            transition: all 0.3s;
+            background-color: rgba(255, 255, 255, 0.1);
+            height: 38px;
+            box-sizing: border-box;
+        }
+        
+        .form-select option {
+            background: #1e293b;
+        }
+        
+        body.white-mode .form-select option {
+            background: white;
+            color: black;
+        }
+        
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3e%3c/path%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+        }
+        
+        .submit-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: var(--accent-color);
+            color: var(--text-color);
+            border: none;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+            height: 38px;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px var(--accent-color);
+            border: 1.5px solid var(--accent-color-solid);
+        }
+        
+        .error-message {
+            background-color: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            font-size: 0.875rem;
+        }
+        
+        .success-message {
+            background-color: #dcfce7;
+            border: 1px solid #bbf7d0;
+            color: #16a34a;
+            padding: 8px 12px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            font-size: 0.875rem;
+        }
+        
+        /* Confirmation Popup */
+        .confirmation-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .confirmation-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: translateY(20px);
+            animation: fadeIn 0.3s ease forwards;
+            background-image: linear-gradient(270deg, rgb(19 19 41 / 71%) 6.5%, rgb(13 18 45) 93.2%);
+        }
+        
+        .confirmation-title {
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        
+        .confirmation-message {
+            color: white;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .confirmation-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        .confirm-button {
+            padding: 0.625rem 1.25rem;
+            background: linear-gradient(45deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .confirm-button:hover {
+            background: linear-gradient(45deg, #2563eb, #1d4ed8);
+        }
+        
+        .cancel-button {
+            padding: 0.625rem 1.25rem;
+            background-color: #f1f5f9;
+            color: #64748b;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .cancel-button:hover {
+            background-color: #e2e8f0;
+            color: #334155;
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 350px;
+        }
+        
+        .toast-message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            animation: slideIn 0.5s ease forwards;
+            opacity: 0;
+            transform: translateX(50px);
+        }
+        
+        .toast-success {
+            background: linear-gradient(to right, var(--success-dark), var(--success-color));
+            color: var(--text-light);
+            border-left: 5px solid #059669;
+        }
+        
+        .toast-error {
+            background: linear-gradient(to right, #b91c1c, var(--danger-color));
+            color: var(--text-light);
+            border-left: 5px solid #7f1d1d;
+        }
+        
+        .toast-icon {
+            margin-right: 12px;
+            font-size: 1.2rem;
+        }
+        
+        .toast-content {
+            flex: 1;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .page-container {
+                padding: 12px;
+            }
+        
+            .header {
+                padding: 12px;
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+        
+            .header-actions {
+                justify-content: space-between;
+            }
+        
+            .form-container {
+                padding: 16px;
+            }
+        }
+        
+        .form-input.error,
+        .form-select.error {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        
+        .form-input.error:focus,
+        .form-select.error:focus {
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+        }
+        
+        .validation-message {
+            font-size: 0.75rem;
+            margin-top: 4px;
+            display: none;
+            color: #ef4444;
+        }
+        
+        .validation-message.error {
+            display: block;
+        }
+        
+        .validation-message.success {
+            display: block;
+            color: #10b981;
+        }
+        
+        .form-input::placeholder {
+            color: #ffffffe0;
+        }
+        
+        body.white-mode .form-input::placeholder {
+            color: black;
+        }
+    </style>
+
+<div class="page-container">
+    <div class="header">
+        <h2 class="page-title">
+            <i class="fas fa-user-edit"></i>
+            Edit User
+        </h2>
+        <div class="header-actions">
+            <button type="button" class="submit-btn" id="submit-btn">
+                <i class="fas fa-save"></i>
+                Save Changes
+            </button>
+            <a href="javascript:history.back()" class="back-button">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <form method="post" id="editUserForm" novalidate>
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    required
+                    class="form-input"
+                    value="{{ user.username }}"
+                    placeholder="Enter username"
+                >
+                <div class="validation-message" id="username-validation">
+                    Please enter a username
+                </div>
+            </div>
+            
+            
+
+            <div class="form-group">
+                <label class="form-label" for="email">Email</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    class="form-input"
+                    value="{{ user.email }}"
+                    placeholder="Enter email address"
+                >
+                <div class="validation-message" id="email-validation">
+                    Please enter an email address
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="phone_number">Phone Number</label>
+                <input
+                    type="tel"
+                    id="phone_number"
+                    name="phone_number"
+                    required
+                    class="form-input"
+                    value="{{ user.phone_number }}"
+                    placeholder="Enter phone number"
+                >
+                <div class="validation-message" id="phone-validation">
+                    Please enter a valid phone number
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="password">New Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-input"
+                    placeholder="Enter new password (leave blank to keep current)"
+                >
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="confirm_password">Confirm Password</label>
+                <input
+                    type="password"
+                    id="confirm_password"
+                    name="confirm_password"
+                    class="form-input"
+                    placeholder="Confirm new password"
+                >
+                <div class="validation-message" id="password-validation">
+                    Passwords do not match
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="role">Role</label>
+                <select id="role" name="role" required class="form-select">
+                    <option value="" disabled>Select a role</option>
+                    <option value="quality_incharge" {% if user.role == "quality_incharge" %}selected{% endif %}>Quality Incharge</option>
+                    <option value="shift_incharge" {% if user.role == "shift_incharge" %}selected{% endif %}>Shift Incharge</option>
+                    <option value="operator" {% if user.role == "operator" or user.role == "Operator" %}selected{% endif %}>Operator</option>
+                </select>
+                <div class="validation-message" id="role-validation">
+                    Please select a role
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+    <script>
+
+        document.getElementById("editUserForm").addEventListener("submit", function(event) {
+            // Get password values
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirm_password").value;
+            const passwordValidation = document.getElementById("password-validation");
+            
+            // If password is provided, check if it matches confirmation
+            if (password) {
+                if (password !== confirmPassword) {
+                    passwordValidation.style.display = "block";
+                    event.preventDefault(); // Prevent form submission
+                    return false;
+                } else {
+                    passwordValidation.style.display = "none";
+                }
+            }
+            
+            return true;
+        });
+
+        document.getElementById("submit-btn").addEventListener("click", function () {
+            document.getElementById("editUserForm").submit();
+        });
+  
+    
+</script>
+{% endblock %}

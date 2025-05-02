@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to right, #1e293b, #334155); /* Dark gradient background */
+            padding: 1.5rem;
+        }
+        
+        .login-container {
+            background: rgba(0, 0, 0, 0.2); /* Semi-transparent dark background */
+            padding: 3rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 450px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .login-container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+        
+        .login-header h1 {
+            color: #ffffff; /* White text for header */
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        
+        .login-header p {
+            color: rgba(255, 255, 255, 0.7); /* Subtle white for subtitle */
+            font-size: 0.95rem;
+        }
+        
+        .login-icon {
+            background: linear-gradient(to right, #4d4ae6, #3c7df4); /* Gradient from user_list */
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .login-icon i {
+            color: white;
+            font-size: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 1.75rem;
+            position: relative;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: rgba(255, 255, 255, 0.8); /* Light text for labels */
+            font-weight: 500;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+        
+        .input-container {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7); /* Icon color */
+            transition: all 0.3s;
+        }
+        
+        input {
+            width: 100%;
+            padding: 8px 16px 8px 36px;
+            border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.1); /* Dark input background */
+            transition: all 0.3s ease;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #3b82f6; /* Blue focus border from user_list */
+            background-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+        }
+        
+        input:focus + .input-icon {
+            color: #3b82f6; /* Blue icon on focus */
+        }
+        
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.5); /* Light placeholder */
+        }
+        
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #10b981; /* Green button from create-btn */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:hover {
+            background: #059669; /* Darker green on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .error-message {
+            background-color: rgba(239, 68, 68, 0.2); /* Red error background */
+            color: #ef4444; /* Red text */
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-left: 3px solid #ef4444;
+        }
+        
+        .error-message i {
+            margin-right: 0.5rem;
+        }
+        
+        .forgot-password {
+            text-align: center;
+            margin-top: 1.75rem;
+        }
+        
+        .forgot-password a {
+            color: #3b82f6; /* Blue link from user_list */
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .forgot-password a:hover {
+            color: #2563eb; /* Darker blue on hover */
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 2rem;
+            }
+        
+            .login-header h1 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="login-icon">
+                <i class="fas fa-user"></i>
+            </div>
+            <h1>Good to Have You Back</h1>
+            <p>Please login to continue</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="employee_id">Employee ID</label>
+                <div class="input-container">
+                    <input
+                        type="text"
+                        id="employee_id"
+                        name="employee_id"
+                        placeholder="Enter your employee ID"
+                        required
+                    >
+                    <span class="input-icon">
+                        <i class="fas fa-id-card"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-container">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Enter your password"
+                        required
+                    >
+                    <span class="input-icon">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                </div>
+            </div>
+            <button type="submit">Sign In</button>
+        </form>
+        {% if error %}
+        <div class="error-message">
+            <i class="fas fa-exclamation-circle"></i>
+            {{ error }}
+        </div>
+        {% endif %}
+        <div class="forgot-password">
+            <a href="{% url 'request_password_reset' %}">Request Password Reset</a>
+        </div>
+    </div>
+
+    <script>
+        // Add subtle interaction effects
+        const inputs = document.querySelectorAll('input');
+       
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.parentElement.querySelector('label').style.color = '#2563eb';
+            });
+           
+            input.addEventListener('blur', () => {
+                input.parentElement.parentElement.querySelector('label').style.color = '#0f172a';
+            });
+        });
+    </script>
+</body>
+</html>

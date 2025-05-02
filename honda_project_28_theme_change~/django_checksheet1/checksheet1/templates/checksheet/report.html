@@ -1,0 +1,769 @@
+{% extends 'checksheet/base.html' %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<style>
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0;
+    }
+    option{
+    background: #1e293b;
+    }
+    body.white-mode option{
+        background: white;
+        color:var(--text-light)
+        }
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.3rem;
+        margin-bottom: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .page-title {
+        color: var(--text-light);
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    /* Tabs styling */
+    .tabs {
+        display: flex;
+        padding: 0 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .tab-button {
+        padding: 10px 18px;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--text-light);
+        transition: all 0.2s;
+    }
+    
+    .tab-button:hover {
+        color: var(--text-light);
+    }
+    
+    .tab-button.active {
+        color: var(--accent-color-solid);
+        border-bottom: 2px solid var(--accent-color-solid);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    /* Filter section */
+    .filter-section {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 12px 16px;
+        background: rgb(0 0 0 / 3%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+    }
+    
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .filter-group label {
+        color: var(--text-light);
+        font-size: 0.875rem;
+    }
+    
+    .form-select, .form-input {
+        padding: 6px 10px;
+        border: 1px solid rgb(161 161 161 / 82%);
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: var(--text-light);
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .form-select:focus, .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+    
+    .filter-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        background-color: var(--accent-color);
+        color: var(--text-light);
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    body.white-mode .filter-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        background-color: var(--accent-color-solid);
+        color: white;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .filter-button:hover {
+        border:1.5px solid var(--accent-color-solid);
+        color: var(--text-light);
+    }
+    
+    .filter-button i {
+        margin-right: 4px;
+    }
+    
+    /* Table container */
+    .table-responsive {
+        overflow-x: auto;
+        width: 100%;
+        background-color: unset;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    /* List View - Table Style */
+    .report-container {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .report-container thead {
+        background: var(--accent-color);
+        border:1.5px solid var(--accent-color-solid);
+
+    }
+    body.white-mode .report-container thead {
+        background: var(--accent-color-solid);
+        
+
+    }
+    
+    .report-container th {
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 500;
+        color: var(--text-light);
+        font-size: 0.875rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        white-space: nowrap;
+    }
+    body.white-mode .report-container th {
+        
+        color: white;
+      
+    }
+    .report-container td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid rgb(161 161 161 / 82%);
+        color: var(--text-light);
+        font-size: 0.875rem;
+        font-weight: 400;
+    }
+    
+    .report-container tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Shift badge styles */
+    .shift-badge {
+        display: inline-flex;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .shift-a {
+        background-color: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+        border: 1px solid rgba(59, 130, 246, 0.5);
+    }
+    
+    .shift-b {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .shift-c {
+        background-color: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    /* Status styles */
+    .status-pending {
+        display: inline-flex;
+        background-color: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .status-accepted {
+        display: inline-flex;
+        background-color: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .status-rejected {
+        display: inline-flex;
+        background-color: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    /* Zone data styling */
+    .zone-data {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .zone-item {
+        display: inline-flex;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        background-color: rgba(59, 130, 246, 0.2);
+      
+        border: 1px solid rgba(59, 130, 246, 0.5);
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .zone-item-yes {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .zone-item-no {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    /* Action buttons */
+    .download-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: var(--accent-color);
+        color: var(--text-light);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    body.white-mode .download-button {
+      
+        background-color: var(--accent-color-solid);
+        color: white;
+       
+    }
+    
+    .download-button:hover {
+        border:1.5px solid var(--accent-color-solid);
+        transform: translateY(-3px);
+    }
+    
+    .download-button i {
+        margin-right: 6px;
+    }
+    
+    /* Empty state */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        text-align: center;
+        color: var(--text-light);
+        border: 1px dashed rgba(255, 255, 255, 0.2);
+    }
+    
+    .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .empty-text {
+        color: rgba(255, 255, 255, 0.5);
+        font-style: italic;
+        font-size: 0.875rem;
+    }
+    
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.875rem;
+        color: #64748b;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+    
+    .download-section {
+        display: none;
+    }
+    </style>
+
+<div class="page-container">
+    <div class="header">
+        <h2 class="page-title">Reports</h2>
+        {% if report_data %}
+        <div class="header-actions">
+            
+            <button type="button" onclick="downloadReport('pdf')" class="download-button">
+                <i class="fas fa-file-pdf"></i> Download PDF
+            </button>
+            <button type="button" onclick="downloadReport('excel')" class="download-button">
+                <i class="fas fa-file-excel"></i> Download Excel
+            </button>
+        </div>
+        {% endif %}
+    </div>
+   
+    <!-- Tab Navigation -->
+    <div class="tabs">
+        <button id="checksheet-tab" class="tab-button {% if tab == 'checksheet' %}active{% endif %}">Check Sheets</button>
+        <button id="startersheet-tab" class="tab-button {% if tab == 'startersheet' %}active{% endif %}">Starter Sheets</button>
+    </div>
+   
+    <!-- Check Sheet Section -->
+    <div id="checksheet-section" class="tab-content {% if tab == 'checksheet' %}active{% endif %}">
+        <form method="GET" id="checksheet-form">
+            <input type="hidden" name="tab" id="tab-input" value="checksheet">
+           
+            <!-- Filter Form -->
+            <div class="filter-section">
+                <div class="filter-form">
+                    <!-- Added Line Filter -->
+                    <div class="filter-group">
+                        <label for="line">Select Line:</label>
+                        <select name="line" id="line" class="form-select" onchange="updateCheckSheetDropdown()">
+                            <option value="">All Lines</option>
+                            {% for line in distinct_lines %}
+                                <option value="{{ line }}" {% if request.GET.line == line %}selected{% endif %}>
+                                    {{ line|title }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="checksheet">Select Check Sheet:</label>
+                        <select name="checksheet" id="checksheet" class="form-select">
+                            {% for sheet in checksheets %}
+                                <option value="{{ sheet.id }}" 
+                                    {% if sheet.id|stringformat:"s" == request.GET.checksheet %}selected{% endif %}
+                                    data-line="{{ sheet.line }}">
+                                    {{ sheet.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                   
+                    <div class="filter-group">
+                        <label for="start_date">Start Date:</label>
+                        <input type="date" name="start_date" id="start_date" class="form-input" value="{{ request.GET.start_date }}" required>
+                    </div>
+                   
+                    <div class="filter-group">
+                        <label for="end_date">End Date:</label>
+                        <input type="date" name="end_date" id="end_date" class="form-input" value="{{ request.GET.end_date }}" required>
+                    </div>
+                   
+                    <div class="filter-group">
+                        <label for="shift">Shift:</label>
+                        <select name="shift" id="shift" class="form-select">
+                            <option value="">All Shifts</option>
+                            <option value="A" {% if request.GET.shift == "A" %}selected{% endif %}>Shift A</option>
+                            <option value="B" {% if request.GET.shift == "B" %}selected{% endif %}>Shift B</option>
+                            <option value="C" {% if request.GET.shift == "C" %}selected{% endif %}>Shift C</option>
+                        </select>
+                    </div>
+                   
+                    <button type="submit" class="filter-button">
+                        <i class="fas fa-search"></i> Generate Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                {% if report_data and tab == 'checksheet' %}
+                <table class="report-container">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Timestamp</th>
+                            <th>Shift</th>
+                            <th>Acknowledgment</th>
+                            <th>Acknowledged By</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in report_data %}
+                        <tr>
+                            <td>{{ entry.user }}</td>
+                            <td>{{ entry.timestamp }}</td>
+                            <td>
+                                <span class="shift-badge shift-{{ entry.shift|lower }}">Shift {{ entry.shift }}</span>
+                            </td>
+                            <td>
+                                {% if entry.acknowledgment == "Pending" %}
+                                    <span class="status-pending">Pending</span>
+                                {% elif entry.acknowledgment == "Accepted" %}
+                                    <span class="status-accepted">Accepted</span>
+                                {% elif entry.acknowledgment == "Rejected" %}
+                                    <span class="status-rejected">Rejected</span>
+                                {% else %}
+                                    <span>{{ entry.acknowledgment }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ entry.acknowledged_by }}</td>
+                            <td>
+                                <div class="zone-data">
+                                    {% comment %} {% for key, value in entry.status_data.items %} {% endcomment %}
+                                        <span class="zone-item" data-value="{{ value }}">{{entry.status_data}}</span>
+                                    {% comment %} {% endfor %} {% endcomment %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="empty-text">No data available for the selected filters</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+               
+                <div class="pagination">
+                    <div class="pagination-info">
+                        <span>Total Entries: {{ report_data|length }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-chart-bar"></i>
+                    <p>Select filters and generate a report to view data</p>
+                </div>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+   
+    <!-- Starter Sheet Section -->
+    <div id="startersheet-section" class="tab-content {% if tab == 'startersheet' %}active{% endif %}">
+        <form method="GET" id="startersheet-form">
+            <input type="hidden" name="tab" value="startersheet">
+           
+            <!-- Filter Form -->
+            <div class="filter-section">
+                <div class="filter-form">
+                    <!-- Added Line Filter for Starter Sheets too -->
+                    <div class="filter-group">
+                        <label for="line_starter">Select Line:</label>
+                        <select name="line" id="line_starter" class="form-select" onchange="updateStarterSheetDropdown()">
+                            <option value="">All Lines</option>
+                            {% for line in distinct_lines %}
+                                <option value="{{ line }}" {% if request.GET.line == line %}selected{% endif %}>
+                                    {{ line|title}}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="startersheet">Select Starter Sheet:</label>
+                        <select name="startersheet" id="startersheet" class="form-select">
+                            {% for sheet in starters %}
+                                <option value="{{ sheet.id }}" 
+                                    {% if sheet.id|stringformat:"s" == request.GET.startersheet %}selected{% endif %}
+                                    data-line="{{ sheet.line }}">
+                                    {{ sheet.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                   
+                    <div class="filter-group">
+                        <label for="start_date_starter">Start Date:</label>
+                        <input type="date" name="start_date" id="start_date_starter" class="form-input" value="{{ request.GET.start_date }}" required>
+                    </div>
+                   
+                    <div class="filter-group">
+                        <label for="end_date_starter">End Date:</label>
+                        <input type="date" name="end_date" id="end_date_starter" class="form-input" value="{{ request.GET.end_date }}" required>
+                    </div>
+                   
+                    <div class="filter-group">
+                        <label for="shift_starter">Shift:</label>
+                        <select name="shift" id="shift_starter" class="form-select">
+                            <option value="">All Shifts</option>
+                            <option value="A" {% if request.GET.shift == "A" %}selected{% endif %}>Shift A</option>
+                            <option value="B" {% if request.GET.shift == "B" %}selected{% endif %}>Shift B</option>
+                            <option value="C" {% if request.GET.shift == "C" %}selected{% endif %}>Shift C</option>
+                        </select>
+                    </div>
+                   
+                    <button type="submit" class="filter-button">
+                        <i class="fas fa-search"></i> Generate Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                {% if report_data and tab == 'startersheet' %}
+                <table class="report-container">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Timestamp</th>
+                            <th>Shift</th>
+                            <th>Acknowledgment</th>
+                            <th>Acknowledged By</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in report_data %}
+                        <tr>
+                            <td>{{ entry.user }}</td>
+                            <td>{{ entry.timestamp }}</td>
+                            <td>
+                                <span class="shift-badge shift-{{ entry.shift|lower }}">Shift {{ entry.shift }}</span>
+                            </td>
+                            <td>
+                                {% if entry.acknowledgment == "Pending" %}
+                                    <span class="status-pending">Pending</span>
+                                {% elif entry.acknowledgment == "Accepted" %}
+                                    <span class="status-accepted">Accepted</span>
+                                {% elif entry.acknowledgment == "Rejected" %}
+                                    <span class="status-rejected">Rejected</span>
+                                {% else %}
+                                    <span>{{ entry.acknowledgment }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ entry.acknowledged_by }}</td>
+                            <td>
+                                <div class="zone-data">
+                                    <span class="zone-item" data-value="{{ value }}">{{entry.status_data}}</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="empty-text">No data available for the selected filters</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+               
+                <div class="pagination">
+                    <div class="pagination-info">
+                        <span>Total Entries: {{ report_data|length }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-chart-bar"></i>
+                    <p>Select filters and generate a report to view data</p>
+                </div>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkSheetTab = document.getElementById('checksheet-tab');
+        const starterSheetTab = document.getElementById('startersheet-tab');
+        const checkSheetSection = document.getElementById('checksheet-section');
+        const starterSheetSection = document.getElementById('startersheet-section');
+        const tabInput = document.getElementById('tab-input');
+       
+        checkSheetTab.addEventListener('click', function() {
+            checkSheetTab.classList.add('active');
+            starterSheetTab.classList.remove('active');
+            checkSheetSection.classList.add('active');
+            starterSheetSection.classList.remove('active');
+           
+            // Store active tab in session storage
+            sessionStorage.setItem('activeReportTab', 'checksheet');
+            tabInput.value = 'checksheet';
+        });
+       
+        starterSheetTab.addEventListener('click', function() {
+            starterSheetTab.classList.add('active');
+            checkSheetTab.classList.remove('active');
+            starterSheetSection.classList.add('active');
+            checkSheetSection.classList.remove('active');
+           
+            // Store active tab in session storage
+            sessionStorage.setItem('activeReportTab', 'startersheet');
+            tabInput.value = 'startersheet';
+        });
+       
+        // Format status data cells - Apply color-coding to "Yes"/"No" values
+        const zoneItems = document.querySelectorAll('.zone-item');
+        zoneItems.forEach(item => {
+            const value = item.getAttribute('data-value').trim();
+            if (value === 'Yes') {
+                item.classList.add('zone-item-yes');
+            } else if (value === 'No') {
+                item.classList.add('zone-item-no');
+            }
+        });
+        
+        // Initialize dropdown filters on load
+        updateCheckSheetDropdown();
+        updateStarterSheetDropdown();
+    });
+   
+    function downloadReport(format) {
+        // Get the active form
+        let form;
+        if (document.getElementById('checksheet-section').classList.contains('active')) {
+            form = document.getElementById('checksheet-form');
+        } else {
+            form = document.getElementById('startersheet-form');
+        }
+       
+        // Create URL with all form params
+        let url = new URL(window.location.href);
+        new FormData(form).forEach((value, key) => {
+            url.searchParams.set(key, value);
+        });
+       
+        // Add download format
+        url.searchParams.set('download', format);
+       
+        // Navigate to the download URL
+        window.location.href = url.toString();
+    }
+    
+    // Function to filter checksheets based on selected line
+    function updateCheckSheetDropdown() {
+        const lineSelect = document.getElementById('line');
+        const checksheetSelect = document.getElementById('checksheet');
+        const selectedLine = lineSelect.value;
+        
+        const checksheetOptions = checksheetSelect.querySelectorAll('option');
+        
+        // Show/hide options based on selected line
+        checksheetOptions.forEach(option => {
+            if (!selectedLine || option.getAttribute('data-line') === selectedLine) {
+                option.style.display = '';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+        
+        // Auto-select first visible option if current selection is hidden
+        const visibleOptions = Array.from(checksheetOptions).filter(option => option.style.display !== 'none');
+        if (visibleOptions.length > 0 && 
+            (checksheetSelect.selectedOptions.length === 0 || 
+             checksheetSelect.selectedOptions[0].style.display === 'none')) {
+            visibleOptions[0].selected = true;
+        }
+    }
+    
+    // Function to filter starter sheets based on selected line
+    function updateStarterSheetDropdown() {
+        const lineSelect = document.getElementById('line_starter');
+        const startersheetSelect = document.getElementById('startersheet');
+        const selectedLine = lineSelect.value;
+        
+        const startersheetOptions = startersheetSelect.querySelectorAll('option');
+        
+        // Show/hide options based on selected line
+        startersheetOptions.forEach(option => {
+            if (!selectedLine || option.getAttribute('data-line') === selectedLine) {
+                option.style.display = '';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+        
+        // Auto-select first visible option if current selection is hidden
+        const visibleOptions = Array.from(startersheetOptions).filter(option => option.style.display !== 'none');
+        if (visibleOptions.length > 0 && 
+            (startersheetSelect.selectedOptions.length === 0 || 
+             startersheetSelect.selectedOptions[0].style.display === 'none')) {
+            visibleOptions[0].selected = true;
+        }
+    }
+</script>
+{% endblock %}
