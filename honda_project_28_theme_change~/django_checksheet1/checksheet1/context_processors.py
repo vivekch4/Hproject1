@@ -16,8 +16,9 @@ def has_page_access(user, page_name=""):
 
 from .models import PasswordResetRequest
 
+
 def pending_requests_count(request):
-    if request.user.is_authenticated and request.user.role =='admin':
+    if request.user.is_authenticated and request.user.role == "admin":
         count = PasswordResetRequest.objects.filter(status="pending").count()
         return {"pending_requests_count": count}
     return {}

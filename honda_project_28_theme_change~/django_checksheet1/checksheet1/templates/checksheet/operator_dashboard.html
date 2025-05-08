@@ -317,134 +317,178 @@
 </div>
 
 <script>
-    document.getElementById('starterBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        if (!this.classList.contains('disabled')) {
-            document.getElementById('starterModal').style.display = 'flex';
-        }
-    });
    
-    document.getElementById('checksheetBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        if (!this.classList.contains('disabled')) {
-            document.getElementById('checksheetModal').style.display = 'flex';
-        }
-    });
-   
-    function closeModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-    }
+        // WebSocket connection
+        const socket = new WebSocket('ws://' + window.location.host + '/ws/form_requests/');
     
-    // Close modal when clicking outside
-    window.addEventListener('click', function(e) {
-        const checksheetModal = document.getElementById('checksheetModal');
-        const starterModal = document.getElementById('starterModal');
-        const backsheetModal = document.getElementById('backsheetModal');
-        
-        if (e.target === checksheetModal) {
-            checksheetModal.style.display = 'none';
-        }
-        
-        if (e.target === starterModal) {
-            starterModal.style.display = 'none';
-        }
-        
-        if (e.target === backsheetModal) {
-            backsheetModal.style.display = 'none';
-        }
-    });
+        // Store requests to manage visibility
+        let formRequests = [];
     
-    document.addEventListener("DOMContentLoaded", function() {
-        function updateStatusIndicators() {
-            const starterBtn = document.getElementById('starterBtn');
-            const checksheetBtn = document.getElementById('checksheetBtn');
-            
-            const starterStatus = document.getElementById('starterStatus');
-            
-            // Check if OPS is completed
-            const opsCompleted = !starterBtn.classList.contains('disabled') && 
-                                 starterBtn.style.pointerEvents !== 'none' && 
-                                 starterBtn.style.opacity !== '0.5';
-            
-            // Check if starter sheet is completed
-            const starterCompleted = !checksheetBtn.classList.contains('disabled') && 
-                                    checksheetBtn.style.pointerEvents !== 'none' && 
-                                    checksheetBtn.style.opacity !== '0.5';
-            
-            // Update OPS status
-            if (opsCompleted) {
-           
-                // Show starter status if OPS is completed
-                starterStatus.style.display = 'block';
-                
-                // Update starter status based on completion
-                if (starterCompleted) {
-                    starterStatus.classList.remove('status-pending');
-                    starterStatus.classList.add('status-completed');
-                    starterStatus.textContent = 'Done';
-                } else {
-                    starterStatus.classList.remove('status-completed');
-                    starterStatus.classList.add('status-pending');
-                    starterStatus.textContent = 'Pending';
-                }
+        socket.onopen = function() {
+            console.log('WebSocket connected');
+        };
+    
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'form_requests') {
+                // Update form requests
+                formRequests = data.form_requests;
+                updateFormRequestsDisplay();
+            }
+        };
+    
+        socket.onclose = function() {
+            console.log('WebSocket disconnected');
+        };
+    
+        function updateFormRequestsDisplay() {
+            const container = document.querySelector("#formRequestsContainer");
+            const backsheetBtn = document.querySelector("#backsheetBtn");
+            const currentTime = new Date();
+    
+            // Format currentTime to 'YYYY-MM-DD HH:MM' (local time)
+            const formatDate = (date, useUTC = false) => {
+                const year = useUTC ? date.getUTCFullYear() : date.getFullYear();
+                const month = String((useUTC ? date.getUTCMonth() : date.getMonth()) + 1).padStart(2, '0');
+                const day = String(useUTC ? date.getUTCDate() : date.getDate()).padStart(2, '0');
+                const hours = String(useUTC ? date.getUTCHours() : date.getHours()).padStart(2, '0');
+                const minutes = String(useUTC ? date.getUTCMinutes() : date.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day} ${hours}:${minutes}`;
+            };
+
+            const formatDate1 = (date) => {
+                const year = date.getUTCFullYear();
+                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(date.getUTCDate()).padStart(2, '0');
+                const hours = String(date.getUTCHours()).padStart(2, '0');
+                const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day} ${hours}:${minutes}`;
+            };
+    
+            const formattedCurrentTime = formatDate(currentTime);
+            console.log("Formatted Current Time:", formattedCurrentTime);
+    
+            // Filter requests that are still visible
+            const validRequests = formRequests.filter(req => {
+                // Parse visible_until (e.g., '2025-05-06T12:08:00+00:00') to 'YYYY-MM-DD HH:MM' in UTC
+                const visibleUntil = new Date(req.visible_until);
+                const formattedVisibleUntil = formatDate1(visibleUntil, true);
+    
+                console.log("Visible Until:", req.visible_until);
+                console.log("Formatted Visible Until:", formattedVisibleUntil);
+    
+                // Convert both to Date objects for comparison
+                const visibleUntilDate = new Date(formattedVisibleUntil.replace(" ", "T") + ":00Z");
+                const currentTimeDate = new Date(formattedCurrentTime.replace(" ", "T") + ":00Z");
+    
+                return visibleUntilDate >= currentTimeDate;
+            });
+    
+            container.innerHTML = ''; // Clear existing requests
+    
+            if (validRequests.length > 0) {
+                validRequests.forEach(req => {
+                    const link = document.createElement("a");
+                    link.href = `/fill_checksheet_request/${req.id}/`;
+                    link.classList.add("dashboard-card");
+                    link.innerHTML = `
+                        <i class="fas fa-file-alt" style="color: white;"></i>
+                        <span style="font-weight: 500; color:white;"> ${req.checksheet_aname} </span>
+                    `;
+                    container.appendChild(link);
+                });
+                backsheetBtn.style.display = "flex";
             } else {
-                opsStatus.classList.remove('status-completed');
-                opsStatus.classList.add('status-pending');
-                opsStatus.textContent = 'Pending';
-                
-                // Hide starter status if OPS is not completed
-                starterStatus.style.display = 'none';
+                backsheetBtn.style.display = "none";
+                container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 1rem;">No available.</p>`;
             }
         }
-        
-        // Set up observers to watch for changes to button states
-        const starterBtn = document.getElementById('starterBtn');
-        const checksheetBtn = document.getElementById('checksheetBtn');
-        
-        const observer = new MutationObserver(function(mutations) {
-            updateStatusIndicators();
-        });
-        
-        // Observe both buttons for attribute changes
-        observer.observe(starterBtn, { attributes: true });
-        observer.observe(checksheetBtn, { attributes: true });
-        
-        // Initial update
-        updateStatusIndicators();
-
-        function fetchValidRequests() {
-            fetch("{% url 'fetch_valid_requests' %}")  // Update with your URL name
-                .then(response => response.json())
-                .then(data => {
-                    const container = document.querySelector("#formRequestsContainer");
-                    container.innerHTML = ""; // Clear existing requests
     
-                    if (data.form_requests.length > 0) {
-                        data.form_requests.forEach(req => {
-                            const link = document.createElement("a");
-                            link.href = `/fill_checksheet_request/${req.id}/`;
-                            link.classList.add("dashboard-card");
-                            link.innerHTML = `
-                                <i class="fas fa-file-alt" style="color: white;"></i>
-                                <span style="font-weight: 500; color:white;"> ${req.checksheet_aname} </span>
-                            `;
-                            container.appendChild(link);
-                        });
-                        document.querySelector("#backsheetBtn").style.display = "flex"; 
-                    } else {
-                        document.querySelector("#backsheetBtn").style.display = "none";
-                        container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 1rem;">No available.</p>`;
-                    }
-                })
-                .catch(error => console.error("Error fetching data:", error));
+    
+        // Periodically check visibility
+        setInterval(updateFormRequestsDisplay, 5000); // Check every minute
+    
+        // Existing modal and button logic
+        document.getElementById('starterBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (!this.classList.contains('disabled')) {
+                document.getElementById('starterModal').style.display = 'flex';
+            }
+        });
+    
+        document.getElementById('checksheetBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (!this.classList.contains('disabled')) {
+                document.getElementById('checksheetModal').style.display = 'flex';
+            }
+        });
+    
+        document.getElementById('backsheetBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('backsheetModal').style.display = 'flex';
+        });
+    
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
         }
     
-        setInterval(fetchValidRequests, 1000);  // Fetch every second
-    });
+        window.addEventListener('click', function(e) {
+            const checksheetModal = document.getElementById('checksheetModal');
+            const starterModal = document.getElementById('starterModal');
+            const backsheetModal = document.getElementById('backsheetModal');
     
-    document.getElementById('backsheetBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        document.getElementById('backsheetModal').style.display = 'flex';
-    });
-</script>
+            if (e.target === checksheetModal) {
+                checksheetModal.style.display = 'none';
+            }
+            if (e.target === starterModal) {
+                starterModal.style.display = 'none';
+            }
+            if (e.target === backsheetModal) {
+                backsheetModal.style.display = 'none';
+            }
+        });
+    
+        // Existing status indicator logic
+        document.addEventListener("DOMContentLoaded", function() {
+            function updateStatusIndicators() {
+                const starterBtn = document.getElementById('starterBtn');
+                const checksheetBtn = document.getElementById('checksheetBtn');
+                const starterStatus = document.getElementById('starterStatus');
+    
+                const opsCompleted = !starterBtn.classList.contains('disabled') &&
+                                    starterBtn.style.pointerEvents !== 'none' &&
+                                    starterBtn.style.opacity !== '0.5';
+                const starterCompleted = !checksheetBtn.classList.contains('disabled') &&
+                                        checksheetBtn.style.pointerEvents !== 'none' &&
+                                        checksheetBtn.style.opacity !== '0.5';
+    
+                if (opsCompleted) {
+                    starterStatus.style.display = 'block';
+                    if (starterCompleted) {
+                        starterStatus.classList.remove('status-pending');
+                        starterStatus.classList.add('status-completed');
+                        starterStatus.textContent = 'Done';
+                    } else {
+                        starterStatus.classList.remove('status-completed');
+                        starterStatus.classList.add('status-pending');
+                        starterStatus.textContent = 'Pending';
+                    }
+                } else {
+                    starterStatus.style.display = 'none';
+                }
+            }
+    
+            const starterBtn = document.getElementById('starterBtn');
+            const checksheetBtn = document.getElementById('checksheetBtn');
+            const observer = new MutationObserver(function(mutations) {
+                updateStatusIndicators();
+            });
+    
+            observer.observe(starterBtn, { attributes: true });
+            observer.observe(checksheetBtn, { attributes: true });
+    
+            updateStatusIndicators();
+        });
+    </script>
+
 {% endblock %}

@@ -1,0 +1,641 @@
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.3rem;
+    margin-bottom: 0;
+    border-bottom: 1px solid rgb(161 161 161 / 82%);
+}
+
+.page-title {
+    color: var(--text-light);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.search-input-container {
+    position: relative;
+    max-width: 400px;
+    width: 100%;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 16px 8px 36px;
+    border: 1px solid rgb(161 161 161 / 82%);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 1px var(--accent-color-solid);
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Table container */
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+    background-color: unset;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+/* POC Table Styling */
+.poc-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.poc-table thead {
+    background: var(--accent-color);
+    border:1.5px solid var(--accent-color-solid);
+
+}
+body.white-mode .poc-table thead {
+    background: var(--accent-color-solid);
+    
+}
+
+.poc-table th {
+    padding: 12px 16px;
+    text-align: center;
+    font-weight: 500;
+    color: var(--text-light);
+    font-size: 0.875rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+    position: relative;
+}
+body.white-mode .poc-table th {
+   
+    color: white;
+   
+}
+
+
+.poc-table th span {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.poc-table th span:hover:after {
+    content: attr(title);
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 100%;
+    background: #1e293b;
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    z-index: 10;
+    white-space: normal;
+    max-width: 200px;
+    word-wrap: break-word;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.poc-table td {
+    padding: 12px 16px;
+    text-align: center;
+    border-bottom: 1px solid rgb(161 161 161 / 82%);
+    color: var(--text-light);
+    font-size: 0.875rem;
+    font-weight: 400;
+    vertical-align: middle;
+}
+
+.poc-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Column widths */
+.poc-table th:first-child,
+.poc-table td:first-child {
+    width: 60px;
+    text-align: left;
+}
+
+.poc-table th:nth-child(2),
+.poc-table td:nth-child(2) {
+    width: 300px;
+    text-align: left;
+}
+
+.poc-table th:nth-child(n+3),
+.poc-table td:nth-child(n+3) {
+    width: 120px;
+    min-width: 80px;
+    max-width: 80px;
+}
+
+/* Checkbox styling */
+.poc-table input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    margin: 0 auto;
+    display: block;
+}
+body.white-mode .poc-table input[type="checkbox"] {
+  
+    background-color: rgb(46 42 42 / 10%);
+border: 2px solid rgb(60 60 60 / 30%);
+   
+}
+
+
+.poc-table input[type="checkbox"]:checked {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color-solid);
+}
+body.white-mode .poc-table input[type="checkbox"]:checked {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color-solid);
+}
+
+.poc-table input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 0px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.poc-table input[type="checkbox"]:hover {
+    border-color: #60a5fa;
+}
+
+/* File upload styling */
+.file-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.file-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pdf-link {
+    display: inline-flex;
+    align-items: center;
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.75rem;
+}
+
+.pdf-link i {
+    margin-right: 6px;
+    color: #ef4444;
+}
+
+.pdf-link:hover {
+    text-decoration: underline;
+}
+
+.custom-file-input {
+    position: relative;
+    display: inline-block;
+}
+
+.custom-file-input input[type="file"] {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+}
+
+.custom-file-label {
+    display: inline-flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.custom-file-label:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: var(text-light);
+}
+
+.custom-file-label i {
+    margin-right: 4px;
+}
+
+/* File size error message */
+.file-error {
+    color: #ef4444;
+    font-size: 0.75rem;
+    margin-top: 4px;
+    display: none;
+}
+
+/* Button styles */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.submit-btn {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--accent-color);
+    color: var(--text-light);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.submit-btn:hover {
+    border:1.5px solid var(--accent-color-solid);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 10px var(--accent-color);
+}
+
+.submit-btn i {
+    margin-right: 6px;
+}
+
+.assign-btn {
+    display: inline-flex;
+    align-items: center;
+    background-color: #3b82f6;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.assign-btn:hover {
+    background-color: #2563eb;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.assign-btn i {
+    margin-right: 6px;
+}
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+body.white-mode .back-button {
+    background-color: #f1f5f9;
+    color: #64748b;
+}
+.back-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+body.white-mode .back-button:hover {
+    background-color: #e2e8f0;
+    color: #334155;
+}
+
+
+
+
+.delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color:rgba(255, 255, 255, 0.7); 
+    color: var(--text-light);
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    margin-left: 8px;
+}
+
+.delete-btn:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+
+
+/* Popup styling */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-box {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.popup-box p {
+    margin-bottom: 16px;
+    font-size: 0.875rem;
+}
+
+.popup-buttons {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.popup-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.save-btn {
+    background: #10b981;
+    color: white;
+}
+
+.save-btn:hover {
+    background: #059669;
+}
+
+.cancel-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.cancel-btn:hover {
+    background: #dc2626;
+}
+
+/* Footer info */
+.table-footer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.875rem;
+    color: #64748b;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+/* No results */
+.no-results {
+    padding: 20px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    width: 100%;
+}
+
+/* Updated PDF viewer styles */
+.fullpage-pdf-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+}
+
+.pdf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background-color: #1e293b;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pdf-title-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pdf-title-container i {
+    color: #ef4444;
+}
+
+#pdfDocumentTitle {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #ffffff;
+    margin: 0;
+}
+
+.pdf-close-btn {
+    background: none;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.2s;
+}
+
+.pdf-close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.pdf-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#pdfViewer {
+    width: 100%;
+    height: 100%;
+}
+
+.page-container.hidden {
+    display: none;
+}
+
+/* Media queries */
+@media (max-width: 640px) {
+    .page-container {
+        padding: 0;
+    }
+    
+    .poc-table th,
+    .poc-table td {
+        padding: 8px 12px;
+    }
+    
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .buttons-container {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 350px;
+}
+
+.toast-message {
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    animation: slideIn 0.5s ease forwards;
+    opacity: 0;
+    transform: translateX(50px);
+}
+
+.toast-success {
+    background: #059669;
+    color: white;
+    border-left: 5px solid #047857;
+}
+
+.toast-error {
+    background: #7f1d1d;
+    color: white;
+    border-left: 5px solid #600;
+}
+
+.toast-icon {
+    margin-right: 12px;
+    font-size: 1.2rem;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}

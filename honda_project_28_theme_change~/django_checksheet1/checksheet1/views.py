@@ -1,125 +1,56 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from collections import defaultdict
+from datetime import datetime, timedelta
+from io import BytesIO
+import json
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Count, Q
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.utils.timezone import localdate, localtime, now, make_aware
+from django.views.decorators.csrf import csrf_exempt
+from reportlab.pdfgen import canvas
+
 from .models import (
     CheckSheet,
-    Zone,
+    CheckSheetImage,
+    CustomUser,
     FilledCheckSheet,
     FilledStarterSheet,
-    StarterSheet,
-    StarterZone,
-    POCUpload,
-    CustomUser,
-    PageAccess,
-    PasswordResetRequest,
-    CheckSheetImage,
     FormRequest,
     POCReadStatus,
+    POCUpload,
+    PageAccess,
+    PasswordResetRequest,
+    ProductionDb,
     Shifttime,
+    StarterSheet,
+    StarterZone,
+    Zone,
+    RejectionAlertConfig,
 )
+from django.db.models import Q, F
 import pytz
-
-from collections import defaultdict
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib import messages
-import random
-import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from django.contrib.auth import get_user_model
-from django.utils import timezone
-from django.contrib import messages
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.utils.timezone import localdate
-import json
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
-from django.utils.timezone import localtime
-from django.contrib.auth.decorators import user_passes_test
-from .models import PasswordResetRequest
-from io import BytesIO
-from reportlab.pdfgen import canvas
-import csv
-from django.http import HttpResponse
-import socket, time
-import threading
-import time as tim
-from .models import ProductionDb
-import django
-from datetime import datetime as dst
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from reportlab.lib.pagesizes import letter
+import openpyxl
+from openpyxl.drawing.image import Image as XLImage
+from openpyxl.styles import Alignment, Font, Border, Side, PatternFill
+from PIL import Image as PILImage
+from dateutil.parser import parse as parse_date, ParserError
+from django.db import transaction
+from django.views.decorators.http import require_http_methods
+from twilio.rest import Client
 
-
-# tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# server_address = ("0.0.0.0", 8289)
-# tcp_socket.bind(server_address)
-# tcp_socket.listen(1)
 
 User = get_user_model()
 
 connection_status = False
-
-
-# def ModumDataReadFunc():
-#     global connection_status
-#     while True:
-#         print("Waiting for connection")
-#         connection, client = tcp_socket.accept()
-#         connection_status = True  # Mark as connected
-
-#         try:
-#             print(f"Connected to client IP: {client}")
-
-#             while True:
-#                 data = connection.recv(10240)
-#                 if not data:
-#                     break
-
-#                 Datainstring = data.decode("utf-8")
-#                 rows = Datainstring.strip().split("\n")
-
-#                 for row in rows:
-#                     print(row, "rows")
-
-#                     try:
-#                         parts = row.split(",")
-#                         timestamp = parts[1]  # Extract timestamp
-#                         production_value = parts[3].split("=")[
-#                             1
-#                         ]  # Extract value after '='
-
-#                         # Convert timestamp to Django DateTimeField format
-#                         timestamp = make_aware(
-#                             datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
-#                         )
-
-#                         # Save to database
-#                         ProductionDb.objects.create(
-#                             Production_count=production_value, timestamp=timestamp
-#                         )
-#                         print(f"Saved: {production_value}, {timestamp}")
-
-#                     except Exception as e:
-#                         print(f"Error parsing row: {row}, Error: {e}")
-
-#                 tim.sleep(1)
-
-#         except Exception as e:
-#             print(f"Connection error: {e}")
-
-#         finally:
-#             connection_status = False  # Mark as disconnected
-#             connection.close()
-
-
-# # Start the function in a new thread
-# def start_modum_thread():
-#     thread = threading.Thread(target=ModumDataReadFunc, daemon=True)
-#     thread.start()
-#     print("ModumDataReadFunc thread started!")
-
-
-# start_modum_thread()
-
 
 # import json
 # import threading
@@ -196,18 +127,10 @@ connection_status = False
 # start_mqtt()
 
 
-def has_page_access(user, page_name):
-    return PageAccess.objects.filter(
-        user=user, page_name=page_name, has_access=True
-    ).exists()
-
-
-# Global variables for OTP
-otp_to_login = None
-otp_generation_time = None
-# ----------------------------------------- login function  --------------------------------#
+# ----------------------------------------- login functions  --------------------------------#
 def redirect_to_login(request):
     return redirect("login")
+
 
 def is_shift_incharge(user):
     return user.is_authenticated and user.role == "shift_incharge"
@@ -231,6 +154,12 @@ def is_admin(user):
     return user.is_authenticated and user.role == "admin"
 
 
+def has_page_access(user, page_name):
+    return PageAccess.objects.filter(
+        user=user, page_name=page_name, has_access=True
+    ).exists()
+
+
 def login_view(request):
     if request.method == "POST":
         employee_id = request.POST.get("employee_id")
@@ -239,7 +168,6 @@ def login_view(request):
 
         if user:
             login(request, user)
-
             # Redirect based on user role
             if user.role == "admin":
                 return redirect("home")
@@ -256,7 +184,6 @@ def login_view(request):
             return render(
                 request, "checksheet/login.html", {"error": "Invalid credentials"}
             )
-
     return render(request, "checksheet/login.html")
 
 
@@ -265,60 +192,9 @@ def logout_view(request):
     return redirect("login")
 
 
-from django.shortcuts import render
-from django.utils.timezone import now
-from django.db.models import Count, Q
-from datetime import timedelta
+# ----------------------------------------- bashboard function  --------------------------------#
 
 
-def get_top_checksheets(checksheets, limit=3):
-    """
-    Gets the top N checksheets with the highest "Yes" counts, also counting integer values.
-
-    Args:
-        checksheets: QuerySet of CheckSheet objects
-        limit: Number of top checksheets to return (default: 3)
-
-    Returns:
-        List of dicts with checksheet id, name, and total yes count
-    """
-    top_checksheets = []
-
-    for sheet in checksheets:
-        # Get all filled checksheets for this template
-        filled_sheets = FilledCheckSheet.objects.filter(checksheet_id=sheet.id)
-
-        # Counter for yes values and integer values
-        yes_count = 0
-
-        for filled in filled_sheets:
-            # Process the status_data JSON
-            try:
-                # Check if status_data is already a dict or if it needs to be parsed
-                status_data = filled.status_data
-                if isinstance(status_data, str):
-                    status_data = json.loads(status_data)
-
-                # Count "Yes" values and integer values in each filled sheet
-                for key, value in status_data.items():
-                    if value == "Yes":  # Count "Yes" as 1
-                        yes_count += 1
-                    elif isinstance(value, int):  # Add integer values directly
-                        yes_count += value
-            except (json.JSONDecodeError, AttributeError, TypeError):
-                continue
-
-        # Add to our list
-        top_checksheets.append(
-            {"id": sheet.id, "name": sheet.name, "yes_count": yes_count}
-        )
-
-    # Sort by yes_count in descending order and take top N
-    top_checksheets.sort(key=lambda x: x["yes_count"], reverse=True)
-    return top_checksheets[:limit]
-
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
 def calculate_production_stats():
     global connection_status  # Consider replacing with a model-based solution
     stats = {
@@ -332,13 +208,17 @@ def calculate_production_stats():
     try:
         # Get the latest ProductionDb record by timestamp
         latest_production = ProductionDb.objects.latest("timestamp")
-        print(f"Latest ProductionDb: id={latest_production.id}, Production_count={latest_production.Production_count}, timestamp={latest_production.timestamp}")
+        print(
+            f"Latest ProductionDb: id={latest_production.id}, Production_count={latest_production.Production_count}, timestamp={latest_production.timestamp}"
+        )
         try:
             production_count_value = latest_production.Production_count
             stats["production_count"] = int(production_count_value)
             print(f"Set production_count to: {stats['production_count']}")
         except (ValueError, TypeError) as e:
-            print(f"Error converting Production_count '{production_count_value}' to int: {e}")
+            print(
+                f"Error converting Production_count '{production_count_value}' to int: {e}"
+            )
             stats["production_count"] = 0
             stats["error"] = "Invalid production count format"
             return stats
@@ -349,13 +229,18 @@ def calculate_production_stats():
 
     try:
         # Calculate reject count
-        reject_count = FilledCheckSheet.objects.aggregate(
-            total_rejects=Count('id', filter=Q(rejected_by_id__isnull=False))
-        )['total_rejects'] or 0
+        reject_count = (
+            FilledCheckSheet.objects.aggregate(
+                total_rejects=Count("id", filter=Q(rejected_by_id__isnull=False))
+            )["total_rejects"]
+            or 0
+        )
         print(f"Rejects from rejected_by_id: {reject_count}")
 
         # Handle status_data["completely_reject"]
-        filled_entries = FilledCheckSheet.objects.filter(status_data__has_key='completely_reject')
+        filled_entries = FilledCheckSheet.objects.filter(
+            status_data__has_key="completely_reject"
+        )
         extra_rejects = 0
         for entry in filled_entries:
             value = entry.status_data.get("completely_reject")
@@ -368,14 +253,18 @@ def calculate_production_stats():
                     if value == "Yes" or (isinstance(value, str) and value.strip()):
                         extra_rejects += 1
         stats["total_rejects"] = reject_count + extra_rejects
-        print(f"Extra rejects from status_data: {extra_rejects}, Total rejects: {stats['total_rejects']}")
+        print(
+            f"Extra rejects from status_data: {extra_rejects}, Total rejects: {stats['total_rejects']}"
+        )
     except Exception as e:
         print(f"Error calculating rejects: {e}")
         stats["error"] = "Error calculating rejects"
         return stats
 
     # Ensure actual_production is non-negative
-    stats["actual_production"] = max(0, stats["production_count"] - stats["total_rejects"])
+    stats["actual_production"] = max(
+        0, stats["production_count"] - stats["total_rejects"]
+    )
     if stats["production_count"] > 0:
         stats["efficiency"] = round(
             (stats["actual_production"] / stats["production_count"]) * 100, 2
@@ -385,6 +274,7 @@ def calculate_production_stats():
 
     print("Final calculated stats:", stats)
     return stats
+
 
 def broadcast_production_update():
     print("Entering broadcast_production_update")
@@ -399,45 +289,13 @@ def broadcast_production_update():
         print("Channel layer retrieved successfully")
 
         async_to_sync(channel_layer.group_send)(
-            'production_group',
-            {
-                'type': 'send_production_update',
-                'data': data
-            }
+            "production_group", {"type": "send_production_update", "data": data}
         )
         print("Group send called successfully")
     except Exception as e:
         print(f"Error in broadcast_production_update: {str(e)}")
 
 
-# def get_reject_count(request):
-#     """
-#     Get the total count of 'completely_reject' entries in FilledCheckSheet data.
-
-#     Returns:
-#         JsonResponse: A dictionary with the total count of completely rejected items.
-#     """
-#     reject_count = 0
-
-#     # Get all relevant entries
-#     filled_entries = FilledCheckSheet.objects.filter(acknowledgment__in=["No", "Yes"])
-#     print(filled_entries, "fillledd")
-#     # Count reject items
-#     for entry in filled_entries:
-#         status_data = entry.status_data
-#         if "completely_reject" in status_data:
-#             # If value is an integer, add that value, otherwise add 1
-#             value = status_data["completely_reject"]
-#             if isinstance(value, int):
-#                 reject_count += value
-#             else:
-#                 reject_count += 1
-#     print(reject_count, "fjjjjjjjjjjjjjjjjjjjjjjjjjjjj")
-
-#     return JsonResponse({"total_rejects": reject_count})
-
-
-# Modify the home view to include top checksheets
 @login_required
 def home(request):
     user = request.user
@@ -449,7 +307,7 @@ def home(request):
     all_lines = CheckSheet.objects.values_list("line", flat=True).distinct()
     lines_list = list(all_lines)
 
-    if request.user.role == "admin" or has_page_access(request.user, "home"):
+    if user.role == "admin" or has_page_access(user, "home"):
         checksheets = CheckSheet.objects.all()
         starter = StarterSheet.objects.all()
 
@@ -459,7 +317,6 @@ def home(request):
         weekly_yes_counts_json = json.dumps(
             get_yes_counts(checksheets, start_of_week, today)
         )
-        top_checksheets_json = json.dumps(get_top_checksheets(checksheets, limit=3))
 
         # Create checksheet options with line data attribute
         checksheet_options = "".join(
@@ -481,45 +338,33 @@ def home(request):
     else:
         checksheets = CheckSheet.objects.filter(assigned_users=user)
         starter = StarterSheet.objects.filter(assigned_users=user)
-        today_yes_counts_json = weekly_yes_counts_json = checksheets_data_json = (
-            top_checksheets_json
-        ) = "[]"
+        today_yes_counts_json = weekly_yes_counts_json = checksheets_data_json = "[]"
         checksheet_options = ""
 
-    if request.user.role == "admin":
-        # Admins can see all pending starter sheets
+    if user.role == "admin":
+        # Admins see all pending starter sheets
         pending_acknowledgments = FilledStarterSheet.objects.filter(
-            Q(
-                approval_status__in=[
-                    "level_2_approved",
-                ],
-                requires_level_3_approval=True,
-            )
+            Q(approval_status="level_2_approved", requires_level_3_approval=True)
         ).exclude(approval_status="rejected")
 
-        # For admins, count starter sheets they specifically approved (excluding rejected ones)
+        # Count starter sheets approved by admin (excluding rejected)
         approved_count = (
-            FilledStarterSheet.objects.filter(Q(level_3_approval_id=request.user.id))
+            FilledStarterSheet.objects.filter(level_3_approval_id=user.id)
             .exclude(approval_status="rejected")
             .count()
         )
-
     else:
         # Regular users see starter sheets they are assigned to approve
         pending_acknowledgments = FilledStarterSheet.objects.filter(
-            # Sheets pending their approval
-            Q(assigned_level_1_approver=request.user, approval_status="pending")
-            | Q(
-                assigned_level_2_approver=request.user,
-                approval_status="level_1_approved",
-            )
+            Q(assigned_level_1_approver=user, approval_status="pending")
+            | Q(assigned_level_2_approver=user, approval_status="level_1_approved")
         ).exclude(approval_status="rejected")
 
-        # Count starter sheets approved by this user (excluding rejected ones)
+        # Count starter sheets approved by user (excluding rejected)
         approved_count = (
             FilledStarterSheet.objects.filter(
                 Q(
-                    level_1_approval_id=request.user.id,
+                    level_1_approval_id=user.id,
                     approval_status__in=[
                         "level_1_approved",
                         "level_2_approved",
@@ -527,7 +372,7 @@ def home(request):
                     ],
                 )
                 | Q(
-                    level_2_approval_id=request.user.id,
+                    level_2_approval_id=user.id,
                     approval_status__in=["level_2_approved", "completed"],
                 )
             )
@@ -535,7 +380,7 @@ def home(request):
             .count()
         )
 
-    # Get the count of pending starter sheets
+    # Get pending starter sheets count
     pending_count = pending_acknowledgments.count()
 
     # Convert to values for template
@@ -554,48 +399,37 @@ def home(request):
         "level_2_approval_id",
     ).order_by("timestamp")
 
-    # Now handle FilledCheckSheet data
-    if request.user.role == "admin":
-        # Admins can see all pending check sheets that require approval AND are flagged for acknowledgment
+    # Handle FilledCheckSheet data
+    if user.role == "admin":
+        # Admins see all pending check sheets requiring acknowledgment
         pending_check_acknowledgments = FilledCheckSheet.objects.filter(
-            Q(send_acknowledgment=True)
-            & (
-                Q(
-                    approval_status__in=[
-                        "level_2_approved",
-                    ],
-                )
-            )
-            & (
-                Q(
-                    requires_level_3_approval=True,
-                )
+            Q(
+                send_acknowledgment=True,
+                approval_status="level_2_approved",
+                requires_level_3_approval=True,
             )
         )
 
-        # For admins, get check sheets they specifically approved (excluding rejected ones)
+        # Check sheets approved by admin (excluding rejected)
         approved_check_sheets = FilledCheckSheet.objects.filter(
-            Q(send_acknowledgment=True) & (Q(level_3_approval_id=request.user.id))
+            Q(send_acknowledgment=True, level_3_approval_id=user.id)
         ).exclude(approval_status="rejected")
     else:
         # Regular users see check sheets they are assigned to approve
         pending_check_acknowledgments = FilledCheckSheet.objects.filter(
             Q(send_acknowledgment=True)
             & (
-                Q(assigned_level_1_approver=request.user, approval_status="pending")
-                | Q(
-                    assigned_level_2_approver=request.user,
-                    approval_status="level_1_approved",
-                )
+                Q(assigned_level_1_approver=user, approval_status="pending")
+                | Q(assigned_level_2_approver=user, approval_status="level_1_approved")
             )
         ).exclude(approval_status="rejected")
 
-        # Get check sheets approved by this user (excluding rejected ones)
+        # Check sheets approved by user (excluding rejected)
         approved_check_sheets = FilledCheckSheet.objects.filter(
             Q(send_acknowledgment=True)
             & (
                 Q(
-                    level_1_approval_id=request.user.id,
+                    level_1_approval_id=user.id,
                     approval_status__in=[
                         "level_1_approved",
                         "level_2_approved",
@@ -603,37 +437,27 @@ def home(request):
                     ],
                 )
                 | Q(
-                    level_2_approval_id=request.user.id,
+                    level_2_approval_id=user.id,
                     approval_status__in=["level_2_approved", "completed"],
                 )
             )
         ).exclude(approval_status="rejected")
 
     # Count unique combinations for pending check sheets
-    pending_unique_combinations = set()
-    for check in pending_check_acknowledgments:
-        # Extract date from timestamp
-        date = check.timestamp.date()
-        # Create a unique identifier tuple
-        unique_key = (date, check.shift, check.user_id, check.checksheet_id)
-        pending_unique_combinations.add(unique_key)
+    pending_unique_combinations = {
+        (check.timestamp.date(), check.shift, check.user_id, check.checksheet_id)
+        for check in pending_check_acknowledgments
+    }
 
     # Count unique combinations for approved check sheets
-    approved_unique_combinations = set()
-    for check in approved_check_sheets:
-        # Extract date from timestamp
-        date = check.timestamp.date()
-        # Create a unique identifier tuple
-        unique_key = (date, check.shift, check.user_id, check.checksheet_id)
-        approved_unique_combinations.add(unique_key)
+    approved_unique_combinations = {
+        (check.timestamp.date(), check.shift, check.user_id, check.checksheet_id)
+        for check in approved_check_sheets
+    }
 
-    # Get the consolidated counts
+    # Get consolidated counts
     check_pending_count = len(pending_unique_combinations)
     check_approved_count = len(approved_unique_combinations)
-
-    print(
-        f"Consolidated counts: {check_approved_count} approved, {check_pending_count} pending"
-    )
 
     return render(
         request,
@@ -645,7 +469,6 @@ def home(request):
             "weekly_yes_counts_json": weekly_yes_counts_json,
             "checksheet_options": checksheet_options,
             "checksheets_data_json": checksheets_data_json,
-            "top_checksheets_json": top_checksheets_json,
             "pending_count": check_pending_count,
             "acknowledged_count": check_approved_count,
             "startersheet_pending_count": pending_count,
@@ -697,7 +520,7 @@ def get_pie_chart_data(request):
         checksheet = CheckSheet.objects.get(id=checksheet_id)
         if (
             request.user.role != "admin"
-            and request.user.role != "shift_incharge" 
+            and request.user.role != "shift_incharge"
             and request.user.role != "quality_incharge"
             and not checksheet.assigned_users.filter(id=request.user.id).exists()
         ):
@@ -752,6 +575,7 @@ def get_checksheet_fields(checksheet_id):
         return sorted(list(fields))
     except Exception:
         return []
+
 
 @login_required
 def get_chart_data(request):
@@ -833,9 +657,8 @@ def get_yes_counts(checksheets, start_date, end_date):
 
     return yes_counts
 
+
 # ----------------------------------------- Create Checksheet--------------------------------#
-
-
 @login_required
 def create_checksheet(request):
     if request.user.role == "admin" or has_page_access(request.user, "all_checksheets"):
@@ -926,7 +749,7 @@ def all_checksheets(request):
             {"checksheets": checksheets, "Starter": Starter, "all_users": all_users},
         )
 
-    return render(request, "checksheet/checksheet/access_denied.html")
+    return render(request, "checksheet/access_denied.html")
 
 
 # ----------------------------------------- Update CheckSheet--------------------------------#
@@ -977,12 +800,12 @@ def update_checksheet(request, checksheet_id):
                 if zone_type:
                     zone.input_type = zone_type
                 zone.save()
-                
+
             messages.success(
-                    request,
-                    "Checksheet updated successfully!",
-                    extra_tags="checksheet_update",
-                )
+                request,
+                "Checksheet updated successfully!",
+                extra_tags="checksheet_update",
+            )
             return redirect("all_checksheets")
 
         return render(
@@ -1041,15 +864,10 @@ def add_zone(request, checksheet_id):
 
 
 # ----------------------------------------- Fill Checksheet--------------------------------#
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from .models import CheckSheet, FilledCheckSheet, Zone, StarterSheet
-from django.utils.timezone import now
 
 
 @login_required
 def fill_checksheet(request, checksheet_id=None):
-    print(type(checksheet_id))
     if request.user.role == "operator" or has_page_access(
         request.user, "fill_checksheet_detail"
     ):
@@ -1063,54 +881,37 @@ def fill_checksheet(request, checksheet_id=None):
         selected_checksheet = (
             get_object_or_404(CheckSheet, id=checksheet_id) if checksheet_id else None
         )
-        print(selected_checksheet)
         if not selected_checksheet and checksheet_id:
             return HttpResponse("CheckSheet not found", status=404)
         images = selected_checksheet.images.all() if selected_checksheet else []
         zones = selected_checksheet.zones.all() if selected_checksheet else []
 
-        today = now().date()
+        today = timezone.now().date()
 
         # Get current time and determine current shift
         IST = pytz.timezone("Asia/Kolkata")
-        current_time = now().astimezone(IST).time()
-        # Get current time in IST
+        current_time = timezone.now().astimezone(IST).time()
         try:
-            shift_times = (
-                Shifttime.objects.first()
-            )  # Get the first record from Shifttime model
-            current_shift = "None"  # Default value
-
-            # Check if current time is in shift A
+            shift_times = Shifttime.objects.first()
+            current_shift = "None"
             if shift_times.shift_A_start <= current_time <= shift_times.shift_A_end:
                 current_shift = "A"
-            # Check if current time is in shift B
             elif shift_times.shift_B_start <= current_time <= shift_times.shift_B_end:
                 current_shift = "B"
         except Shifttime.DoesNotExist:
             current_shift = "None"
 
-        print(
-            current_shift,
-            shift_times.shift_A_start,
-            shift_times.shift_A_end,
-            shift_times.shift_B_start,
-            current_time,
-            "test",
-        )
-        # Get pending acknowledgments for today and the current user
+        # Get pending acknowledgments for today, current user, and current shift
         pending_acknowledgments_checksheet = FilledCheckSheet.objects.filter(
-            approval_status="Pending",
             user=request.user,
             timestamp__date=today,
             line=selected_checksheet.line,
+            shift=current_shift,  # Filter by current shift
         )
 
-        # Consolidated Data
+        # Consolidated Data for the current shift
         consolidated_data = {}
         for entry in pending_acknowledgments_checksheet:
-            # Use only checksheet name, shift, and specific zones as key
-            # since we're already filtering by user and date
             key = (entry.checksheet.name, entry.shift)
             if key not in consolidated_data:
                 consolidated_data[key] = defaultdict(int)
@@ -1124,21 +925,21 @@ def fill_checksheet(request, checksheet_id=None):
                         consolidated_data[key][k] += v
                     else:
                         consolidated_data[key]["completely_reject"] += 1
-        print(consolidated_data, "consolidated_data")
+
+        # Prepare chart data for the current shift
         chart_labels = []
         chart_values = []
         for key, value_dict in consolidated_data.items():
-            for zone_label, count in value_dict.items():
-                chart_labels.append(zone_label)
-                chart_values.append(count)
+            if key[1] == current_shift:  # Only include data for the current shift
+                for zone_label, count in value_dict.items():
+                    chart_labels.append(zone_label)
+                    chart_values.append(count)
 
         if request.method == "POST":
-            # Traditional form handling
             status_data = {}
-            shift = request.POST.get("shift", "A")
+            shift = request.POST.get("shift", current_shift)
             line = request.POST.get(
-                "line",
-                selected_checksheet.line if selected_checksheet else None,
+                "line", selected_checksheet.line if selected_checksheet else None
             )
 
             for zone in zones:
@@ -1157,7 +958,6 @@ def fill_checksheet(request, checksheet_id=None):
                     except ValueError:
                         status_data[zone.name] = 0.0
 
-            # Save reject reason if provided
             reject_reason = request.POST.get("reject_reason", "").strip()
             if reject_reason:
                 status_data["completely_reject"] = reject_reason
@@ -1167,15 +967,13 @@ def fill_checksheet(request, checksheet_id=None):
                 user=request.user,
                 status_data=status_data,
                 shift=shift,
-                timestamp=now(),
+                timestamp=timezone.now(),
                 line=line,
             )
 
-            # For AJAX requests, return a JSON response
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return JsonResponse({"success": True})
-        
-        # For regular form submissions, redirect
+
             return redirect("fill_checksheet_detail", checksheet_id=checksheet_id)
 
         return render(
@@ -1194,6 +992,7 @@ def fill_checksheet(request, checksheet_id=None):
             },
         )
     return render(request, "access_denied.html")
+
 
 # ----------------------------------------- Create StarterSheet--------------------------------#
 
@@ -1295,6 +1094,8 @@ def create_startersheet(request):
 
 
 # ----------------------------------------- All StarterSheet--------------------------------#
+
+
 @login_required
 def all_startersheet(request):
     if request.user.role == "admin" or has_page_access(
@@ -1406,10 +1207,10 @@ def update_startersheet(request, startersheet_id):
             id__in=updated_zone_ids
         ).delete()
         messages.success(
-                    request,
-                    "StarterSheet updated successfully!",
-                    extra_tags="StarterSheet_update",
-                )
+            request,
+            "StarterSheet updated successfully!",
+            extra_tags="StarterSheet_update",
+        )
         return redirect("all_startersheet")
 
     return render(
@@ -1492,10 +1293,10 @@ def Add_start_zone(request, startersheet_id):
                 standard=standard,  # Add the check method field
             )
             messages.success(
-                    request,
-                    "Zone Added sucessfully!",
-                    extra_tags="StarterSheet_zone",
-                )
+                request,
+                "Zone Added sucessfully!",
+                extra_tags="StarterSheet_zone",
+            )
             return redirect("all_startersheet")
 
     return render(
@@ -1512,13 +1313,11 @@ def Add_start_zone(request, startersheet_id):
 # -----------------------------------------Fill StarterSheet--------------------------------#
 
 
-from django.utils import timezone
-from datetime import datetime
-import pytz
-
 @login_required
 def fill_starter_sheet(request, startersheet_id=None):
-    if request.user.role == "operator" or has_page_access(request.user, "fill_starter_sheet"):
+    if request.user.role == "operator" or has_page_access(
+        request.user, "fill_starter_sheet"
+    ):
         if request.user.role == "admin":
             checksheets = CheckSheet.objects.all()
             Starter = StarterSheet.objects.all()
@@ -1535,10 +1334,12 @@ def fill_starter_sheet(request, startersheet_id=None):
         today = now().date()
 
         # Get current time and determine current shift
-        IST = pytz.timezone('Asia/Kolkata')
+        IST = pytz.timezone("Asia/Kolkata")
         current_time = now().astimezone(IST).time()
         try:
-            shift_times = Shifttime.objects.first()  # Get the first record from Shifttime model
+            shift_times = (
+                Shifttime.objects.first()
+            )  # Get the first record from Shifttime model
             current_shift = "None"  # Default value
 
             # Check if current time is in shift A
@@ -1555,7 +1356,10 @@ def fill_starter_sheet(request, startersheet_id=None):
                 data = json.loads(request.body)
                 shift = data.get("shift")
                 user = request.user  # Get the logged-in user
-                line = data.get("line", selected_startersheet.line if selected_startersheet else None)
+                line = data.get(
+                    "line",
+                    selected_startersheet.line if selected_startersheet else None,
+                )
 
                 # Check if data already exists for today, same user, shift, line, and startersheet
                 existing_entry = FilledStarterSheet.objects.filter(
@@ -1563,13 +1367,15 @@ def fill_starter_sheet(request, startersheet_id=None):
                     filled_by=user,
                     shift=shift,
                     line=line,
-                    timestamp__date=today
+                    timestamp__date=today,
                 ).exists()
 
                 if existing_entry:
                     return JsonResponse(
-                        {"error": "Data already filled for this user, shift, line, and sheet today"},
-                        status=400
+                        {
+                            "error": "Data already filled for this user, shift, line, and sheet today"
+                        },
+                        status=400,
                     )
 
                 # Collect all zone statuses in a dictionary with zone names
@@ -1624,7 +1430,7 @@ def fill_starter_sheet(request, startersheet_id=None):
     return render(request, "checksheet/access_denied.html")
 
 
-# ----------------------------------------- Create USer --------------------------------#
+# ----------------------------------------- Create User --------------------------------#
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def create_user(request):
@@ -1676,7 +1482,7 @@ def create_user(request):
     )
 
 
-# ----------------------------------------- User List--------------------------------#
+# ----------------------------------------- User List(all_user)--------------------------------#
 
 
 @login_required
@@ -1712,7 +1518,7 @@ def edit_user(request, user_id):
         # Operators see only assigned CheckSheets and StarterSheets
         checksheets = CheckSheet.objects.filter(assigned_users=request.user)
         Starter = StarterSheet.objects.filter(assigned_users=request.user)
-    
+
     user = get_object_or_404(CustomUser, id=user_id)
 
     if request.method == "POST":
@@ -1720,14 +1526,14 @@ def edit_user(request, user_id):
         user.email = request.POST.get("email")
         user.role = request.POST.get("role")
         user.phone_number = request.POST.get("phone_number")
-        
+
         # Handle password change if provided
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
-        
+
         if password and password == confirm_password:
             user.set_password(password)
-        
+
         user.save()
         return redirect("user_list")
 
@@ -1736,6 +1542,10 @@ def edit_user(request, user_id):
         "checksheet/edit_user.html",
         {"user": user, "checksheets": checksheets, "Starter": Starter},
     )
+
+
+# ----------Dashboard function for (operator shift_incharge and  quality_incharge----------------------#
+
 
 @login_required
 @user_passes_test(is_quality_incharge)
@@ -2186,10 +1996,10 @@ def upload_poc(request):
                     new_poc.assigned_startersheets.set(selected_startersheets)
                     poc_files.append(new_poc)
             messages.success(
-                    request,
-                    "ops updated sucessfully!",
-                    extra_tags="ops",
-                )
+                request,
+                "ops updated sucessfully!",
+                extra_tags="ops",
+            )
             return redirect("upload_poc")  # Redirect after saving
 
         remaining_inputs = 15 - len(poc_files)
@@ -2241,7 +2051,6 @@ def view_poc(request):
     )
 
 
-from django.db.models import Q,F
 # ----------------------------------------- Acknowledgment--------------------------------#
 @login_required
 def acknowledgment_list(request):
@@ -2251,7 +2060,9 @@ def acknowledgment_list(request):
         checksheets = CheckSheet.objects.all()
         Starter = StarterSheet.objects.all()
         is_admin = request.user.role == "admin"
-        pending_requests = FormRequest.objects.filter(status="Pending") if is_admin else None
+        pending_requests = (
+            FormRequest.objects.filter(status="Pending") if is_admin else None
+        )
         if request.user.role == "admin":
             # Admins can see all pending sheets
             pending_acknowledgments = FilledStarterSheet.objects.filter(
@@ -2263,9 +2074,7 @@ def acknowledgment_list(request):
                 )
             )
         else:
-            # Regular users see sheets they are assigned to approve or that they approved but were rejected by the next level
-            # Regular users see sheets they are assigned to approve or that they approved but were rejected
-            # by the next level or by an admin (in which case only show to level 2)
+
             pending_acknowledgments = FilledStarterSheet.objects.filter(
                 # Sheets pending their approval
                 Q(assigned_level_1_approver=request.user, approval_status="pending")
@@ -2273,10 +2082,7 @@ def acknowledgment_list(request):
                     assigned_level_2_approver=request.user,
                     approval_status="level_1_approved",
                 )
-                |
-                # Show rejected sheets based on appropriate flow:
-                # If rejected by admin (user_id=1), show only to level 2 approver
-                Q(
+                | Q(
                     rejected_by_id=1,
                     assigned_level_2_approver=request.user,
                     approval_status="rejected",
@@ -2370,7 +2176,14 @@ def acknowledgment_list(request):
             # Convert timestamp to date string for grouping
             entry_date = entry.timestamp.date()
             # Add line and employee_id to the key tuple
-            key = (entry.checksheet.name, entry.user.username, entry.shift, entry_date, entry.line, entry.user.employee_id)
+            key = (
+                entry.checksheet.name,
+                entry.user.username,
+                entry.shift,
+                entry_date,
+                entry.line,
+                entry.user.employee_id,
+            )
             if key not in consolidated_data:
                 consolidated_data[key] = defaultdict(int)
                 consolidated_data[key]["reject_reasons"] = set()
@@ -2430,11 +2243,13 @@ def acknowledgment_list(request):
                 "Starter": Starter,
                 "pending_acknowledgments_checksheet": consolidated_check_entries,
                 "pending_acknowledgments": pending_acknowledgments,
-                "pending_requests":pending_requests,
+                "pending_requests": pending_requests,
             },
         )
     return render(request, "checksheet/access_denied.html")
 
+
+# ----------------------------------------- view filled startersheet --------------------------------#
 
 
 def view_filled_startersheet(request, startersheet_id, user_id, shift, id):
@@ -2622,6 +2437,7 @@ def view_filled_startersheet(request, startersheet_id, user_id, shift, id):
     return render(request, "checksheet/access_denied.html")
 
 
+# ----------------------------------------- To aprove a startersheet--------------------------------#
 @login_required
 def approve_startersheet(request):
     if request.method != "POST":
@@ -2687,64 +2503,7 @@ def approve_startersheet(request):
     return redirect("acknowledgment_list")
 
 
-# ----------------------------------------- forget password and otp generation--------------------------------#
-
-
-def forgot_password(request):
-    if request.method == "POST":
-        email = request.POST.get("email")
-        user = User.objects.filter(email=email).first()
-
-        if user:
-            # Generate OTP
-            otp_to_login = random.randint(100000, 999999)
-            otp_generation_time = timezone.now()  # Save the current timestamp
-            request.session["reset_email"] = email
-            request.session["reset_otp"] = otp_to_login
-
-            # Send OTP via email using smtplib
-            subject = "Password Reset OTP"
-            message = f"Your OTP for password reset is: {otp_to_login}"
-            try:
-                s = smtplib.SMTP("smtp.gmail.com", 587)
-                s.starttls()  # Start the TLS connection
-                s.login(
-                    "workspace00018@gmail.com", "hgqu porv wvka lgnq"
-                )  # Replace with your Gmail & App Password
-                msg = MIMEMultipart()
-                msg["From"] = "your-email@gmail.com"
-                msg["To"] = email
-                msg["Subject"] = subject
-                msg.attach(MIMEText(message, "plain"))
-
-                s.send_message(msg)
-                s.quit()
-
-                messages.success(request, "OTP sent successfully to your email!")
-                return redirect("verify_otp")  # Redirect to OTP verification page
-
-            except Exception as e:
-                messages.error(request, f"Error sending OTP: {e}")
-                return render(
-                    request, "checksheet/forgot_password.html"
-                )  # Render the same page on error
-        else:
-            messages.error(request, "Email not found!")
-
-    return render(request, "checksheet/forgot_password.html")
-
-
-def verify_otp(request):
-    if request.method == "POST":
-        entered_otp = request.POST.get("otp")
-        session_otp = request.session.get("reset_otp")
-
-        if session_otp and int(entered_otp) == session_otp:
-            return redirect("reset_password")  # Redirect to password reset page
-        else:
-            messages.error(request, "Invalid OTP!")
-
-    return render(request, "checksheet/verify_otp.html")
+# ----------------------------------------- forget password --------------------------------#
 
 
 def reset_password(request):
@@ -2767,8 +2526,10 @@ def reset_password(request):
             messages.error(request, "Passwords do not match!")
 
     return render(request, "checksheet/reset_password.html")
-from openpyxl.drawing.spreadsheet_drawing import OneCellAnchor, AnchorMarker
-from openpyxl.utils.units import pixels_to_EMU
+
+
+# --------------- Assign sheet function to asign sheet in userlist by action button ---------------------#
+
 
 @login_required
 def assign_sheets(request, user_id):
@@ -2809,43 +2570,6 @@ def parse_date(date_str):
 
 
 # ----------------------------------------- reporting function  --------------------------------#
-import csv
-from datetime import datetime, time
-from io import BytesIO
-from django.shortcuts import render
-from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
-from django.utils.dateparse import parse_date
-from reportlab.pdfgen import canvas
-from .models import CheckSheet, StarterSheet, FilledCheckSheet, FilledStarterSheet
-
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
-from django.shortcuts import render
-from django.utils.dateparse import parse_date
-from datetime import datetime, time
-from collections import defaultdict
-from io import BytesIO
-from reportlab.pdfgen import canvas
-import csv
-from django.conf import settings
-from io import BytesIO
-from reportlab.lib.pagesizes import letter
-
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
-from django.shortcuts import render
-from datetime import datetime, time
-from dateutil.parser import parse as parse_date
-from io import BytesIO
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-import openpyxl
-from openpyxl.drawing.image import Image as XLImage
-from openpyxl.styles import Alignment, Font, Border, Side, PatternFill
-from PIL import Image as PILImage
-from collections import defaultdict
-from dateutil.parser import parse as parse_date, ParserError
 
 
 @login_required
@@ -2898,11 +2622,12 @@ def report_view(request):
                 if selected_checksheet
                 else []
             )
+            from datetime import time as datetime_time
 
             # Only proceed with filtering if both dates are provided
             if start_date and end_date:
                 end_date = datetime.combine(
-                    end_date, time(hour=23, minute=59, second=59)
+                    end_date, datetime_time(hour=23, minute=59, second=59)
                 )
                 # Rest of your filtering logic remains the same
                 if tab == "checksheet" and selected_checksheet:
@@ -3021,7 +2746,7 @@ def report_view(request):
                         startersheet_id=selected_startersheet,
                         timestamp__range=(start_date, end_date),
                     )
-                    print(entries,"effffffffffffffffff")
+                    print(entries, "effffffffffffffffff")
                     if shift:
                         entries = entries.filter(shift=shift)
 
@@ -3032,17 +2757,25 @@ def report_view(request):
 
                         # Check if rejected
                         if entry.rejected_by_id:
-                            acknowledged_by = f"Rejected by {entry.rejected_by.username}"
+                            acknowledged_by = (
+                                f"Rejected by {entry.rejected_by.username}"
+                            )
                             acknowledged_time = entry.rejection_timestamp
                         # Check highest level of approval
                         elif entry.level_3_approval_id:
-                            acknowledged_by = f"Level 3: {entry.level_3_approval.username}"
+                            acknowledged_by = (
+                                f"Level 3: {entry.level_3_approval.username}"
+                            )
                             acknowledged_time = entry.level_3_approval_timestamp
                         elif entry.level_2_approval_id:
-                            acknowledged_by = f"Level 2: {entry.level_2_approval.username}"
+                            acknowledged_by = (
+                                f"Level 2: {entry.level_2_approval.username}"
+                            )
                             acknowledged_time = entry.level_2_approval_timestamp
                         elif entry.level_1_approval_id:
-                            acknowledged_by = f"Level 1: {entry.level_1_approval.username}"
+                            acknowledged_by = (
+                                f"Level 1: {entry.level_1_approval.username}"
+                            )
                             acknowledged_time = entry.level_1_approval_timestamp
 
                         # Format the timestamp if it exists
@@ -3055,7 +2788,9 @@ def report_view(request):
                         report_data.append(
                             {
                                 "user": entry.filled_by.username,
-                                "timestamp": entry.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                                "timestamp": entry.timestamp.strftime(
+                                    "%Y-%m-%d %H:%M:%S"
+                                ),
                                 "shift": entry.shift,
                                 "acknowledgment": entry.approval_status,
                                 "acknowledged_by": acknowledged_by,
@@ -3254,7 +2989,9 @@ def report_view(request):
             pdf.save()
             buffer.seek(0)
             response = HttpResponse(buffer, content_type="application/pdf")
-            filename = f"{checksheet_name} {start_date_str} to {end_date_str}".replace(" ", "_").replace("/", "-")
+            filename = f"{checksheet_name} {start_date_str} to {end_date_str}".replace(
+                " ", "_"
+            ).replace("/", "-")
             response["Content-Disposition"] = f'attachment; filename="{filename}.pdf"'
             return response
 
@@ -3334,12 +3071,16 @@ def report_view(request):
                     ws.cell(row=current_row, column=col).border = thin_border
                 current_row += 1
                 img_row = current_row
-                ws.row_dimensions[img_row].height = 120  # Increased to ensure images fit
+                ws.row_dimensions[img_row].height = (
+                    120  # Increased to ensure images fit
+                )
                 image_count = min(len(get_image), 4)
-                start_col = 2  # Start from column B to avoid overlapping with "Images:" label
+                start_col = (
+                    2  # Start from column B to avoid overlapping with "Images:" label
+                )
 
                 for img_idx in range(image_count):
-    
+
                     try:
                         # Custom column placement
                         if img_idx == 0:
@@ -3350,7 +3091,7 @@ def report_view(request):
                             col_num = 5  # Third image in column E
                         else:
                             col_num = 6  # Any additional images in column F
-                            
+
                         img = get_image[img_idx]
                         img_path = img.image.path
                         pil_img = PILImage.open(img_path)
@@ -3360,27 +3101,31 @@ def report_view(request):
                         pil_img.save(img_io, format=pil_img.format)
                         img_io.seek(0)
                         xl_img = XLImage(img_io)
-                        
+
                         # Calculate column letter
                         col_letter = chr(64 + col_num)
                         cell_address = f"{col_letter}{img_row}"
-                        
+
                         # Add image to worksheet
                         ws.add_image(xl_img, cell_address)
-                        
+
                         # Make the column wider to avoid overlap
                         ws.column_dimensions[col_letter].width = 30
-                        
+
                         # If you want empty columns between images to look nicer
                         if img_idx < image_count - 1:
                             # Set width for spacing column (column between images)
                             spacing_col = chr(65 + col_num)  # Next column
                             ws.column_dimensions[spacing_col].width = 5
-                        
-                        print(f"Placed image {img_idx} at column {col_letter} ({cell_address})")
+
+                        print(
+                            f"Placed image {img_idx} at column {col_letter} ({cell_address})"
+                        )
                     except Exception as e:
                         print(f"Error adding image to Excel: {e}")
-                        ws.cell(row=img_row, column=col_num).value = "Error loading image"
+                        ws.cell(row=img_row, column=col_num).value = (
+                            "Error loading image"
+                        )
                         ws.cell(row=img_row, column=col_num).border = thin_border
                 current_row = img_row + 2
             else:
@@ -3424,7 +3169,8 @@ def report_view(request):
                 if (
                     tab == "checksheet"
                     and row_num - 1 < len(rejection_reasons)
-                    and rejection_reasons[row_num - 1]["timestamp"] == entry["timestamp"]
+                    and rejection_reasons[row_num - 1]["timestamp"]
+                    == entry["timestamp"]
                 ):
                     status_data += f" (Rejection Reasons: {rejection_reasons[row_num - 1]['reasons']})"
                 max_data_length = max(max_data_length, len(status_data))
@@ -3438,12 +3184,17 @@ def report_view(request):
                 if (
                     tab == "checksheet"
                     and row_num - 1 < len(rejection_reasons)
-                    and rejection_reasons[row_num - 1]["timestamp"] == entry["timestamp"]
+                    and rejection_reasons[row_num - 1]["timestamp"]
+                    == entry["timestamp"]
                 ):
                     status_data += f" (Rejection Reasons: {rejection_reasons[row_num - 1]['reasons']})"
 
                 data_width = ws.column_dimensions[data_column].width * 1.2
-                lines_needed = max(1, len(status_data) // int(data_width) + (1 if len(status_data) % int(data_width) > 0 else 0))
+                lines_needed = max(
+                    1,
+                    len(status_data) // int(data_width)
+                    + (1 if len(status_data) % int(data_width) > 0 else 0),
+                )
                 row_height = max(22, lines_needed * 15)
                 ws.row_dimensions[data_row].height = row_height
 
@@ -3497,10 +3248,11 @@ def report_view(request):
             )
             start_date_str = start_date.strftime("%d-%m-%Y") if start_date else "N/A"
             end_date_str = end_date.strftime("%d-%m-%Y") if end_date else "N/A"
-            filename = f"{checksheet_name} {start_date_str} to {end_date_str}".replace(" ", "_").replace("/", "-")
+            filename = f"{checksheet_name} {start_date_str} to {end_date_str}".replace(
+                " ", "_"
+            ).replace("/", "-")
             response["Content-Disposition"] = f'attachment; filename="{filename}.xlsx"'
             return response
-
 
         print(report_data, "repor")
         return render(
@@ -3518,13 +3270,17 @@ def report_view(request):
     return render(request, "checksheet/access_denied.html")
 
 
+# ----------------------------------------- in fill_checksheet edit button to get data --------------------------------#
 def get_today_checksheets(request):
     today = localdate()
-    checksheet_id = request.GET.get('checksheet_id')
-    line = request.GET.get('line')
+    checksheet_id = request.GET.get("checksheet_id")
+    line = request.GET.get("line")
+    shift = request.GET.get("shift")
 
-    print(checksheet_id,line)
-    checksheets = FilledCheckSheet.objects.filter(checksheet=checksheet_id,line=line,timestamp__date=today)
+    print(checksheet_id, line)
+    checksheets = FilledCheckSheet.objects.filter(
+        checksheet=checksheet_id, line=line, timestamp__date=today, shift=shift
+    )
 
     data = [
         {"id": c.id, "status_data": c.status_data, "timestamp": c.timestamp}
@@ -3533,23 +3289,6 @@ def get_today_checksheets(request):
     print(data)
 
     return JsonResponse(data, safe=False)
-
-
-def get_checksheet_zones(request):
-    zones = Zone.objects.all().values("name", "input_type")
-    return JsonResponse(list(zones), safe=False)
-
-
-@csrf_exempt
-def update_checksheet_data(request, id):
-    if request.method == "POST":
-        checksheet = get_object_or_404(FilledCheckSheet, id=id)
-        data = json.loads(request.body)
-        checksheet.status_data = data["status_data"]
-        checksheet.save()
-        return JsonResponse({"success": True})
-
-    return JsonResponse({"success": False})
 
 
 # ----------------------------------------- function to request password change by user   --------------------------------#
@@ -3623,18 +3362,6 @@ def approve_password_reset(request, request_id):
     )
 
 
-@login_required
-@user_passes_test(lambda user: user.role == "admin")  # Only admin can access
-def get_user_access(request, user_id):
-    user = User.objects.get(id=user_id)
-    access_entries = PageAccess.objects.filter(user=user)
-    print(access_entries)
-    access_pages = [entry.page_name for entry in access_entries]
-    print(access_pages)
-
-    return JsonResponse({"pages": access_pages})
-
-
 # ----------------------------------------- manage acces function to give feature to users  --------------------------------#
 @login_required
 @user_passes_test(lambda user: user.role == "admin")  # Only admin can access
@@ -3696,7 +3423,7 @@ def manage_access(request):
                     first_record = duplicates.first()
                     # Delete all other records except the first one
                     duplicates.exclude(id=first_record.id).delete()
-        messages.success(request,"Access Granted",extra_tags="manage")
+        messages.success(request, "Access Granted", extra_tags="manage")
         return redirect(manage_access)
 
     return render(
@@ -4007,12 +3734,13 @@ def assign_poc_bulk(request):
 
 
 # ----------------------------------------- back date data request functionality  --------------------------------#
-from django.utils.timezone import make_aware
 
 
 @login_required
 def form_request_view(request):
-    if request.user.role == "shift_incharge" or has_page_access(request.user, "form_request_view"):
+    if request.user.role == "shift_incharge" or has_page_access(
+        request.user, "form_request_view"
+    ):
         if request.method == "POST":
             number_of_requests = int(request.POST.get("number_of_requests", 1))
             if number_of_requests > 20:
@@ -4035,7 +3763,9 @@ def form_request_view(request):
                 or len(reasons) != number_of_requests
                 or len(lines) != number_of_requests  # New: Validate lines
             ):
-                messages.error(request, "Invalid form submission. Please fill all fields.")
+                messages.error(
+                    request, "Invalid form submission. Please fill all fields."
+                )
                 return redirect("form_request_view")
 
             for i in range(number_of_requests):
@@ -4061,7 +3791,6 @@ def form_request_view(request):
                 "Back Data Submitted successfully!",
                 extra_tags="back_creation",
             )
-            
 
         # GET request handling
         checksheets = CheckSheet.objects.all()
@@ -4080,7 +3809,11 @@ def form_request_view(request):
                 "users": users,
                 "checksheets_for_js": json.dumps(
                     [
-                        {"id": checksheet.id, "name": checksheet.name, "line": checksheet.line}
+                        {
+                            "id": checksheet.id,
+                            "name": checksheet.name,
+                            "line": checksheet.line,
+                        }
                         for checksheet in checksheets
                     ]
                 ),
@@ -4119,12 +3852,12 @@ def fill_checksheet_request(request, request_id):
             checksheet__assigned_users=request.user,
             visible_until__gte=now(),
         ).select_related("checksheet")
-        
+
         try:
             form_request = form_requests.get(id=request_id)
         except FormRequest.DoesNotExist:
             return render(request, "checksheet/access_denied.html")
-        
+
         if request.method == "POST":
             status_data = {}
             complete_reject = request.POST.get("completely_reject")
@@ -4146,24 +3879,26 @@ def fill_checksheet_request(request, request_id):
             except ValueError:
                 complete_reject = 0
             status_data["completely_reject"] = complete_reject
-            
+
             if any(status_data.values()):  # Check if at least one value is not zero
                 try:
                     # Use transaction to ensure data integrity
                     with transaction.atomic():
                         # Find all entries for this checksheet, shift, and date
-                        date_obj = form_request.date  # Get the date part of the timestamp
+                        date_obj = (
+                            form_request.date
+                        )  # Get the date part of the timestamp
                         existing_entries = FilledCheckSheet.objects.filter(
-                            checksheet_id=form_request.checksheet.id, 
-                            shift=form_request.shift, 
+                            checksheet_id=form_request.checksheet.id,
+                            shift=form_request.shift,
                             timestamp__date=date_obj,
-                            line=form_request.line
+                            line=form_request.line,
                         )
-                        
+
                         # Delete existing entries if any
                         if existing_entries.exists():
                             existing_entries.delete()
-                        
+
                         # Create new entry
                         FilledCheckSheet.objects.create(
                             checksheet=form_request.checksheet,
@@ -4174,22 +3909,24 @@ def fill_checksheet_request(request, request_id):
                             line=form_request.line,
                             send_acknowledgment=True,
                         )
-                    
+
                     # Return JSON response for AJAX
-                    return JsonResponse({"success": True, "message": "Checksheet filled successfully."})
+                    return JsonResponse(
+                        {"success": True, "message": "Checksheet filled successfully."}
+                    )
                 except Exception as e:
                     # Return JSON error response for exceptions
-                    return JsonResponse(
-                        {"success": False, "error": str(e)},
-                        status=500
-                    )
+                    return JsonResponse({"success": False, "error": str(e)}, status=500)
             else:
                 # Return JSON error response
                 return JsonResponse(
-                    {"success": False, "error": "No valid data provided. Please fill the checksheet properly."},
-                    status=400
+                    {
+                        "success": False,
+                        "error": "No valid data provided. Please fill the checksheet properly.",
+                    },
+                    status=400,
                 )
-        
+
         zones = Zone.objects.filter(checksheet=form_request.checksheet)
         images = form_request.checksheet.images.all()
         return render(
@@ -4204,6 +3941,8 @@ def fill_checksheet_request(request, request_id):
         )
     return render(request, "checksheet/access_denied.html")
 
+
+# ----------------------------------------- delete Q-galery(ops/poc) --------------------------------#
 def delete_poc(request, poc_id):
     if request.method == "DELETE":
         poc = get_object_or_404(POCUpload, id=poc_id)
@@ -4219,10 +3958,7 @@ def delete_poc(request, poc_id):
     return JsonResponse({"error": "Invalid request"}, status=400)
 
 
-from django.shortcuts import get_object_or_404, redirect
-from .models import CheckSheet, StarterSheet, CustomUser
-
-
+# ----------------------------------------- assign checksheet and starter sheet to user by dropdown --------------------------------#
 def assign_users(request, sheet_type, sheet_id):
     if request.method == "POST":
         if sheet_type == "checksheet":
@@ -4240,72 +3976,6 @@ def assign_users(request, sheet_type, sheet_id):
             return redirect("all_checksheets")
         else:
             return redirect("all_startersheet")
-
-
-def fetch_valid_requests(request):
-    current_time_utc = now().replace(second=0, microsecond=0)
-    local_tz = pytz.timezone("Asia/Kolkata")
-    current_time_local = current_time_utc.astimezone(local_tz)
-
-    form_requests = FormRequest.objects.filter(
-        status="Accepted", checksheet__assigned_users=request.user
-    )
-
-    valid_requests = []
-    for req in form_requests:
-        if req.visible_until:
-            visible_until_utc = req.visible_until.replace(
-                second=0, microsecond=0, tzinfo=None
-            )
-            current_time_local_clean = current_time_local.replace(
-                second=0, microsecond=0, tzinfo=None
-            )
-
-            if visible_until_utc >= current_time_local_clean:
-                valid_requests.append(
-                    {
-                        "id": req.id,
-                        "checksheet_aname": (
-                            req.checksheet.name if req.checksheet else "N/A"
-                        ),
-                        "visible_until": req.visible_until.isoformat(),  # Convert datetime to string
-                    }
-                )
-
-    return JsonResponse({"form_requests": valid_requests})
-
-
-@csrf_exempt
-def save_checksheet(request):
-    if request.method == "POST":
-        try:
-            if not request.body:
-                return JsonResponse(
-                    {"success": False, "error": "Empty request body"}, status=400
-                )
-
-            data = json.loads(request.body)
-
-            if not isinstance(data, dict):
-                return JsonResponse(
-                    {"success": False, "error": "Invalid JSON format"}, status=400
-                )
-
-            FilledCheckSheet.objects.create(
-                **data
-            )  # Adjust according to your model fields
-            return JsonResponse({"success": True})
-
-        except json.JSONDecodeError:
-            return JsonResponse(
-                {"success": False, "error": "Invalid JSON data"}, status=400
-            )
-        except Exception as e:
-            return JsonResponse({"success": False, "error": str(e)}, status=400)
-
-    return JsonResponse(
-        {"success": False, "error": "Invalid request method"}, status=400
-    )
 
 
 @csrf_exempt
@@ -4335,6 +4005,10 @@ def mark_poc_as_read(request):
             return JsonResponse({"status": "error", "message": str(e)}, status=400)
     return JsonResponse({"status": "error"}, status=400)
 
+
+# ------------------------------to show images in view checksheet  --------------------------------#
+
+
 def get_checksheet_images(request):
     checksheet_name = request.GET.get("name", "")
     checksheet_line = request.GET.get("line", "")  # Get the line parameter
@@ -4356,13 +4030,7 @@ def get_checksheet_images(request):
         return JsonResponse({"success": False, "error": str(e)})
 
 
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.utils import timezone
-from datetime import datetime
-import json
-
-
+# ------------------------------when operator click finish to send for acknowledgment  --------------------------------#
 @login_required
 def send_acknowledgments(request):
     if request.method == "POST":
@@ -4394,6 +4062,7 @@ def send_acknowledgments(request):
     )
 
 
+# ------------------------------ to assing user on approver level on checksheet and startersheet page  --------------------------------#
 @login_required
 def assign_approver(request, model_type, pk, level):
     """Assign approver for a StarterSheet or CheckSheet"""
@@ -4433,6 +4102,9 @@ def assign_approver(request, model_type, pk, level):
         return redirect("all_startersheet")
     else:
         return redirect("all_checksheets")
+
+
+# ------------------------------ for admin approvel yes or no  --------------------------------#
 
 
 @login_required
@@ -4476,6 +4148,9 @@ def toggle_level3_approval(request, pk, model_type=None):
     return redirect(redirect_url)
 
 
+# ------------------------------approvel hierarchy of checksheet  --------------------------------#
+
+
 def get_checksheet_approval_hierarchy(request):
     # Extract request parameters
     checksheet_name = request.GET.get("name")
@@ -4485,7 +4160,9 @@ def get_checksheet_approval_hierarchy(request):
     line = request.GET.get("line")  # Added line parameter
 
     # Validate required parameters
-    if not all([checksheet_name, username, shift, date, line]):  # Added line to required params
+    if not all(
+        [checksheet_name, username, shift, date, line]
+    ):  # Added line to required params
         return JsonResponse({"error": "Missing required parameters"}, status=400)
 
     try:
@@ -4500,7 +4177,10 @@ def get_checksheet_approval_hierarchy(request):
             checksheet_obj = CheckSheet.objects.get(name=checksheet_name, line=line)
         except CheckSheet.DoesNotExist:
             return JsonResponse(
-                {"error": f"Checksheet '{checksheet_name}' with line '{line}' not found"}, status=404
+                {
+                    "error": f"Checksheet '{checksheet_name}' with line '{line}' not found"
+                },
+                status=404,
             )
 
         # Now fetch the filled checksheet with correct objects
@@ -4723,8 +4403,7 @@ def get_checksheet_approval_hierarchy(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-from django.db import transaction
-
+# ------------------------------edit the checksheet count by admin in settings  --------------------------------#
 @login_required
 @csrf_exempt
 def update_checksheet_errors(request):
@@ -4806,7 +4485,7 @@ def update_checksheet_errors(request):
 
             # Delete all existing entries only after successfully creating the new one
             entries.delete()
-            
+
             # Save the new entry
             new_entry.save()
 
@@ -4829,25 +4508,6 @@ def update_checksheet_errors(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-
-from django.utils import timezone
-import pytz
-
-def edit_checksheet_view(request):
-    """Render the checksheet editor page"""
-    # Get all checksheets for the dropdown
-    checksheets = CheckSheet.objects.all()
-    # Get unique lines
-    lines = CheckSheet.objects.values_list('line', flat=True).distinct()
-    
-    return render(
-        request, 
-        "checksheet/change_back_data.html", 
-        {
-            "checksheets": checksheets,
-            "lines": lines
-        }
-    )
 
 @login_required
 def get_checksheet_data(request):
@@ -4878,8 +4538,10 @@ def get_checksheet_data(request):
             checksheet = CheckSheet.objects.get(name=checksheet_name, line=line)
         except CheckSheet.DoesNotExist:
             return JsonResponse(
-                {"error": f"Checksheet '{checksheet_name}' for line '{line}' not found"}, 
-                status=404
+                {
+                    "error": f"Checksheet '{checksheet_name}' for line '{line}' not found"
+                },
+                status=404,
             )
 
         # Find entries for this checksheet, shift, and date
@@ -4941,24 +4603,26 @@ def get_checksheets_by_line(request):
     """
     try:
         line = request.GET.get("line")
-        
+
         if not line:
             return JsonResponse({"error": "Line parameter is required"}, status=400)
-            
+
         checksheets = CheckSheet.objects.filter(line=line)
-        
+
         # Convert to list of dict for JSON response
         checksheet_list = []
         for checksheet in checksheets:
-            checksheet_list.append({
-                "id": checksheet.id,
-                "name": checksheet.name,
-                "line": checksheet.line,
-                "requires_level_3_approval": checksheet.require_level_3_approval
-            })
-            
+            checksheet_list.append(
+                {
+                    "id": checksheet.id,
+                    "name": checksheet.name,
+                    "line": checksheet.line,
+                    "requires_level_3_approval": checksheet.require_level_3_approval,
+                }
+            )
+
         return JsonResponse({"checksheets": checksheet_list})
-        
+
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
@@ -4971,21 +4635,24 @@ def get_all_checksheets(request):
     """
     try:
         checksheets = CheckSheet.objects.all()
-        
+
         # Convert to list of dict for JSON response
         checksheet_list = []
         for checksheet in checksheets:
-            checksheet_list.append({
-                "id": checksheet.id,
-                "name": checksheet.name,
-                "line": checksheet.line,
-                "requires_level_3_approval": checksheet.require_level_3_approval
-            })
-            
+            checksheet_list.append(
+                {
+                    "id": checksheet.id,
+                    "name": checksheet.name,
+                    "line": checksheet.line,
+                    "requires_level_3_approval": checksheet.require_level_3_approval,
+                }
+            )
+
         return JsonResponse({"checksheets": checksheet_list})
-        
+
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
 
 @login_required
 def shiftpage(request):
@@ -5012,15 +4679,16 @@ def shiftpage(request):
                 shift_B_start=shift_B_start,
                 shift_B_end=shift_B_end,
             )
-        messages.success(request,"Shift Saved",extra_tags="shift")
+        messages.success(request, "Shift Saved", extra_tags="shift")
         return redirect("setting_view")  # Redirect to refresh the page
 
     return render(request, "checksheet/shift_page.html", {"shift": shift_instance})
 
 
-def check_server_time(request):
+@require_http_methods(["GET"])
+def get_shift_data(request):
     """
-    Check the current server time and determine if the shift has changed
+    Initial endpoint to get all shift times at once
     """
     IST = pytz.timezone("Asia/Kolkata")
     current_time = now().astimezone(IST).time()
@@ -5028,67 +4696,131 @@ def check_server_time(request):
     try:
         shift_times = Shifttime.objects.first()
 
-        # Get the user's current shift from the session
-        current_user_shift = request.session.get("current_shift", None)
-
         # Determine which shift should be active based on the current time
-        current_time_shift = None
+        current_shift = None
         if shift_times.shift_A_start <= current_time < shift_times.shift_A_end:
-            current_time_shift = "A"
+            current_shift = "A"
         elif shift_times.shift_B_start <= current_time < shift_times.shift_B_end:
-            current_time_shift = "B"
+            current_shift = "B"
 
-        # Update the session with the current shift
-        if current_time_shift:
-            request.session["current_shift"] = current_time_shift
+        # Save current shift in session
+        request.session["current_shift"] = current_shift
 
-        # Determine if we're at or past a shift end time
-        shift_changed = False
-
-        # Only trigger shift change if user is in a different shift than they should be
-        if (
-            current_user_shift
-            and current_time_shift
-            and current_user_shift != current_time_shift
-        ):
-            # Check if we're within 1 minute of a shift transition
-            if (
-                current_time >= shift_times.shift_A_end
-                and current_time
-                < shift_times.shift_A_end.replace(
-                    minute=shift_times.shift_A_end.minute + 1
-                )
-            ):
-                shift_changed = True
-            elif (
-                current_time >= shift_times.shift_B_end
-                and current_time
-                < shift_times.shift_B_end.replace(
-                    minute=shift_times.shift_B_end.minute + 1
-                )
-            ):
-                shift_changed = True
-        print(current_time_shift, shift_times.shift_B_end.strftime("%I:%M %p"))
         return JsonResponse(
             {
+                "shift_times": {
+                    "shift_a_start": shift_times.shift_A_start.strftime("%H:%M:%S"),
+                    "shift_a_end": shift_times.shift_A_end.strftime("%H:%M:%S"),
+                    "shift_b_start": shift_times.shift_B_start.strftime("%H:%M:%S"),
+                    "shift_b_end": shift_times.shift_B_end.strftime("%H:%M:%S"),
+                },
+                "current_shift": current_shift,
                 "current_time": current_time.strftime("%H:%M:%S"),
-                "current_time_shift": current_time_shift,
-                "user_shift": current_user_shift,
-                "shift_changed": shift_changed,
-                # Add these fields to support dynamic shift updating in the frontend
-                "shift_a_end": shift_times.shift_A_end.strftime("%I:%M %p"),
-                "shift_b_end": shift_times.shift_B_end.strftime("%I:%M %p"),
             }
         )
 
     except Shifttime.DoesNotExist:
         return JsonResponse(
             {
+                "error": "Shift times not configured",
                 "current_time": current_time.strftime("%H:%M:%S"),
-                "shift_changed": False,
+            },
+            status=404,
+        )
+
+
+# ----------------- shift function to change shift ------------#
+@require_http_methods(["POST"])
+def verify_shift_change(request):
+    """
+    Endpoint to verify if a shift change should result in a logout
+    """
+    IST = pytz.timezone("Asia/Kolkata")
+    current_time = now().astimezone(IST).time()
+
+    try:
+        # Parse the request body
+        data = json.loads(request.body)
+        client_shift = data.get("client_shift")
+
+        # Get user's current stored shift
+        session_shift = request.session.get("current_shift")
+
+        shift_times = Shifttime.objects.first()
+
+        # Determine which shift should be active based on the current time
+        server_shift = None
+        if shift_times.shift_A_start <= current_time < shift_times.shift_A_end:
+            server_shift = "A"
+        elif shift_times.shift_B_start <= current_time < shift_times.shift_B_end:
+            server_shift = "B"
+
+        # Update the session with the current shift
+        request.session["current_shift"] = server_shift
+
+        # Determine if logout is needed
+        should_logout = False
+
+        # Case 1: Client thinks it's end of shift B
+        if client_shift == "B" and server_shift is None:
+            # Verify we're close to shift B end
+            if is_time_near(current_time, shift_times.shift_B_end, minutes=3):
+                should_logout = True
+
+        # Case 2: Client thinks it's end of shift A but server says B
+        elif session_shift == "A" and server_shift == "B":
+            # Verify we're close to shift A end
+            if is_time_near(current_time, shift_times.shift_A_end, minutes=3):
+                should_logout = True
+
+        # Case 3: Shift mismatch between session and server (rare case)
+        elif session_shift and server_shift and session_shift != server_shift:
+            should_logout = True
+
+        return JsonResponse(
+            {
+                "should_logout": should_logout,
+                "current_shift": server_shift,
+                "server_time": current_time.strftime("%H:%M:%S"),
             }
         )
 
+    except (Shifttime.DoesNotExist, json.JSONDecodeError) as e:
+        return JsonResponse(
+            {
+                "error": str(e),
+                "should_logout": False,
+                "current_time": current_time.strftime("%H:%M:%S"),
+            },
+            status=400,
+        )
+
+
+# ------------to show countdown of shift ending -------------#
+
+
+def is_time_near(current_time, target_time, minutes=3):
+    """
+    Helper function to check if current time is within X minutes of target time
+    """
+    if not current_time or not target_time:
+        return False
+
+    # Calculate the time range
+    import datetime
+
+    # Convert to datetime.datetime for easier manipulation
+    base_date = datetime.datetime.today().date()
+    current_datetime = datetime.datetime.combine(base_date, current_time)
+    target_datetime = datetime.datetime.combine(base_date, target_time)
+
+    # Calculate time difference in minutes
+    time_diff = abs((current_datetime - target_datetime).total_seconds()) / 60
+
+    return time_diff <= minutes
+
+
+# ------------------------setting page -----------------#
 @login_required
 def setting_view(request):
     """
@@ -5096,34 +4828,27 @@ def setting_view(request):
     """
     # Get shift data
     shift_instance = Shifttime.objects.first()
-    
+
     # Get checksheets for the error editor
     checksheets = CheckSheet.objects.all()
-    
-    
-    
-    config = RejectionAlertConfig.objects.get()
+
+    # Get RejectionAlertConfig, handle case where it doesn't exist
+    config = RejectionAlertConfig.objects.first()  # Returns None if no record exists
+    phone_numbers = (
+        config.get_phone_numbers() if config else []
+    )  # Default to empty list if no config
+
     context = {
-    
         "checksheets": checksheets,
         "config": config,
-        "shift":shift_instance,
-        "phone_numbers": config.get_phone_numbers(),
+        "shift": shift_instance,
+        "phone_numbers": phone_numbers,
     }
-    
+
     return render(request, "checksheet/settings.html", context)
 
 
-from twilio.rest import Client
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .models import RejectionAlertConfig
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .models import RejectionAlertConfig
-
-
+# --------------rejection alert functions------------------#
 def rejection_alert_config(request):
     # Try to get existing config or create new one
     config, created = RejectionAlertConfig.objects.get_or_create(pk=1)
@@ -5157,29 +4882,16 @@ def rejection_alert_config(request):
     shift_instance = Shifttime.objects.first()
     context = {
         "config": config,
-        "shift":shift_instance,
+        "shift": shift_instance,
         "phone_numbers": config.get_phone_numbers(),
     }
 
     return render(request, "checksheet/settings.html", context)
 
 
-import time
-import json
-import threading
-from datetime import timedelta
-from django.utils import timezone
-from twilio.rest import Client
-import re
-from datetime import timedelta
-from django.utils import timezone
-from twilio.rest import Client
-
-
-
 def send_sms(phone_number, message_text):
     account_sid = "ACd7994a397edfc86cb7966dd4178c6815"  # Your Twilio Account SID
-    auth_token = "f33dc07256b0fc4e3af2b7242c33417b"     # Your Auth Token
+    auth_token = "f33dc07256b0fc4e3af2b7242c33417b"  # Your Auth Token
 
     client = Client(account_sid, auth_token)
 

@@ -30,7 +30,6 @@ def to_float(value):
 import pytz
 
 
-
 @register.filter
 def to_ist(value):
     if not value:
@@ -40,5 +39,15 @@ def to_ist(value):
     if utc_time.tzinfo is None:
         # Make it timezone-aware if it's naive
         utc_time = pytz.utc.localize(utc_time)
-    ist_time = utc_time.astimezone(pytz.timezone('Asia/Kolkata'))
-    return ist_time.strftime('%Y-%m-%d %H:%M:%S')
+    ist_time = utc_time.astimezone(pytz.timezone("Asia/Kolkata"))
+    return ist_time.strftime("%Y-%m-%d %H:%M:%S")
+
+
+@register.filter
+def split(value, delimiter):
+    return value.split(delimiter)
+
+
+@register.filter
+def trim(value):
+    return value.strip()

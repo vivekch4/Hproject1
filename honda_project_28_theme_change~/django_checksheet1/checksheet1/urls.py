@@ -50,23 +50,10 @@ urlpatterns = [
         view_filled_startersheet,
         name="view_filled_startersheet",
     ),
-    # path(
-    #     "acknowledge/<int:startersheet_id>/<int:id>/<str:action>/",
-    #     update_acknowledgment,
-    #     name="update_acknowledgment",
-    # ),
-    path("forgot-password/", forgot_password, name="forgot_password"),
-    path("verify-otp/", verify_otp, name="verify_otp"),
     path("reset-password/", reset_password, name="reset_password"),
     path("assign-sheets/<int:user_id>/", assign_sheets, name="assign_sheets"),
     path("report/", report_view, name="report"),
     path("get_today_checksheets/", get_today_checksheets, name="get_today_checksheets"),
-    path(
-        "update_checksheet_data/<int:id>/",
-        update_checksheet_data,
-        name="update_checksheet_data",
-    ),
-    path("get_checksheet_zones/", get_checksheet_zones, name="get_checksheet_zones"),
     path(
         "request-password-reset/", request_password_reset, name="request_password_reset"
     ),
@@ -81,7 +68,6 @@ urlpatterns = [
         name="admin_password_requests",
     ),
     path("manage-access/", manage_access, name="manage_access"),
-    path("get_user_access/<int:user_id>/", get_user_access, name="get_user_access"),
     path(
         "delete_checksheet/<int:checksheet_id>/",
         delete_checksheet,
@@ -108,11 +94,8 @@ urlpatterns = [
         assign_users,
         name="assign_users",
     ),
-    path("fetch_valid_requests/", fetch_valid_requests, name="fetch_valid_requests"),
     path("get_chart_data/", get_chart_data, name="get_chart_data"),
     path("get_pie_chart_data/", get_pie_chart_data, name="get_pie_chart_data"),
-    path("save_checksheet/", save_checksheet, name="save_checksheet"),
-    # path("get_latest_production/", get_latest_production, name="get_latest_production"),
     path("mark_poc_as_read/", mark_poc_as_read, name="mark_poc_as_read"),
     path(
         "get_checksheet_images/",
@@ -126,7 +109,6 @@ urlpatterns = [
         assign_approver,
         name="assign_approver",
     ),
-    # Toggle level 3 approval - update to include model_type
     path(
         "toggle-level3-approval/<str:model_type>/<int:pk>/",
         toggle_level3_approval,
@@ -137,7 +119,6 @@ urlpatterns = [
         get_checksheet_approval_hierarchy,
         name="get_checksheet_approval_hierarchy",
     ),
-    path("edit-checksheet/", edit_checksheet_view, name="edit_checksheet"),
     path(
         "api/update-checksheet-errors/",
         update_checksheet_errors,
@@ -145,13 +126,17 @@ urlpatterns = [
     ),
     path("api/get-checksheet-data/", get_checksheet_data, name="get_checksheet_data"),
     path("shiftpage/", shiftpage, name="shiftpage"),
-    path("check-server-time/", check_server_time, name="check_server_time"),
-    path('setting_view/', setting_view, name='setting_view'),
-    path('api/get-checksheets-by-line/',get_checksheets_by_line, name='get_checksheets_by_line'),
-    path('api/get-all-checksheets/', get_all_checksheets, name='get_all_checksheets'),
+    path("setting_view/", setting_view, name="setting_view"),
+    path(
+        "api/get-checksheets-by-line/",
+        get_checksheets_by_line,
+        name="get_checksheets_by_line",
+    ),
+    path("api/get-all-checksheets/", get_all_checksheets, name="get_all_checksheets"),
     path("accounts/login/", redirect_to_login),
     path(
         "rejection_alert_config/", rejection_alert_config, name="rejection_alert_config"
     ),
+    path("get-shift-data/", get_shift_data, name="get-shift-data"),
+    path("verify-shift-change/", verify_shift_change, name="verify-shift-change"),
 ]
-

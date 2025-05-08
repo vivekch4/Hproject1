@@ -1,0 +1,257 @@
+/* Scrollbar Styling */
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #3b82f6;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #2563eb;
+}
+
+/* Firefox Scrollbar */
+.table-responsive {
+    scrollbar-color: #3b82f6 rgba(255, 255, 255, 0.1);
+    scrollbar-width: thin;
+}
+
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.3rem;
+    margin-bottom: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+body.white-mode .header {
+    border-bottom: 1px solid #e2e8f0;
+    background:unset;
+}
+body.white-mode .table-responsive{
+    background:unset;
+}
+.page-title {
+    color: #ffffff;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+body.white-mode .page-title {
+    color: #1e293b;
+}
+
+.buttons-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.submit-btn {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--accent-color);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.submit-btn:hover {
+    background-color: var(--accent-color);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 10px var(--accent-color);
+}
+
+.submit-btn i {
+    margin-right: 6px;
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+body.white-mode .back-button {
+    background: #f1f5f9;
+    color: #6474eb;
+}
+
+.back-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.poc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.poc-table thead {
+    background: var(--accent-color);
+    border: 1.5px solid var(--accent-color-solid);
+}
+body.white-mode .poc-table thead {
+    background: var(--accent-color-solid);
+    
+}
+
+.poc-table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 500;
+    color: white;
+    font-size: 0.875rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+}
+
+.poc-table td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    font-weight: 400;
+    vertical-align: middle;
+}
+
+body.white-mode .poc-table td {
+    color: unset;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.poc-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+body.white-mode .poc-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.poc-table input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    margin: 0;
+    display: block;
+}
+
+body.white-mode .poc-table input[type="checkbox"] {
+    border: 2px solid #9f9f9f4d;
+}
+
+.poc-table input[type="checkbox"]:checked {
+    background-color:var(--accent-color);
+    border-color:var(--accent-color-solid);
+}
+
+.poc-table input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 0px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.poc-table input[type="checkbox"]:hover {
+    border-color: #6366f1;
+}
+
+.checksheet-name {
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+body.white-mode .pagination {
+    background-color: #f8fafc;
+}
+
+body.white-mode .pagination span {
+    color: grey;
+}
+
+@media (max-width: 640px) {
+    .page-container {
+        padding: 0;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .buttons-container {
+        margin-top: 10px;
+        width: 100%;
+    }
+
+    .poc-table th,
+    .poc-table td {
+        padding: 8px 12px;
+    }
+}

@@ -1,756 +1,12 @@
 {% extends 'checksheet/base.html' %}
+{% load static %}
+{% block extra_css %}
+
+<link rel="stylesheet" href="{% static 'css/acknowledge.css' %}">
+{% endblock %}
 {% block title %}Pending Acknowledgments{% endblock %}
 {% block content %}
-<style>
-    .page-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 0;
-    }
-    body.white-mode .checksheets-container td{
-        color:unset;
-    }
-    option {
-        background: #1e293b;
-    }
-    body.white-mode  option{
-        background:white;
-        color:#334155;
-    }
-    .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.3rem;
-        margin-bottom: 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .page-title {
-        color: var(--text-light);
-        font-size: 1.25rem;
-        font-weight: 600;
-    }
-  
-    
-    /* Tabs styling */
-    .tabs {
-        display: flex;
-        padding: 0 16px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .tab-button {
-        padding: 10px 18px;
-        background: transparent;
-        border: none;
-        border-bottom: 2px solid transparent;
-        cursor: pointer;
-        font-weight: 500;
-        font-size: 0.875rem;
-        color:var(--text-light)
-        transition: all 0.2s;
-    }
-    body.white-mode .tab-button {
-       
-        background: transparent;
-        
-        color: var(--text-light);
-        
-    }
-    .tab-button.active {
-       
-        color: var(--accent-color-solid);
-        border-bottom: 2px solid var(--accent-color-solid);
-    }
-    body.white-mode .tab-button.active {
-       
-        color: var(--accent-color-solid);
-        border-bottom: 2px solid var(--accent-color-solid);
-    }
-    
-   
-    .tab-content {
-        display: none;
-    }
-    
-    .tab-content.active {
-        display: block;
-    }
-    
-    /* Search container */
-    .search-container {
-        display: flex;
-        align-items: center;
-        padding: 1rem;
-        background-color: rgba(255, 255, 255, 0.05);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .search-input-container {
-        position: relative;
-        max-width: 400px;
-        width: 100%;
-    }
-    
-    .search-input {
-        width: 100%;
-        padding: 8px 16px 8px 36px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        font-size: 0.875rem;
-        color: #ffffff;
-        background-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    .search-input:focus {
-        outline: none;
-        border-color: var(--accent-color);
-        box-shadow: 0 0 0 1px  var(--accent-color);
-    }
-    body.white-mode .filter-select {
-        border: 1px solid #e2e8f0;
-        color: #334155;
-    }
-    .search-icon {
-        position: absolute;
-        left: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.7);
-    }
-    
-    .filter-options {
-        display: flex;
-        align-items: center;
-        margin-left: 16px;
-        gap: 8px;
-    }
-    
-    .filter-label {
-        font-size: 0.875rem;
-        color: var(--text-light);
-    }
-    body.white-mode .search-icon {
-        color: #94a3b8;
-    }
-    body.white-mode .search-input {
-        border: 1px solid #e2e8f0;
-      
-    }
-    .filter-select {
-        padding: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        font-size: 0.875rem;
-        color: #ffffff;
-        background-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    /* Filter section */
-    .filter-section {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        padding: 12px 16px;
-        background: rgba(0, 0, 0, 0.2);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    /* Table container */
-    .table-responsive {
-        overflow-x: auto;
-        width: 100%;
-        background-color: rgba(0, 0, 0, 0.2);
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        margin-bottom: 1.5rem;
-    }
 
-    body.white-mode .table-responsive {
-        
-        background-color: unset;
-        
-    }
-    body.white-mode .filter-section{
-        background-color: #f8fafc;
-    }
-    body.white-mode .pagination {
-        background-color: #f8fafc;
-        color:var(--text-light);
-    }
-    
-    /* List View - Table Style */
-    .checksheets-container {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    .checksheets-container thead {
-        background: var(--accent-color);
-        border:1.5px solid var(--accent-color-solid);
-
-    }
-    
-    .checksheets-container th {
-        padding: 12px 16px;
-        text-align: left;
-        font-weight: 500;
-        color: var(--text-light);
-        font-size: 0.875rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        white-space: nowrap;
-        cursor: pointer;
-    }
-    
-    .checksheets-container th i {
-        margin-left: 5px;
-        color: var(--text-light);
-    }
-    
-    .checksheets-container th i.fa-sort-up,
-    .checksheets-container th i.fa-sort-down {
-        color: #3b82f6;
-    }
-    
-    .checksheets-container td {
-        padding: 12px 16px;
-        text-align: left;
-        border-bottom: 1px solid rgb(161 161 161 /82%);
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 0.875rem;
-        font-weight: 400;
-    }
-    
-    
-    .checksheets-container tbody tr:hover {
-        background-color: rgba(255, 255, 255, 0.05);
-    }
-    
-    /* Checkbox styling */
-    .checkbox {
-        appearance: none;
-        width: 16px;
-        height: 16px;
-        cursor: pointer;
-        border-radius: 3px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        background-color: rgba(255, 255, 255, 0.1);
-        position: relative;
-    }
-    
-    .checkbox:checked {
-        background-color: var(--accent-color);
-      
-    }
-   
-    
-    .checkbox:checked::after {
-        content: '';
-        position: absolute;
-        left: 4px;
-        top: -1px;
-        width: 5px;
-        height: 10px;
-        border: solid white;
-        border-width: 0 2px 2px 0;
-        transform: rotate(45deg);
-    }
-    
-    /* Shift badge styles */
-    .shift-badge {
-        display: inline-flex;
-        padding: 4px 10px;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-   
-    
-    
-    /* Action buttons */
-    .action-buttons-top {
-        display: flex;
-        gap: 8px;
-    }
-    
-    .reject-button {
-        display: inline-flex;
-        align-items: center;
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        border: none;
-        background:var(--accent-color);
-        color:var(--text-light);
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .accept-button {
-        display: inline-flex;
-        align-items: center;
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        border: none;
-        background:var(--accent-color);
-        color:var(--text-light);
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    body.white-mode .accept-button{
-      
-        background:var(--accent-color-solid);
-        color:white;
-       
-    }
-    body.white-mode .reject-button {
-      
-        background:var(--accent-color-solid);
-        color:white;
-       
-    }
-   
-    
-    .accept-button:hover,.reject-button:hover {
-       border:1.5px solid var(--accent-color-solid);
-        transform: translateY(-3px);
-    }
-    
-    
-    
-    
-    /* View buttons */
-    .view-button {
-        display: inline-flex;
-        align-items: center;
-        padding: 6px 10px;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 500;
-        text-decoration: none;
-        background-color: var(--accent-color);
-        color: var(--text-light);
-        border: 1px solid var(--accent-color-solid);
-        transition: all 0.2s;
-    }
-    body.white-mode .view-button {
-        
-        background-color: var(--accent-color-solid);
-        color: white;
-        
-    }
-    
-    .view-button:hover {
-        background-color: var(--accent-color-solid);
-    }
-    
-    .view-button1 {
-        display: inline-flex;
-        align-items: center;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 500;
-        background-color: var(--accent-color);
-        color: var(--text-light);
-        border: 1px solid var(--accent-color-solid);
-        
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    body.white-mode .view-button1 {
-        
-        background-color: var(--accent-color-solid);
-        color: white;
-       
-    }
-    
-    .view-button1:hover {
-        background-color: var(--accent-color-solid)
-    }
-    body.white-mode input[type="checkbox"] {
-        border: 2px solid #9f9f9f4d;
-    }
-    /* Zone data styling */
-    .zone-data {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-    }
-    
-    .zone-item {
-        display: inline-flex;
-        padding: 4px 10px;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
-        background-color: rgba(59, 130, 246, 0.2);
-        color: #3b82f6;
-        border: 1px solid rgba(59, 130, 246, 0.5);
-        max-width: 100%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    
-    /* Empty state */
-    .empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 3rem;
-        background-color: rgba(0, 0, 0, 0.2);
-        border-radius: 8px;
-        text-align: center;
-        color: rgba(255, 255, 255, 0.7);
-        border: 1px dashed rgba(255, 255, 255, 0.2);
-    }
-    
-    .empty-state i {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-        color: rgba(255, 255, 255, 0.5);
-    }
-    
-    .empty-text {
-        color: rgba(255, 255, 255, 0.5);
-        font-style: italic;
-        font-size: 0.875rem;
-    }
-    
-    /* Pagination */
-    .pagination {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 16px;
-        background-color: rgba(0, 0, 0, 0.2);
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        font-size: 0.875rem;
-        color: rgba(255, 255, 255, 0.7);
-        border-bottom-left-radius: 8px;
-        border-bottom-right-radius: 8px;
-    }
-    
-    /* Modal styles */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0, 0, 0, 0.5);
-    }
-    
-    .modal-content {
-        background-color: #1e293b;
-        margin: 5% auto;
-        padding: 25px;
-        border-radius: 8px;
-        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
-        width: 80%;
-        max-width: 900px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    body.white-mode .modal-content {
-        background-color: white;
-        margin: 5% auto;
-        padding: 25px;
-        border-radius: 8px;
-        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
-        width: 80%;
-        max-width: 900px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    .close, .close1 {
-        color: var(--text-light);
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-        cursor: pointer;
-        position: relative;
-        top: -2rem;
-        left: 1rem;
-    }
-    
-    .close:hover, .close1:hover {
-        color: var(--text-light);
-    }
-    
-    /* Checksheet header with images */
-    .checksheet-header {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 20px;
-        padding: 15px;
-        background-color: rgba(255, 255, 255, 0.05);
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    body.white-mode .checksheet-header {
-      
-        background-color: rgb(183 183 183 / 38%);
-   
-        border: 1px solid rgb(161 161 161 / 82%);
-    }
-    
-    .checksheet-title-container {
-        margin-bottom: 15px;
-    }
-    
-    .checksheet-name {
-        font-size: 22px;
-        font-weight: 600;
-        color: var(--text-light);
-    }
-    
-    .checksheet-images-row {
-        display: flex;
-        overflow-x: auto;
-        gap: 15px;
-        padding: 10px 0;
-        flex-wrap: wrap;
-        align-content: space-around;
-        justify-content: center;
-    }
-    
-    .checksheet-image {
-        width: 200px;
-        height: 150px;
-        flex-shrink: 0;
-        object-fit: contain;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: transform 0.2s;
-    }
-    
-    .checksheet-image:hover {
-        transform: scale(1.03);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    
-    /* User details row */
-    .user-details-row {
-        display: flex;
-        flex-wrap: wrap;
-        background-color: rgba(255, 255, 255, 0.05);
-        padding: 12px 15px;
-        border-radius: 6px;
-        margin-bottom: 20px;
-        border-left: 4px solid #3b82f6;
-    }
-
-    body.white-mode .user-details-row {
-      
-        background-color: rgb(183 183 183 / 38%);
-        border: 1px solid rgb(161 161 161 / 82%);
-        border-left: 4px solid var(--accent-color-solid);
-    }
-    
-    .detail-item {
-        padding: 0 12px;
-        margin: 5px 0;
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
-        flex: 1;
-        min-width: 150px;
-    }
-    
-    .detail-item:last-child {
-        border-right: none;
-    }
-    
-    .detail-label {
-        font-weight: 600;
-        color: var(--text-light);
-        margin-right: 6px;
-    }
-    
-    .detail-value {
-        color:var(--text-light);
-    }
-    body.white-mode h3{
-        color:var(--text-light);
-    }
-    /* Zone data styling */
-    .zone-data-container_for {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin: 15px 0;
-        background-color: rgba(255, 255, 255, 0.05);
-        padding: 15px;
-        border-radius: 5px;
-    }
-    
-    .zone-item_for {
-        background-color: rgba(59, 130, 246, 0.2);
-        padding: 8px 12px;
-        border-radius: 4px;
-        display: inline-block;
-        border-left: 3px solid #3b82f6;
-        color: #3b82f6;
-        font-size: 0.875rem;
-    }
-    
-    /* Approval hierarchy styles */
-    .approval-hierarchy-section {
-        margin-top: 20px;
-        padding-top: 10px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .approval-hierarchy-section h3 {
-        margin-bottom: 15px;
-        font-size: 1rem;
-        font-weight: 600;
-        color: #ffffff;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding-bottom: 8px;
-    }
-    
-    .approval-hierarchy-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 15px;
-    }
-    
-    .approval-hierarchy-table th,
-    .approval-hierarchy-table td {
-        padding: 10px;
-        text-align: left;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 0.875rem;
-    }
-    body.white-mode .approval-hierarchy-table th,
-    body.white-mode .approval-hierarchy-table td {
-        padding: 10px;
-        text-align: left;
-        border: 1px solid rgb(161 161 161 / 82%);
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 0.875rem;
-    }
-    
-    .approval-hierarchy-table th {
-        background-color: rgba(255, 255, 255, 0.05);
-        font-weight: 600;
-        color: #ffffff;
-    }
-    body.white-mode .approval-hierarchy-table th  {
-        background-color: rgb(183 183 183 / 38%);
-        font-weight: 600;
-        color: var(--text-light);
-    }
-    body.white-mode .approval-hierarchy-table td  {
-        background-color: rgb(183 183 183 / 38%);
-        font-weight: 600;
-        color: var(--text-light);
-    }
-    
-    .approval-hierarchy-table tr:nth-child(even) {
-        background-color: rgba(255, 255, 255, 0.03);
-    }
-    
-    /* Status badges for approval hierarchy */
-    .status-badge {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-    
-    
-    
-    /* Loading indicator */
-    .loading {
-        padding: 10px;
-        text-align: center;
-        color: rgba(255, 255, 255, 0.5);
-        font-style: italic;
-        font-size: 0.875rem;
-    }
-    
-    /* Rejection modal form */
-    #rejection-form .form-group {
-        margin-bottom: 16px;
-    }
-    
-    #rejection-form label {
-        color: #ffffff;
-        font-size: 0.875rem;
-        font-weight: 500;
-        display: block;
-        margin-bottom: 8px;
-    }
-    
-    #rejection-form textarea {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 6px;
-        background-color: rgba(255, 255, 255, 0.1);
-        color: #ffffff;
-        font-size: 0.875rem;
-        resize: vertical;
-    }
-    
-    #rejection-form textarea:focus {
-        outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
-    }
-    
-    #rejection-form .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 8px;
-    }
-    
-    #rejection-form .submit-button {
-        background-color: #3b82f6;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    
-    #rejection-form .submit-button:hover {
-        background-color: #2563eb;
-    }
-    
-    #rejection-form .cancel-button {
-        background-color: #ef4444;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    
-    #rejection-form .cancel-button:hover {
-        background-color: #dc2626;
-    }
-    </style>
 <div class="page-container">
     <div class="header">
         <h2 class="page-title">Pending Acknowledgments</h2>
@@ -809,13 +65,13 @@
                             {% endif %}
                         </td>
                         <td>
-                            
+                           
                             <span class="status-pending">{{ entry.approval_status }}</span>
-                        
-            
+                       
+           
                         </td>
                         <td>{{ entry.timestamp|date:"Y-m-d" }}</td>
-                        
+                       
                         <td>
                             <a href="{% url 'view_filled_startersheet' entry.startersheet__id entry.filled_by__id entry.shift entry.id|default:0 %}" class="view-button">
                                 <i class="fas fa-eye"></i> view
@@ -829,11 +85,17 @@
                     {% endfor %}
                 </tbody>
             </table>
-            <div class="pagination">
+            <div class="pagination" id="startersheetPagination">
                 <div class="pagination-info">
                     <span>Total Pending: {{ pending_acknowledgments|length }}</span>
                 </div>
+                <div class="pagination-controls">
+                    <button class="pagination-button" id="startersheetPrev" disabled>Previous</button>
+                    <div class="pagination-numbers" id="startersheetPageNumbers"></div>
+                    <button class="pagination-button" id="startersheetNext">Next</button>
+                </div>
             </div>
+           
         </div>
     </div>
 
@@ -901,9 +163,14 @@
                     {% endfor %}
                 </tbody>
             </table>
-            <div class="pagination">
+            <div class="pagination" id="backDataPagination">
                 <div class="pagination-info">
                     <span>Total Pending: {{ pending_requests|length }}</span>
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-button" id="backDataPrev" disabled>Previous</button>
+                    <div class="pagination-numbers" id="backDataPageNumbers"></div>
+                    <button class="pagination-button" id="backDataNext">Next</button>
                 </div>
             </div>
         </div>
@@ -925,21 +192,8 @@
                     <option value="C">Shift C</option>
                 </select>
             </div>
-            
-        </div>
-       
-        <div class="table-responsive">
-            <form method="POST" action="{% url 'acknowledge_checksheets' %}" id="checksheet-form">
-                {% csrf_token %}
-                <input type="hidden" name="shift" value="{{ request.GET.shift }}">
-                <input type="hidden" name="selected_date" value="{{ request.GET.selected_date }}">
-                <input type="hidden" name="active_tab" value="checksheet">
-                
-                <!-- Filter Section -->
-                <div class="filter-section">
-                    
-                    
-                    {% if pending_acknowledgments_checksheet %}
+
+            {% if pending_acknowledgments_checksheet %}
                     <div class="action-buttons-top">
                         <button type="submit" name="action" value="accept" class="accept-button">
                             <i class="fas fa-check"></i> Accept
@@ -949,12 +203,20 @@
                         </button>
                     </div>
                     {% endif %}
-                </div>
-    
+           
+        </div>
+       
+        <div class="table-responsive">
+            <form method="POST" action="{% url 'acknowledge_checksheets' %}" id="checksheet-form">
+                {% csrf_token %}
+                <input type="hidden" name="shift" value="{{ request.GET.shift }}">
+                <input type="hidden" name="selected_date" value="{{ request.GET.selected_date }}">
+                <input type="hidden" name="active_tab" value="checksheet">
+   
             <table class="checksheets-container">
                 <thead>
                     <tr>
-                        
+                       
                     <th>
                         <input type="checkbox" id="select-all" class="checkbox">
                     </th>
@@ -988,7 +250,7 @@
                             <div class="zone-data" data-status="{{ entry.status_data }}"></div>
                         </td>
                         <td>
-                            <button type="button" class="view-button1" data-name="{{ entry.checksheet_name }}" data-line="{{ entry.line }}" data-user="{{ entry.username }}" 
+                            <button type="button" class="view-button1" data-name="{{ entry.checksheet_name }}" data-line="{{ entry.line }}" data-user="{{ entry.username }}"
                                 data-shift="{{ entry.shift }}" data-date="{{ entry.date }}" data-zone="{{ entry.status_data }}" data-empid="{{ entry.employee_id }}">
                             <i class="fas fa-eye"></i> View
                         </button>
@@ -1001,12 +263,18 @@
                     {% endfor %}
                 </tbody>
             </table>
-        
-            <div class="pagination">
+       
+            <div class="pagination" id="checksheetPagination">
                 <div class="pagination-info">
                     <span>Total Pending: {{ pending_acknowledgments_checksheet|length }}</span>
                 </div>
+                <div class="pagination-controls">
+                    <button class="pagination-button" id="checksheetPrev" disabled>Previous</button>
+                    <div class="pagination-numbers" id="checksheetPageNumbers"></div>
+                    <button class="pagination-button" id="checksheetNext">Next</button>
+                </div>
             </div>
+           
         </div>
     </form>
     </div>
@@ -1023,12 +291,12 @@
             <input type="hidden" name="selected_date" value="{{ request.GET.selected_date }}">
             <input type="hidden" name="active_tab" value="checksheet">
             <input type="hidden" name="action" value="reject">
-            
+           
             <div class="form-group">
                 <label for="rejection-reason">Please provide a reason for rejection:</label>
                 <textarea id="rejection-reason" name="rejection_reason" rows="4" required></textarea>
             </div>
-            
+           
             <div class="form-actions">
                 <button type="button" class="cancel-button">Cancel</button>
                 <button type="submit" class="submit-button">Submit Rejection</button>
@@ -1041,7 +309,7 @@
   <div id="checksheetModal" class="modal">
     <div class="modal-content">
         <span class="close1">×</span>
-        
+       
         <!-- Checksheet Header with Name and Images -->
         <div class="checksheet-header">
             <div class="checksheet-title-container">
@@ -1052,7 +320,7 @@
                 <div class="loading">Loading images...</div>
             </div>
         </div>
-        
+       
         <!-- User Details in a single row -->
         <div class="user-details-row">
             <div class="detail-item">
@@ -1072,14 +340,14 @@
                 <span id="modal-date" class="detail-value"></span>
             </div>
         </div>
-        
+       
         <h3>Zone Data Summary</h3>
         <div id="modal-zone-data">
             <table class="approval-hierarchy-table">
                 <thead>
                     <tr>
-                        <th>Zone</th>
-                        <th>Data</th>
+                        {% comment %} <th>Zone</th>
+                        <th>Data</th> {% endcomment %}
                     </tr>
                 </thead>
                 <tbody id="zone-data-body"></tbody>
@@ -1091,76 +359,222 @@
 <!-- JavaScript -->
 <script>
 
-   // Add this to your JavaScript code
+// Pagination settings
+const rowsPerPage = 5;
+
+// Function to setup pagination for a table
+function setupPagination(tableBodyId, paginationId, prevButtonId, nextButtonId, pageNumbersId) {
+    const tableBody = document.getElementById(tableBodyId);
+    const pagination = document.getElementById(paginationId);
+    const prevButton = document.getElementById(prevButtonId);
+    const nextButton = document.getElementById(nextButtonId);
+    const pageNumbers = document.getElementById(pageNumbersId);
+    let currentPage = 1;
+    let allRows = Array.from(tableBody.querySelectorAll('tr'));
+
+    // Function to update displayed rows
+    function updateTable() {
+        // Filter rows based on current filters
+        const searchInput = document.getElementById(tableBodyId.replace('TableBody', 'Search'));
+        const shiftFilter = document.getElementById(tableBodyId.replace('TableBody', 'ShiftFilter'));
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const shiftValue = shiftFilter ? shiftFilter.value : '';
+
+        const filteredRows = allRows.filter(row => {
+            const name = row.querySelector('td:first-child').textContent.toLowerCase();
+            const username = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+            const shift = row.querySelector('.shift-badge')?.textContent || '';
+            const reason = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
+
+            const matchesSearch = searchTerm === '' || name.includes(searchTerm) || username.includes(searchTerm) || reason.includes(searchTerm);
+            const matchesShift = shiftValue === '' || shift.includes(shiftValue);
+            return matchesSearch && matchesShift;
+        });
+
+        // Calculate pagination
+        const totalRows = filteredRows.length;
+        const totalPages = Math.ceil(totalRows / rowsPerPage);
+        currentPage = Math.min(currentPage, totalPages || 1);
+
+        // Hide all rows
+        allRows.forEach(row => row.style.display = 'none');
+
+        // Show rows for current page
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        filteredRows.slice(start, end).forEach(row => row.style.display = '');
+
+        // Update pagination controls
+        updatePaginationControls(totalPages, filteredRows.length);
+    }
+
+    // Function to update pagination controls
+    function updatePaginationControls(totalPages, totalFilteredRows) {
+        // Update buttons
+        prevButton.disabled = currentPage === 1;
+        nextButton.disabled = currentPage === totalPages || totalPages === 0;
+
+        // Update page numbers
+        pageNumbers.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+            const pageNum = document.createElement('span');
+            pageNum.className = 'page-number';
+            if (i === currentPage) pageNum.classList.add('active');
+            pageNum.textContent = i;
+            pageNum.addEventListener('click', () => {
+                currentPage = i;
+                updateTable();
+            });
+            pageNumbers.appendChild(pageNum);
+        }
+       
+        // Update total count in pagination info
+        const paginationInfo = pagination.querySelector('.pagination-info span');
+        if (paginationInfo) {
+            paginationInfo.textContent = `Total Pending: ${totalFilteredRows}`;
+        }
+    }
+
+    // Event listeners for navigation
+    prevButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            updateTable();
+        }
+    });
+
+    nextButton.addEventListener('click', () => {
+        const searchInput = document.getElementById(tableBodyId.replace('TableBody', 'Search'));
+        const shiftFilter = document.getElementById(tableBodyId.replace('TableBody', 'ShiftFilter'));
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const shiftValue = shiftFilter ? shiftFilter.value : '';
+
+        // Get filtered rows for pagination calculation
+        const filteredRows = allRows.filter(row => {
+            const name = row.querySelector('td:first-child').textContent.toLowerCase();
+            const username = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+            const shift = row.querySelector('.shift-badge')?.textContent || '';
+            const reason = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
+
+            const matchesSearch = searchTerm === '' || name.includes(searchTerm) || username.includes(searchTerm) || reason.includes(searchTerm);
+            const matchesShift = shiftValue === '' || shift.includes(shiftValue);
+            return matchesSearch && matchesShift;
+        });
+
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            updateTable();
+        }
+    });
+
+    // Update table on search or filter change
+    const searchInput = document.getElementById(tableBodyId.replace('TableBody', 'Search'));
+    const shiftFilter = document.getElementById(tableBodyId.replace('TableBody', 'ShiftFilter'));
+   
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            currentPage = 1;
+            updateTable();
+        });
+    }
+   
+    if (shiftFilter) {
+        shiftFilter.addEventListener('change', () => {
+            currentPage = 1;
+            updateTable();
+        });
+    }
+
+    // Initial update
+    updateTable();
+   
+    // Return the updateTable function so it can be called from outside
+    return updateTable;
+}
+
+// Setup pagination for each table and store the update functions
+const startersheetUpdate = setupPagination('startersheetTableBody', 'startersheetPagination', 'startersheetPrev', 'startersheetNext', 'startersheetPageNumbers');
+const checksheetUpdate = setupPagination('checksheetTableBody', 'checksheetPagination', 'checksheetPrev', 'checksheetNext', 'checksheetPageNumbers');
+const backDataUpdate = setupPagination('backDataTableBody', 'backDataPagination', 'backDataPrev', 'backDataNext', 'backDataPageNumbers');
+
+// Main JavaScript for the page
 document.addEventListener('DOMContentLoaded', function() {
-    // Get the rejection modal and buttons
-    var modal = document.getElementById('rejection-modal');
-    var rejectButton = document.querySelector('button[name="action"][value="reject"]');
-    var closeModalButton = modal.querySelector('.close');
-    var cancelButton = modal.querySelector('.cancel-button');
-    
-    // Function to open modal and populate hidden field
+    // --- MODAL HANDLING ---
+   
+    // Rejection Modal
+    var rejectionModal = document.getElementById('rejection-modal');
+    var closeRejectionModalButton = rejectionModal.querySelector('.close');
+    var cancelButton = rejectionModal.querySelector('.cancel-button');
+   
+    // Function to open rejection modal and populate hidden field
     function openRejectionModal() {
         // Get all selected checksheets
         var selectedCheckboxes = document.querySelectorAll('input[name="selected_checksheets"]:checked');
-        
+       
         if (selectedCheckboxes.length === 0) {
             alert('Please select at least one checksheet to reject.');
             return;
         }
-        
+       
         // Create an array of selected values
         var selectedValues = Array.from(selectedCheckboxes).map(function(checkbox) {
             return checkbox.value;
         });
-        
+       
         // Populate the hidden input with selected checksheets
         document.getElementById('rejection-checksheets').value = selectedValues.join(',');
-        
+       
         // Show the modal
-        modal.style.display = 'block';
+        rejectionModal.style.display = 'block';
     }
-    
-    // Function to close modal
+   
+    // Function to close rejection modal
     function closeRejectionModal() {
-        modal.style.display = 'none';
+        rejectionModal.style.display = 'none';
         document.getElementById('rejection-reason').value = '';
     }
-    
-    // Event listeners
-    if (rejectButton) {
-        rejectButton.addEventListener('click', function(e) {
+   
+    // Regular Rejection Button Event (the one inside the form)
+    var formRejectButton = document.querySelector('form .reject-button');
+    if (formRejectButton) {
+        formRejectButton.addEventListener('click', function(e) {
             e.preventDefault();
             openRejectionModal();
         });
     }
-    
-    closeModalButton.addEventListener('click', closeRejectionModal);
+   
+    // Close modal buttons
+    closeRejectionModalButton.addEventListener('click', closeRejectionModal);
     cancelButton.addEventListener('click', closeRejectionModal);
-    
+   
     // Close modal if clicking outside
     window.addEventListener('click', function(e) {
-        if (e.target === modal) {
+        if (e.target === rejectionModal) {
             closeRejectionModal();
         }
     });
-});
-document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('checksheetModal');
+   
+    // --- CHECKSHEET MODAL HANDLING ---
+   
+    const checksheetModal = document.getElementById('checksheetModal');
     const closeBtn = document.querySelector('.close1');
-    
+   
     // Close the modal when clicking the X
     closeBtn.onclick = function() {
-        modal.style.display = "none";
+        checksheetModal.style.display = "none";
     }
-    
+   
     // Close the modal when clicking outside of it
     window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = "none";
+        if (event.target == checksheetModal) {
+            checksheetModal.style.display = "none";
         }
+        // The rejection modal is handled separately
     }
-    
+   
+    // --- VIEW BUTTON HANDLING ---
+   
     // Add click event to all view buttons
     document.querySelectorAll('.view-button1').forEach(button => {
         button.addEventListener('click', function() {
@@ -1172,62 +586,86 @@ document.addEventListener('DOMContentLoaded', function() {
             const shift = this.getAttribute('data-shift');
             const date = this.getAttribute('data-date');
             const zoneData = this.getAttribute('data-zone');
-            
+           
             // Populate modal with data
             document.getElementById('modal-checksheet').textContent = name;
             document.getElementById('modal-user').textContent = user;
             document.getElementById('modal-emid').textContent = idis;
             document.getElementById('modal-shift').textContent = shift;
             document.getElementById('modal-date').textContent = date;
-            
-            // Populate zone data table
+           
+            // Populate zone data table with the transformed data
             const zoneBody = document.getElementById('zone-data-body');
             zoneBody.innerHTML = '';
+           
             if (zoneData) {
-                const items = zoneData.split(', ');
-                items.forEach(item => {
-                    if (item.includes(':')) {
-                        const [key, value] = item.split(':').map(part => part.trim());
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${key}</td>
-                            <td>${value}</td>
-                        `;
-                        zoneBody.appendChild(row);
-                    }
-                });
+                // Check if the data is in the old format (with : separator)
+                if (zoneData.includes(':')) {
+                    // Handle the old format (key:value pairs separated by commas)
+                    const items = zoneData.split(', ');
+                   
+                    // First create a table with headers
+                    const headerRow = document.createElement('tr');
+                    const dataRow = document.createElement('tr');
+                   
+                    items.forEach(item => {
+                        if (item.includes(':')) {
+                            const [key, value] = item.split(':').map(part => part.trim());
+                           
+                            // Create header cell
+                            const th = document.createElement('th');
+                            th.textContent = key;
+                            headerRow.appendChild(th);
+                           
+                            // Create data cell
+                            const td = document.createElement('td');
+                            td.textContent = value;
+                            dataRow.appendChild(td);
+                        }
+                    });
+                   
+                    // Append rows to zone data body
+                    zoneBody.appendChild(headerRow);
+                    zoneBody.appendChild(dataRow);
+                } else {
+                    // Handle the new format (raw vertical data)
+                    const transformedTable = transformZoneData(zoneData);
+                    zoneBody.appendChild(transformedTable);
+                }
             } else {
                 zoneBody.innerHTML = '<tr><td colspan="2">No zone data available</td></tr>';
             }
-            
+           
             // Load images for this checksheet
             loadChecksheetImages(name, line);
-            
+           
             // Fetch approval hierarchy data
             fetchApprovalHierarchy(name, user, shift, date, line);
-            
+           
             // Show the modal
-            modal.style.display = "block";
+            checksheetModal.style.display = "block";
         });
     });
 
+    // --- APPROVAL HIERARCHY HANDLING ---
+   
     function fetchApprovalHierarchy(checksheetName, username, shift, date, line) {
         // Create a URL with parameters - now including line
         const url = `/get_checksheet_approval_hierarchy/?name=${encodeURIComponent(checksheetName)}&username=${encodeURIComponent(username)}&shift=${encodeURIComponent(shift)}&date=${encodeURIComponent(date)}&line=${encodeURIComponent(line)}`;
-        
+       
         // Create a container for the hierarchy if it doesn't exist
         if (!document.getElementById('approval-hierarchy-container')) {
             const hierarchyContainer = document.createElement('div');
             hierarchyContainer.id = 'approval-hierarchy-container';
             hierarchyContainer.className = 'approval-hierarchy-section';
-            
+           
             // Add after zone data container
             document.getElementById('modal-zone-data').parentNode.appendChild(hierarchyContainer);
         }
-        
+       
         const hierarchyContainer = document.getElementById('approval-hierarchy-container');
         hierarchyContainer.innerHTML = '<div class="loading">Loading approval hierarchy...</div>';
-        
+       
         // Fetch the hierarchy data
         fetch(url)
             .then(response => response.json())
@@ -1239,7 +677,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 hierarchyContainer.innerHTML = '<p>Error loading approval hierarchy. Please try again.</p>';
             });
     }
-    
+   
     // Function to render approval hierarchy
     function renderApprovalHierarchy(data, container) {
         // Create the heading and table structure
@@ -1259,22 +697,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     </thead>
                     <tbody>
         `;
-        
+       
         // Check if we have hierarchy data
         if (data.approval_hierarchy) {
             const hierarchy = data.approval_hierarchy;
             const rejection = data.rejection_info;
-            
+           
             // Level 1
             if (hierarchy.level1) {
                 html += renderHierarchyRow('Level 1', hierarchy.level1, rejection);
             }
-            
+           
             // Level 2
             if (hierarchy.level2) {
                 html += renderHierarchyRow('Level 2', hierarchy.level2, rejection);
             }
-            
+           
             // Level 3
             if (hierarchy.level3) {
                 html += renderHierarchyRow('Level 3', hierarchy.level3, rejection);
@@ -1282,16 +720,16 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             html += `<tr><td colspan="6">No approval hierarchy information available</td></tr>`;
         }
-        
+       
         html += `
                     </tbody>
                 </table>
             </div>
         `;
-        
+       
         container.innerHTML = html;
     }
-    
+   
     // Helper function to render a hierarchy row
     function renderHierarchyRow(levelLabel, levelData, rejectionInfo) {
         // Set status class based on status value
@@ -1301,16 +739,16 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (levelData.status === 'Rejected') {
             statusClass = 'status-rejected';
         }
-        
+       
         // Format timestamp if present
         const timestamp = levelData.timestamp ? new Date(levelData.timestamp).toLocaleString() : '-';
-        
+       
         // Show rejection reason if this level is rejected
         let rejectionReason = '-';
         if (levelData.status === 'Rejected' && rejectionInfo) {
             rejectionReason = rejectionInfo.reason || '-';
         }
-        
+       
         return `
         <tr>
             <td>${levelLabel}</td>
@@ -1324,18 +762,21 @@ document.addEventListener('DOMContentLoaded', function() {
         </tr>
         `;
     }
+   
+    // --- IMAGE HANDLING ---
+   
     // Function to load images
     function loadChecksheetImages(checksheetName, line) {
         const imageContainer = document.getElementById('image-container');
-        
+       
         imageContainer.innerHTML = '<div class="loading">Loading images...</div>';
-        
+       
         // Fetch images using AJAX - now passing both name and line
         fetch(`/get_checksheet_images/?name=${encodeURIComponent(checksheetName)}&line=${encodeURIComponent(line)}`)
             .then(response => response.json())
             .then(data => {
                 imageContainer.innerHTML = '';
-                
+               
                 if (data.images && data.images.length > 0) {
                     // Add all images to the horizontal gallery
                     data.images.forEach(image => {
@@ -1343,7 +784,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         imgElement.src = image.url;
                         imgElement.alt = 'Checksheet Image';
                         imgElement.className = 'checksheet-image';
-                        
+                       
                         imageContainer.appendChild(imgElement);
                     });
                 } else {
@@ -1355,6 +796,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 imageContainer.innerHTML = '<p>Error loading images. Please try again.</p>';
             });
     }
+   
+    // --- TAB HANDLING ---
+   
     const starterSheetTab = document.getElementById('startersheet-tab');
     const checkSheetTab = document.getElementById('checksheet-tab');
     const formTab = document.getElementById('form-tab');
@@ -1375,12 +819,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tab === 'startersheet') {
             starterSheetTab.classList.add('active');
             starterSheetSection.classList.add('active');
+            // Update pagination for starter sheet tab
+            startersheetUpdate();
         } else if (tab === 'checksheet') {
             checkSheetTab.classList.add('active');
             checkSheetSection.classList.add('active');
+            // Update pagination for check sheet tab
+            checksheetUpdate();
         } else if (tab === 'form') {
             formTab.classList.add('active');
             formSection.classList.add('active');
+            // Update pagination for form tab
+            backDataUpdate();
         }
     }
 
@@ -1392,14 +842,6 @@ document.addEventListener('DOMContentLoaded', function() {
     checkSheetTab.addEventListener('click', function() {
         setActiveTab('checksheet');
     });
-
-    const selectAll = document.getElementById('select-all');
-        if (selectAll) {
-            selectAll.addEventListener('change', function() {
-                const checkboxes = document.querySelectorAll("input[name='selected_checksheets']");
-                checkboxes.forEach(cb => cb.checked = this.checked);
-            });
-        }
 
     formTab.addEventListener('click', function() {
         setActiveTab('form');
@@ -1414,7 +856,19 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         starterSheetTab.click();
     }
+   
+    // --- CHECKBOX HANDLING ---
+   
+    const selectAll = document.getElementById('select-all');
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll("input[name='selected_checksheets']");
+            checkboxes.forEach(cb => cb.checked = this.checked);
+        });
+    }
 
+    // --- FORMAT STATUS DATA ---
+   
     // Format status data cells
     const statusCells = document.querySelectorAll('.zone-data[data-status]');
     statusCells.forEach(cell => {
@@ -1433,90 +887,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Starter Sheet Search and Sort functionality
-    const startersheetSearch = document.getElementById('startersheetSearch');
-    const startersheetShiftFilter = document.getElementById('startersheetShiftFilter');
-    const startersheetRows = document.querySelectorAll('#startersheetTableBody tr');
+    // --- SEARCH AND FILTER FUNCTIONS ---
    
-    function filterStartersheets() {
-        const searchTerm = startersheetSearch.value.toLowerCase().trim();
-        const shiftValue = startersheetShiftFilter.value;
-       
-        startersheetRows.forEach(row => {
-            const name = row.querySelector('td:first-child').textContent.toLowerCase();
-            const username = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-            const shift = row.querySelector('.shift-badge').textContent;
-           
-            const matchesSearch = searchTerm === '' ||
-                                name.includes(searchTerm) ||
-                                username.includes(searchTerm);
-            const matchesShift = shiftValue === '' || shift.includes(shiftValue);
-           
-            row.style.display = matchesSearch && matchesShift ? '' : 'none';
-        });
-    }
+    // We've replaced these with the pagination approach above
+    // The old search-only functions are now integrated into the pagination system
    
-    startersheetSearch.addEventListener('input', filterStartersheets);
-    startersheetShiftFilter.addEventListener('change', filterStartersheets);
+    // --- SORTING FUNCTIONALITY ---
    
-    // Check Sheet Search and Sort functionality
-    const checksheetSearch = document.getElementById('checksheetSearch');
-    const checksheetShiftFilter = document.getElementById('checksheetShiftFilter');
-    const checksheetRows = document.querySelectorAll('#checksheetTableBody tr');
-   
-    function filterChecksheets() {
-        const searchTerm = checksheetSearch.value.toLowerCase().trim();
-        const shiftValue = checksheetShiftFilter.value;
-       
-        checksheetRows.forEach(row => {
-            const name = row.querySelector('td:first-child').textContent.toLowerCase();
-            const username = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-            const shift = row.querySelector('.shift-badge').textContent;
-           
-            const matchesSearch = searchTerm === '' ||
-                                name.includes(searchTerm) ||
-                                username.includes(searchTerm);
-            const matchesShift = shiftValue === '' || shift.includes(shiftValue);
-           
-            row.style.display = matchesSearch && matchesShift ? '' : 'none';
-        });
-    }
-   
-checksheetSearch.addEventListener('input', filterChecksheets);
-    checksheetShiftFilter.addEventListener('change', filterChecksheets);
-   
-    // Back Data Search and Sort functionality
-    const backDataSearch = document.getElementById('backDataSearch');
-    const backDataShiftFilter = document.getElementById('backDataShiftFilter');
-    const backDataRows = document.querySelectorAll('#backDataTableBody tr');
-   
-    function filterBackData() {
-        const searchTerm = backDataSearch.value.toLowerCase().trim();
-        const shiftValue = backDataShiftFilter.value;
-       
-        backDataRows.forEach(row => {
-            const name = row.querySelector('td:first-child').textContent.toLowerCase();
-            const shift = row.querySelector('.shift-badge')?.textContent || '';
-            const reason = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
-           
-            const matchesSearch = searchTerm === '' ||
-                                name.includes(searchTerm) ||
-                                reason.includes(searchTerm);
-            const matchesShift = shiftValue === '' || shift.includes(shiftValue);
-           
-            row.style.display = matchesSearch && matchesShift ? '' : 'none';
-        });
-    }
-   
-    if (backDataSearch) {
-        backDataSearch.addEventListener('input', filterBackData);
-    }
-   
-    if (backDataShiftFilter) {
-        backDataShiftFilter.addEventListener('change', filterBackData);
-    }
-   
-    // Sorting functionality for all tables
     document.querySelectorAll('.sortable').forEach(header => {
         header.addEventListener('click', function() {
             const table = this.closest('table');
@@ -1541,12 +918,16 @@ checksheetSearch.addEventListener('input', filterChecksheets);
                 if (tableId === 'checksheetTableBody') {
                     switch(column) {
                         case 'name':
-                            aValue = a.querySelector('td:first-child').textContent;
-                            bValue = b.querySelector('td:first-child').textContent;
-                            break;
-                        case 'username':
                             aValue = a.querySelector('td:nth-child(2)').textContent;
                             bValue = b.querySelector('td:nth-child(2)').textContent;
+                            break;
+                        case 'line':
+                            aValue = a.querySelector('td:nth-child(3)').textContent;
+                            bValue = b.querySelector('td:nth-child(3)').textContent;
+                            break;
+                        case 'username':
+                            aValue = a.querySelector('td:nth-child(4)').textContent;
+                            bValue = b.querySelector('td:nth-child(4)').textContent;
                             break;
                         case 'shift':
                             aValue = a.querySelector('.shift-badge').textContent;
@@ -1559,9 +940,13 @@ checksheetSearch.addEventListener('input', filterChecksheets);
                             aValue = a.querySelector('td:first-child').textContent;
                             bValue = b.querySelector('td:first-child').textContent;
                             break;
-                        case 'username':
+                        case 'Line':
                             aValue = a.querySelector('td:nth-child(2)').textContent;
                             bValue = b.querySelector('td:nth-child(2)').textContent;
+                            break;
+                        case 'username':
+                            aValue = a.querySelector('td:nth-child(3)').textContent;
+                            bValue = b.querySelector('td:nth-child(3)').textContent;
                             break;
                         case 'shift':
                             aValue = a.querySelector('.shift-badge').textContent;
@@ -1605,8 +990,84 @@ checksheetSearch.addEventListener('input', filterChecksheets);
            
             // Update sort direction
             this.classList.toggle('asc');
+           
+            // After sorting, update the correct pagination
+            if (tableId === 'startersheetTableBody') {
+                startersheetUpdate();
+            } else if (tableId === 'checksheetTableBody') {
+                checksheetUpdate();
+            } else if (tableId === 'backDataTableBody') {
+                backDataUpdate();
+            }
         });
     });
+   
+    // --- EXTERNAL BUTTONS FUNCTIONALITY ---
+   
+    // Get references to the external buttons and the form
+    const externalAcceptButton = document.querySelector('.action-buttons-top .accept-button');
+    const externalRejectButton = document.querySelector('.action-buttons-top .reject-button');
+    const checksheetForm = document.getElementById('checksheet-form');
+   
+    // Function to handle external accept button click
+    if (externalAcceptButton) {
+        externalAcceptButton.addEventListener('click', function(e) {
+            e.preventDefault();
+           
+            // Check if any checkboxes are selected
+            const selectedCheckboxes = document.querySelectorAll('input[name="selected_checksheets"]:checked');
+            if (selectedCheckboxes.length === 0) {
+                alert('Please select at least one checksheet to accept.');
+                return;
+            }
+           
+            // Create a hidden input for the action if it doesn't exist
+            let actionInput = checksheetForm.querySelector('input[name="action"]');
+            if (!actionInput) {
+                actionInput = document.createElement('input');
+                actionInput.type = 'hidden';
+                actionInput.name = 'action';
+                checksheetForm.appendChild(actionInput);
+            }
+           
+            // Set the action value to accept
+            actionInput.value = 'accept';
+           
+            // Submit the form
+            checksheetForm.submit();
+        });
+    }
+   
+    // Function to handle external reject button click
+    if (externalRejectButton) {
+        externalRejectButton.addEventListener('click', function(e) {
+            e.preventDefault();
+           
+            // Check if any checkboxes are selected
+            const selectedCheckboxes = document.querySelectorAll('input[name="selected_checksheets"]:checked');
+            if (selectedCheckboxes.length === 0) {
+                alert('Please select at least one checksheet to reject.');
+                return;
+            }
+           
+            // Open rejection modal
+            openRejectionModal();
+        });
+    }
+   
+    // Helper function for zone data transformation
+    function transformZoneData(zoneData) {
+        // If this function is not implemented in your code, add a placeholder
+        // or implement it based on your requirements
+        const fragment = document.createDocumentFragment();
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 2;
+        cell.textContent = "Zone data format not supported";
+        row.appendChild(cell);
+        fragment.appendChild(row);
+        return fragment;
+    }
 });
 </script>
 {% endblock %}
