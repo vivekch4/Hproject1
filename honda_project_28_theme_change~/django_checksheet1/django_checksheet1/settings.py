@@ -25,8 +25,8 @@ SECRET_KEY = "_n$o7+1gt*0-bk0^k0s^(!m=_dz64w4ghs@-sv5q3ybi1g@*t1"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# ALLOWED_HOSTS = []
-ALLOWED_HOSTS = ["192.168.1.60"]
+ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = ["192.168.1.60"]
 # ALLOWED_HOSTS = ["worksp.pythonanywhere.com"]
 # Application definition
 
