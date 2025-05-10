@@ -275,7 +275,7 @@ body.white-mode .form-container {
 .submit-btn:hover {
     border: 1.5px solid var(--accent-color-solid);
     transform: translateY(-3px);
-    box-shadow: 0 6px 10px var(--accent-color);
+    /* box-shadow: 0 6px 10px var(--accent-color); */
 }
 
 /* Success popup */

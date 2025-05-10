@@ -854,8 +854,8 @@ body.white-mode .approval-radio label::before {
     
 }
 .approval-radio input[type="radio"]:checked + label::before {
-    background-color: #3b82f6;
-    border-color: #3b82f6;
+    background-color: var(--accent-color);
+    border-color: var(--accent-color-solid);
 }
 
 .approval-radio input[type="radio"]:checked + label::after {
