@@ -46,7 +46,16 @@ body.sidebar-ready {
     padding: 3px 7px;
     margin-left: 5px;
 }
-
+.sidebar-logo {
+    width: 41px; /* Adjust the width as needed */
+    height: 41px; /* Adjust the height as needed */
+    margin-right: 10px; /* Space between logo and text */
+    vertical-align: middle; /* Align with text */
+}
+.sidebar-collapsed .sidebar-logo {
+    width: 25px; /* Smaller size for collapsed sidebar */
+    height: 25px;
+}
 .navbar {
     position: fixed;
     top: 0;
@@ -866,3 +875,24 @@ body.white-mode .modal {
     background-color:white;
     
 }
+
+button.fullscreen-btn {
+    order: 3;
+}
+
+
+
+.fullscreen-btn {
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px;
+    transition: color 0.3s;
+}
+
+.fullscreen-btn:hover {
+    color: var(--accent-color-solid, #11aabb);
+}
+

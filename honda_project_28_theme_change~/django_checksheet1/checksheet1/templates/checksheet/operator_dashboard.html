@@ -224,7 +224,13 @@
     document.body.classList.add('operator-dashboard');
 </script>
 
-<h1 class="dashboard-heading">Welcome, {{ request.user.username }}</h1>
+<h1 class="dashboard-heading">Welcome, {{ request.user.username }}</h1></h1><div style="text-align: center; margin-top: 2rem;">
+    <a href="{% url 'home' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: #475569; color: white; text-decoration: none; border-radius: 0.5rem; font-weight: 500; transition: all 0.2s ease;">
+        <i class="fas fa-arrow-left"></i>
+        Back to Admin Dashboard
+    </a>
+</div>
+
 
 <div class="dashboard-container">
     <!-- View POCs Card -->

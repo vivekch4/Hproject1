@@ -16,10 +16,19 @@
                 document.documentElement.classList.add('sidebar-collapsed-init');
             }
         })();
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
     </script>
     {% block extra_css %}
-  
-  {% endblock%}
+    {% endblock %}
 </head>
 <body>
     {% if request.user.is_authenticated %}
@@ -36,10 +45,16 @@
                 </div>
             </div>
         </div>
-        <a href="{% url 'logout' %}" class="logout-btn">
-            <i class="fas fa-sign-out-alt"></i>
-            Logout
-        </a>
+        <div class="navbar-right" style="display: flex; align-items: center; gap: 10px;">
+            <div class="line-filter-nav"></div> <!-- Placeholder for line filter dropdown -->
+            <a href="{% url 'logout' %}" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </a>
+            <button class="fullscreen-btn" onclick="toggleFullScreen()" title="Toggle Full Screen">
+                <i class="fas fa-expand"></i>
+            </button>
+        </div>
     </nav>
     {% endif %}
 
@@ -48,9 +63,11 @@
     </button>
 
     <div class="sidebar">
-        <div class="sidebar-header">
-            <h3><i class="fa-solid fa-clipboard-list si"></i> <span>Checksheet</span></h3>
-        </div>
+        
+            <div class="sidebar-header">
+                <h3><img src="{% static 'images/logo-.png' %}" alt="Checksheet Logo" class="sidebar-logo"> <span>Checksheet</span></h3>
+            </div>
+        
         
         {% if request.user.is_authenticated %}
         
@@ -87,8 +104,9 @@
         {% if request.user|has_page_access:"report" %}
         <a href="{% url 'report' %}"><i class="fas fa-file"></i><span class="sidebar-text">Report</span></a>
         {% endif %}
-   
-        {% if request.user.role != "admin" %}
+
+        <a href="{% url 'operator_dashboard' %}"><i class="fa-solid fa-user-nurse"></i><span class="sidebar-text">Operator</span></a>
+        {% comment %} {% if request.user.role != "admin" %}
             {% if request.user.role == "operator" or request.user|has_page_access:"fill_checksheet_detail" %}
             <a href="{% url 'view_poc' %}"><i class="fas fa-eye"></i><span class="sidebar-text">View POCs</span></a>
             <a href="#" class="submenu-toggle"><i class="fas fa-clipboard-check"></i><span class="sidebar-text">Checksheets</span></a>
@@ -102,9 +120,9 @@
                 {% endfor %}
             </div>
             {% endif %}
-        {% endif %}
+        {% endif %} {% endcomment %}
         
-        {% if request.user.role != "admin" %}
+        {% comment %} {% if request.user.role != "admin" %}
             {% if request.user.role == "operator" or request.user|has_page_access:"fill_starter_sheet" %}
             <a href="#" class="submenu-toggle"><i class="fas fa-folder"></i><span class="sidebar-text">Starter</span></a>
             <div class="sub-menu">
@@ -117,7 +135,7 @@
                 {% endfor %}
             </div>
             {% endif %}
-        {% endif %}
+        {% endif %} {% endcomment %}
         
         {% endif %}
     </div>

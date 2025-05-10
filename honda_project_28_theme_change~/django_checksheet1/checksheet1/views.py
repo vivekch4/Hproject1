@@ -866,43 +866,44 @@ def add_zone(request, checksheet_id):
 # ----------------------------------------- Fill Checksheet--------------------------------#
 
 
+
 @login_required
 def fill_checksheet(request, checksheet_id=None):
-    if request.user.role == "operator" or has_page_access(
-        request.user, "fill_checksheet_detail"
-    ):
-        if request.user.role == "admin":
-            checksheets = CheckSheet.objects.all()
-            Starter = StarterSheet.objects.all()
-        else:
-            checksheets = CheckSheet.objects.filter(assigned_users=request.user)
-            Starter = StarterSheet.objects.filter(assigned_users=request.user)
+   
+    if request.user.role == "admin":
+        checksheets = CheckSheet.objects.all()
+        Starter = StarterSheet.objects.all()
+    else:
+        checksheets = CheckSheet.objects.filter(
+                assigned_users=request.user)
+        Starter = StarterSheet.objects.filter(assigned_users=request.user)
 
-        selected_checksheet = (
-            get_object_or_404(CheckSheet, id=checksheet_id) if checksheet_id else None
+    selected_checksheet = (
+            get_object_or_404(
+                CheckSheet, id=checksheet_id) if checksheet_id else None
         )
-        if not selected_checksheet and checksheet_id:
-            return HttpResponse("CheckSheet not found", status=404)
-        images = selected_checksheet.images.all() if selected_checksheet else []
-        zones = selected_checksheet.zones.all() if selected_checksheet else []
+    if not selected_checksheet and checksheet_id:
+        return HttpResponse("CheckSheet not found", status=404)
+    images = selected_checksheet.images.all() if selected_checksheet else []
+    zones = selected_checksheet.zones.all() if selected_checksheet else []
 
-        today = timezone.now().date()
+    today = timezone.now().date()
 
         # Get current time and determine current shift
-        IST = pytz.timezone("Asia/Kolkata")
-        current_time = timezone.now().astimezone(IST).time()
-        try:
-            shift_times = Shifttime.objects.first()
-            current_shift = "None"
-            if shift_times.shift_A_start <= current_time <= shift_times.shift_A_end:
-                current_shift = "A"
-            elif shift_times.shift_B_start <= current_time <= shift_times.shift_B_end:
-                current_shift = "B"
-        except Shifttime.DoesNotExist:
-            current_shift = "None"
+    IST = pytz.timezone("Asia/Kolkata")
+    current_time = timezone.now().astimezone(IST).time()
+    try:
+        shift_times = Shifttime.objects.first()
+        current_shift = "None"
+        if shift_times.shift_A_start <= current_time <= shift_times.shift_A_end:
+            current_shift = "A"
+        elif shift_times.shift_B_start <= current_time <= shift_times.shift_B_end:
+            current_shift = "B"
+    except Shifttime.DoesNotExist:
+        current_shift = "None"
 
         # Get pending acknowledgments for today, current user, and current shift
-        pending_acknowledgments_checksheet = FilledCheckSheet.objects.filter(
+    pending_acknowledgments_checksheet = FilledCheckSheet.objects.filter(
             user=request.user,
             timestamp__date=today,
             line=selected_checksheet.line,
@@ -910,59 +911,59 @@ def fill_checksheet(request, checksheet_id=None):
         )
 
         # Consolidated Data for the current shift
-        consolidated_data = {}
-        for entry in pending_acknowledgments_checksheet:
-            key = (entry.checksheet.name, entry.shift)
-            if key not in consolidated_data:
-                consolidated_data[key] = defaultdict(int)
-            for k, v in entry.status_data.items():
-                if v == "Yes":
-                    consolidated_data[key][k] += 1
-                elif isinstance(v, int):
+    consolidated_data = {}
+    for entry in pending_acknowledgments_checksheet:
+        key = (entry.checksheet.name, entry.shift)
+        if key not in consolidated_data:
+            consolidated_data[key] = defaultdict(int)
+        for k, v in entry.status_data.items():
+            if v == "Yes":
+                consolidated_data[key][k] += 1
+            elif isinstance(v, int):
+                consolidated_data[key][k] += v
+            elif k == "completely_reject":
+                if isinstance(v, int):
                     consolidated_data[key][k] += v
-                elif k == "completely_reject":
-                    if isinstance(v, int):
-                        consolidated_data[key][k] += v
-                    else:
-                        consolidated_data[key]["completely_reject"] += 1
+                else:
+                    consolidated_data[key]["completely_reject"] += 1
 
         # Prepare chart data for the current shift
-        chart_labels = []
-        chart_values = []
-        for key, value_dict in consolidated_data.items():
-            if key[1] == current_shift:  # Only include data for the current shift
-                for zone_label, count in value_dict.items():
-                    chart_labels.append(zone_label)
-                    chart_values.append(count)
+    chart_labels = []
+    chart_values = []
+    for key, value_dict in consolidated_data.items():
+        if key[1] == current_shift:  # Only include data for the current shift
+            for zone_label, count in value_dict.items():
+                chart_labels.append(zone_label)
+                chart_values.append(count)
 
-        if request.method == "POST":
-            status_data = {}
-            shift = request.POST.get("shift", current_shift)
-            line = request.POST.get(
+    if request.method == "POST":
+        status_data = {}
+        shift = request.POST.get("shift", current_shift)
+        line = request.POST.get(
                 "line", selected_checksheet.line if selected_checksheet else None
             )
 
-            for zone in zones:
-                user_input = request.POST.get(f"zone_{zone.id}", "").strip()
-                if zone.input_type == "checkbox":
-                    status_data[zone.name] = "Yes" if user_input else "No"
-                elif zone.input_type == "int":
-                    status_data[zone.name] = (
+        for zone in zones:
+            user_input = request.POST.get(f"zone_{zone.id}", "").strip()
+            if zone.input_type == "checkbox":
+                status_data[zone.name] = "Yes" if user_input else "No"
+            elif zone.input_type == "int":
+                status_data[zone.name] = (
                         int(user_input) if user_input.isdigit() else 0
                     )
-                elif zone.input_type == "float":
-                    try:
-                        status_data[zone.name] = (
+            elif zone.input_type == "float":
+                try:
+                    status_data[zone.name] = (
                             float(user_input) if user_input else 0.0
                         )
-                    except ValueError:
+                except ValueError:
                         status_data[zone.name] = 0.0
 
-            reject_reason = request.POST.get("reject_reason", "").strip()
-            if reject_reason:
+        reject_reason = request.POST.get("reject_reason", "").strip()
+        if reject_reason:
                 status_data["completely_reject"] = reject_reason
 
-            FilledCheckSheet.objects.create(
+        FilledCheckSheet.objects.create(
                 checksheet=selected_checksheet,
                 user=request.user,
                 status_data=status_data,
@@ -971,12 +972,12 @@ def fill_checksheet(request, checksheet_id=None):
                 line=line,
             )
 
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse({"success": True})
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse({"success": True})
 
-            return redirect("fill_checksheet_detail", checksheet_id=checksheet_id)
+        return redirect("fill_checksheet_detail", checksheet_id=checksheet_id)
 
-        return render(
+    return render(
             request,
             "checksheet/fill_checksheet.html",
             {
@@ -991,7 +992,8 @@ def fill_checksheet(request, checksheet_id=None):
                 "current_shift": current_shift,
             },
         )
-    return render(request, "access_denied.html")
+   
+
 
 
 # ----------------------------------------- Create StarterSheet--------------------------------#
@@ -1315,54 +1317,53 @@ def Add_start_zone(request, startersheet_id):
 
 @login_required
 def fill_starter_sheet(request, startersheet_id=None):
-    if request.user.role == "operator" or has_page_access(
-        request.user, "fill_starter_sheet"
-    ):
-        if request.user.role == "admin":
-            checksheets = CheckSheet.objects.all()
-            Starter = StarterSheet.objects.all()
-        else:
-            checksheets = CheckSheet.objects.filter(assigned_users=request.user)
-            Starter = StarterSheet.objects.filter(assigned_users=request.user)
 
-        selected_startersheet = (
+    if request.user.role == "admin":
+        checksheets = CheckSheet.objects.all()
+        Starter = StarterSheet.objects.all()
+    else:
+        checksheets = CheckSheet.objects.filter(
+                assigned_users=request.user)
+        Starter = StarterSheet.objects.filter(assigned_users=request.user)
+
+    selected_startersheet = (
             get_object_or_404(StarterSheet, id=startersheet_id)
             if startersheet_id
             else None
         )
-        zones = selected_startersheet.zones.all() if selected_startersheet else []
-        today = now().date()
+    zones = selected_startersheet.zones.all() if selected_startersheet else []
+    today = now().date()
 
         # Get current time and determine current shift
-        IST = pytz.timezone("Asia/Kolkata")
-        current_time = now().astimezone(IST).time()
-        try:
-            shift_times = (
+    IST = pytz.timezone("Asia/Kolkata")
+    current_time = now().astimezone(IST).time()
+    try:
+        shift_times = (
                 Shifttime.objects.first()
             )  # Get the first record from Shifttime model
-            current_shift = "None"  # Default value
+        current_shift = "None"  # Default value
 
             # Check if current time is in shift A
-            if shift_times.shift_A_start <= current_time <= shift_times.shift_A_end:
-                current_shift = "A"
+        if shift_times.shift_A_start <= current_time <= shift_times.shift_A_end:
+            current_shift = "A"
             # Check if current time is in shift B
-            elif shift_times.shift_B_start <= current_time <= shift_times.shift_B_end:
-                current_shift = "B"
-        except Shifttime.DoesNotExist:
-            current_shift = "None"
+        elif shift_times.shift_B_start <= current_time <= shift_times.shift_B_end:
+            current_shift = "B"
+    except Shifttime.DoesNotExist:
+        current_shift = "None"
 
-        if request.method == "POST":
-            try:
-                data = json.loads(request.body)
-                shift = data.get("shift")
-                user = request.user  # Get the logged-in user
-                line = data.get(
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            shift = data.get("shift")
+            user = request.user  # Get the logged-in user
+            line = data.get(
                     "line",
                     selected_startersheet.line if selected_startersheet else None,
                 )
 
                 # Check if data already exists for today, same user, shift, line, and startersheet
-                existing_entry = FilledStarterSheet.objects.filter(
+            existing_entry = FilledStarterSheet.objects.filter(
                     startersheet=selected_startersheet,
                     filled_by=user,
                     shift=shift,
@@ -1370,8 +1371,8 @@ def fill_starter_sheet(request, startersheet_id=None):
                     timestamp__date=today,
                 ).exists()
 
-                if existing_entry:
-                    return JsonResponse(
+            if existing_entry:
+                return JsonResponse(
                         {
                             "error": "Data already filled for this user, shift, line, and sheet today"
                         },
@@ -1379,32 +1380,34 @@ def fill_starter_sheet(request, startersheet_id=None):
                     )
 
                 # Collect all zone statuses in a dictionary with zone names
-                status_data = {}
-                for zone_data in data["zones"]:
-                    zone_id = zone_data["id"]
-                    user_input = zone_data["value"]
+            status_data = {}
+            for zone_data in data["zones"]:
+                zone_id = zone_data["id"]
+                user_input = zone_data["value"]
 
-                    zone = next((z for z in zones if str(z.id) == zone_id), None)
-                    if not zone:
+                zone = next(
+                        (z for z in zones if str(z.id) == zone_id), None)
+                if not zone:
                         continue
 
-                    zone_name = zone.name  # Get zone name
+                zone_name = zone.name  # Get zone name
 
-                    if zone.type == "checkbox":
+                if zone.type == "checkbox":
                         status_data[zone_name] = "Yes" if user_input == "Yes" else "No"
-                    elif zone.type == "int":
+                elif zone.type == "int":
                         status_data[zone_name] = (
                             int(user_input) if user_input.isdigit() else 0
                         )
-                    elif zone.type == "float":
-                        try:
+                elif zone.type == "float":
+                    try:
                             float(user_input)
-                            status_data[zone_name] = user_input  # Keep as string
-                        except ValueError:
+                            # Keep as string
+                            status_data[zone_name] = user_input
+                    except ValueError:
                             status_data[zone_name] = "0.0"
 
                 # Save the filled data in a single JSON field
-                FilledStarterSheet.objects.create(
+            FilledStarterSheet.objects.create(
                     startersheet=selected_startersheet,
                     filled_by=user,
                     status_data=status_data,
@@ -1412,11 +1415,11 @@ def fill_starter_sheet(request, startersheet_id=None):
                     line=line,
                 )
 
-                return JsonResponse({"message": "Data saved successfully"}, status=200)
-            except json.JSONDecodeError:
-                return JsonResponse({"error": "Invalid data"}, status=400)
+            return JsonResponse({"message": "Data saved successfully"}, status=200)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid data"}, status=400)
 
-        return render(
+    return render(
             request,
             "checksheet/fill_starter_sheet.html",
             {
@@ -1427,7 +1430,7 @@ def fill_starter_sheet(request, startersheet_id=None):
                 "current_shift": current_shift,
             },
         )
-    return render(request, "checksheet/access_denied.html")
+
 
 
 # ----------------------------------------- Create User --------------------------------#
@@ -1908,46 +1911,305 @@ def shift_incharge_dashboard(request):
     )
 
 
-@login_required
-def operator_dashboard(request):
-    if request.user.role == "operator":
-        if request.user.role == "admin":
-            checksheets = CheckSheet.objects.all()
-            Starter = StarterSheet.objects.all()
-        else:
-            checksheets = CheckSheet.objects.filter(assigned_users=request.user)
-            Starter = StarterSheet.objects.filter(assigned_users=request.user)
 
-        current_date = now().date()  # ✅ Get today's date (ignoring time)
-        user = request.user
+@login_required
+def fill_checksheet(request, checksheet_id=None):
+   
+    if request.user.role == "admin":
+        checksheets = CheckSheet.objects.all()
+        Starter = StarterSheet.objects.all()
+    else:
+        checksheets = CheckSheet.objects.filter(
+                assigned_users=request.user)
+        Starter = StarterSheet.objects.filter(assigned_users=request.user)
+
+    selected_checksheet = (
+            get_object_or_404(
+                CheckSheet, id=checksheet_id) if checksheet_id else None
+        )
+    if not selected_checksheet and checksheet_id:
+        return HttpResponse("CheckSheet not found", status=404)
+    images = selected_checksheet.images.all() if selected_checksheet else []
+    zones = selected_checksheet.zones.all() if selected_checksheet else []
+
+    today = timezone.now().date()
 
         # Get current time and determine current shift
-        IST = pytz.timezone("Asia/Kolkata")
-        current_time = now().astimezone(IST).time()
-        # Get current time in IST
-        try:
-            shift_times = (
+    IST = pytz.timezone("Asia/Kolkata")
+    current_time = timezone.now().astimezone(IST).time()
+    try:
+        shift_times = Shifttime.objects.first()
+        current_shift = "None"
+        if shift_times.shift_A_start <= current_time <= shift_times.shift_A_end:
+            current_shift = "A"
+        elif shift_times.shift_B_start <= current_time <= shift_times.shift_B_end:
+            current_shift = "B"
+    except Shifttime.DoesNotExist:
+        current_shift = "None"
+
+        # Get pending acknowledgments for today, current user, and current shift
+    pending_acknowledgments_checksheet = FilledCheckSheet.objects.filter(
+            user=request.user,
+            timestamp__date=today,
+            line=selected_checksheet.line,
+            shift=current_shift,  # Filter by current shift
+        )
+
+        # Consolidated Data for the current shift
+    consolidated_data = {}
+    for entry in pending_acknowledgments_checksheet:
+        key = (entry.checksheet.name, entry.shift)
+        if key not in consolidated_data:
+            consolidated_data[key] = defaultdict(int)
+        for k, v in entry.status_data.items():
+            if v == "Yes":
+                consolidated_data[key][k] += 1
+            elif isinstance(v, int):
+                consolidated_data[key][k] += v
+            elif k == "completely_reject":
+                if isinstance(v, int):
+                    consolidated_data[key][k] += v
+                else:
+                    consolidated_data[key]["completely_reject"] += 1
+
+        # Prepare chart data for the current shift
+    chart_labels = []
+    chart_values = []
+    for key, value_dict in consolidated_data.items():
+        if key[1] == current_shift:  # Only include data for the current shift
+            for zone_label, count in value_dict.items():
+                chart_labels.append(zone_label)
+                chart_values.append(count)
+
+    if request.method == "POST":
+        status_data = {}
+        shift = request.POST.get("shift", current_shift)
+        line = request.POST.get(
+                "line", selected_checksheet.line if selected_checksheet else None
+            )
+
+        for zone in zones:
+            user_input = request.POST.get(f"zone_{zone.id}", "").strip()
+            if zone.input_type == "checkbox":
+                status_data[zone.name] = "Yes" if user_input else "No"
+            elif zone.input_type == "int":
+                status_data[zone.name] = (
+                        int(user_input) if user_input.isdigit() else 0
+                    )
+            elif zone.input_type == "float":
+                try:
+                    status_data[zone.name] = (
+                            float(user_input) if user_input else 0.0
+                        )
+                except ValueError:
+                        status_data[zone.name] = 0.0
+
+        reject_reason = request.POST.get("reject_reason", "").strip()
+        if reject_reason:
+                status_data["completely_reject"] = reject_reason
+
+        FilledCheckSheet.objects.create(
+                checksheet=selected_checksheet,
+                user=request.user,
+                status_data=status_data,
+                shift=shift,
+                timestamp=timezone.now(),
+                line=line,
+            )
+
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse({"success": True})
+
+        return redirect("fill_checksheet_detail", checksheet_id=checksheet_id)
+
+    return render(
+            request,
+            "checksheet/fill_checksheet.html",
+            {
+                "checksheets": checksheets,
+                "selected_checksheet": selected_checksheet,
+                "zones": zones,
+                "images": images,
+                "Starter": Starter,
+                "consolidated_data": consolidated_data,
+                "chart_labels": chart_labels,
+                "chart_values": chart_values,
+                "current_shift": current_shift,
+            },
+        )
+   
+
+
+
+
+
+
+
+
+
+@login_required
+def fill_starter_sheet(request, startersheet_id=None):
+
+    if request.user.role == "admin":
+        checksheets = CheckSheet.objects.all()
+        Starter = StarterSheet.objects.all()
+    else:
+        checksheets = CheckSheet.objects.filter(
+                assigned_users=request.user)
+        Starter = StarterSheet.objects.filter(assigned_users=request.user)
+
+    selected_startersheet = (
+            get_object_or_404(StarterSheet, id=startersheet_id)
+            if startersheet_id
+            else None
+        )
+    zones = selected_startersheet.zones.all() if selected_startersheet else []
+    today = now().date()
+
+        # Get current time and determine current shift
+    IST = pytz.timezone("Asia/Kolkata")
+    current_time = now().astimezone(IST).time()
+    try:
+        shift_times = (
                 Shifttime.objects.first()
             )  # Get the first record from Shifttime model
-            current_shift = "None"  # Default value
+        current_shift = "None"  # Default value
 
             # Check if current time is in shift A
-            if shift_times.shift_A_start <= current_time <= shift_times.shift_A_end:
-                current_shift = "A"
+        if shift_times.shift_A_start <= current_time <= shift_times.shift_A_end:
+            current_shift = "A"
             # Check if current time is in shift B
-            elif shift_times.shift_B_start <= current_time <= shift_times.shift_B_end:
-                current_shift = "B"
-        except Shifttime.DoesNotExist:
-            current_shift = "None"
+        elif shift_times.shift_B_start <= current_time <= shift_times.shift_B_end:
+            current_shift = "B"
+    except Shifttime.DoesNotExist:
+        current_shift = "None"
+
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            shift = data.get("shift")
+            user = request.user  # Get the logged-in user
+            line = data.get(
+                    "line",
+                    selected_startersheet.line if selected_startersheet else None,
+                )
+
+                # Check if data already exists for today, same user, shift, line, and startersheet
+            existing_entry = FilledStarterSheet.objects.filter(
+                    startersheet=selected_startersheet,
+                    filled_by=user,
+                    shift=shift,
+                    line=line,
+                    timestamp__date=today,
+                ).exists()
+
+            if existing_entry:
+                return JsonResponse(
+                        {
+                            "error": "Data already filled for this user, shift, line, and sheet today"
+                        },
+                        status=400,
+                    )
+
+                # Collect all zone statuses in a dictionary with zone names
+            status_data = {}
+            for zone_data in data["zones"]:
+                zone_id = zone_data["id"]
+                user_input = zone_data["value"]
+
+                zone = next(
+                        (z for z in zones if str(z.id) == zone_id), None)
+                if not zone:
+                        continue
+
+                zone_name = zone.name  # Get zone name
+
+                if zone.type == "checkbox":
+                        status_data[zone_name] = "Yes" if user_input == "Yes" else "No"
+                elif zone.type == "int":
+                        status_data[zone_name] = (
+                            int(user_input) if user_input.isdigit() else 0
+                        )
+                elif zone.type == "float":
+                    try:
+                            float(user_input)
+                            # Keep as string
+                            status_data[zone_name] = user_input
+                    except ValueError:
+                            status_data[zone_name] = "0.0"
+
+                # Save the filled data in a single JSON field
+            FilledStarterSheet.objects.create(
+                    startersheet=selected_startersheet,
+                    filled_by=user,
+                    status_data=status_data,
+                    shift=shift,
+                    line=line,
+                )
+
+            return JsonResponse({"message": "Data saved successfully"}, status=200)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid data"}, status=400)
+
+    return render(
+            request,
+            "checksheet/fill_starter_sheet.html",
+            {
+                "Starter": Starter,
+                "selected_startersheet": selected_startersheet,
+                "zones": zones,
+                "checksheets": checksheets,
+                "current_shift": current_shift,
+            },
+        )
+
+
+
+
+
+
+
+@login_required
+def operator_dashboard(request):
+    
+    if request.user.role == "admin":
+            checksheets = CheckSheet.objects.all()
+            Starter = StarterSheet.objects.all()
+    else:
+            checksheets = CheckSheet.objects.filter(
+                assigned_users=request.user)
+            Starter = StarterSheet.objects.filter(assigned_users=request.user)
+
+    current_date = now().date()  # ✅ Get today's date (ignoring time)
+    user = request.user
+
+        # Get current time and determine current shift
+    IST = pytz.timezone("Asia/Kolkata")
+    current_time = now().astimezone(IST).time()
+        # Get current time in IST
+    try:
+        shift_times = (
+                Shifttime.objects.first()
+            )  # Get the first record from Shifttime model
+        current_shift = "None"  # Default value
+
+            # Check if current time is in shift A
+        if shift_times.shift_A_start <= current_time <= shift_times.shift_A_end:
+            current_shift = "A"
+            # Check if current time is in shift B
+        elif shift_times.shift_B_start <= current_time <= shift_times.shift_B_end:
+            current_shift = "B"
+    except Shifttime.DoesNotExist:
+        current_shift = "None"
 
         # ✅ Get assigned POCs
 
         # ✅ Check if the user has filled at least one Starter Sheet today (ignoring time)
-        has_filled_starter_sheet_today = FilledStarterSheet.objects.filter(
+    has_filled_starter_sheet_today = FilledStarterSheet.objects.filter(
             filled_by=user, timestamp__date=current_date, shift=current_shift
         ).exists()
 
-        return render(
+    return render(
             request,
             "checksheet/operator_dashboard.html",
             {
@@ -1956,7 +2218,6 @@ def operator_dashboard(request):
                 "has_filled_starter_sheet": has_filled_starter_sheet_today,
             },
         )
-    return render(request, "checksheet/access_denied.html")
 
 
 # ----------------------------------------- Upload POC--------------------------------#
