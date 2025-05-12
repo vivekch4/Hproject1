@@ -139,4 +139,5 @@ urlpatterns = [
     ),
     path("get-shift-data/", get_shift_data, name="get-shift-data"),
     path("verify-shift-change/", verify_shift_change, name="verify-shift-change"),
+      path('get_dashboard_stats/', get_dashboard_stats, name='get_dashboard_stats'),
 ]

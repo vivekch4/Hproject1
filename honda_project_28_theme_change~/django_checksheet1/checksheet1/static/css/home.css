@@ -211,11 +211,11 @@ canvas {
 .line-filter-container {
     display: flex;
     align-items: center;
-    padding: 4px 14px;
+    padding: 4px 0px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* border: 1px solid rgba(255, 255, 255, 0.1); */
     margin-right: 10px;
 }
 
@@ -256,8 +256,10 @@ canvas {
     gap: 15px;
 }
 
+
 .logout-btn {
     order: 2;
+
 }
 
 .navbar .line-filter-container {
@@ -403,3 +405,4 @@ body.white-mode option {
         max-width: 120px;
     }
 }
+

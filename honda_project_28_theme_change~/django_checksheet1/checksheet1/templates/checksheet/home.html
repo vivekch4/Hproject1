@@ -4,6 +4,101 @@
 {% block extra_css %}
 
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
+<style>
+.line-filter-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  
+}
+
+.line-filter-nav {
+    display: flex;
+    align-items: center;
+    gap: 0px;
+    margin-left: auto; /* Push to the right in navbar */
+}
+
+.line-filter-wrapper {
+    display: inline-flex;
+}
+
+.line-filter-dropdown {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+    width: 150px;
+}
+
+.line-filter-dropdown:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+.date-filter-input {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+    width: 45px; /* Reduced width to just fit the icon */
+    position: relative;
+    overflow: hidden;
+    text-indent: -9999px; /* Hide the date text */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.date-filter-input::-webkit-calendar-picker-indicator {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    left: 0;
+    top: 0;
+    cursor: pointer;
+}
+
+body:not(.white-mode) .date-filter-input {
+    background-color: #2c3e50;
+    border-color: #34495e;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23ecf0f1' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3E%3C/svg%3E");
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .date-filter-input {
+        width: 40px;
+    }
+}
+
+body:not(.white-mode) .line-filter-dropdown {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    border-color: #34495e;
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .line-filter-nav {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    .line-filter-dropdown,
+    .date-filter-input {
+        width: 120px;
+        font-size: 12px;
+    }
+}
+</style>
 {% endblock %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
@@ -11,13 +106,15 @@
     <!-- Top Row: Stats Cards and Bar Graph -->
     <div class="top-row">
         <div class="line-filter-container">
-          
+           <div class="line-filter-wrapper">
             <select id="lineFilter" class="line-filter-dropdown">
                 <option value="all">All Lines</option>
                 {% for line in lines_list %}
                 <option value="{{ line }}">{{ line }}</option>
                 {% endfor %}
             </select>
+        </div>
+            <input type="date" id="dateFilter" class="date-filter-input" value="{{ today|date:'Y-m-d' }}">
         </div>
         <!-- Stats Cards -->
         <div class="stats-container">
@@ -136,13 +233,14 @@
 </div>
 
 <!-- Chart.js from CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<!-- Chart.js from CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <script>
-    window.onload = function () {
-        setupWebSocketUpdates();
-    };
+window.onload = function () {
+    setupWebSocketUpdates();
+};
+
 // Utility function to get chart text color based on theme
 function getChartTextColor() {
     return document.body.classList.contains('white-mode') ? '#333333' : '#ffffff';
@@ -179,25 +277,21 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof ChartDataLabels !== 'undefined') {
         Chart.register(ChartDataLabels);
     } else {
-        console.warn('ChartDataLabels plugin not found. Make sure to include the plugin script.');
+        console.warn('ChartDataLabels plugin not found.');
     }
 
-    // Parse checksheets data globally so it's available throughout the code
+    // Parse checksheets data globally
     window.checksheets = parseChecksheets();
 
     // Initialize all charts and UI components
     initializeCharts();
     setupEventListeners();
     loadInitialData();
-   
+
     // Watch for theme changes
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
-            if (mutation.attributeName === 'class' && mutation.target.classList.contains('white-mode')) {
-                updateChartTextColors(window.barChart);
-                updateChartTextColors(window.pieChart);
-                updateChartTextColors(window.lineChart);
-            } else if (mutation.attributeName === 'class' && !mutation.target.classList.contains('white-mode')) {
+            if (mutation.attributeName === 'class') {
                 updateChartTextColors(window.barChart);
                 updateChartTextColors(window.pieChart);
                 updateChartTextColors(window.lineChart);
@@ -205,6 +299,45 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     observer.observe(document.body, { attributes: true });
+
+    // Navbar filter integration
+    if (document.querySelector('.dashboard')) {
+        const navbar = document.querySelector('.navbar');
+        if (navbar) {
+            const logoutBtn = navbar.querySelector('.logout-btn');
+            if (logoutBtn) {
+                const navbarRight = document.createElement('div');
+                navbarRight.className = 'navbar-right line-filter-nav';
+                const lineFilterContainer = document.querySelector('.line-filter-container');
+                if (lineFilterContainer) {
+                    const lineFilterClone = lineFilterContainer.cloneNode(true);
+                    logoutBtn.parentNode.removeChild(logoutBtn);
+                    navbarRight.appendChild(lineFilterClone);
+                    navbarRight.appendChild(logoutBtn);
+                    navbar.appendChild(navbarRight);
+                    lineFilterContainer.style.display = 'none';
+
+                    const navbarLineFilter = navbarRight.querySelector('#lineFilter');
+                    const dashboardLineFilter = lineFilterContainer.querySelector('#lineFilter');
+                    const navbarDateFilter = navbarRight.querySelector('#dateFilter');
+                    const dashboardDateFilter = lineFilterContainer.querySelector('#dateFilter');
+
+                    if (navbarLineFilter && dashboardLineFilter) {
+                        navbarLineFilter.addEventListener('change', function() {
+                            dashboardLineFilter.value = this.value;
+                            dashboardLineFilter.dispatchEvent(new Event('change'));
+                        });
+                    }
+                    if (navbarDateFilter && dashboardDateFilter) {
+                        navbarDateFilter.addEventListener('change', function() {
+                            dashboardDateFilter.value = this.value;
+                            dashboardDateFilter.dispatchEvent(new Event('change'));
+                        });
+                    }
+                }
+            }
+        }
+    }
 });
 
 function parseChecksheets() {
@@ -231,11 +364,7 @@ function configureChartDefaults() {
 
 function initializeBarChart() {
     const barCtx = document.getElementById('barChart');
-    if (!barCtx) {
-        console.warn('Bar chart canvas not found');
-        return null;
-    }
-
+    if (!barCtx) return null;
     return new Chart(barCtx.getContext('2d'), {
         type: 'bar',
         data: {
@@ -252,22 +381,14 @@ function initializeBarChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    top: window.innerWidth <= 480 ? 15 : 25
-                }
-            },
+            layout: { padding: { top: window.innerWidth <= 480 ? 15 : 25 } },
             plugins: {
-                legend: {
-                    display: false
-                },
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
                         title: function(tooltipItems) {
                             const index = tooltipItems[0].dataIndex;
-                            return this.chart.originalLabels ?
-                                this.chart.originalLabels[index] :
-                                tooltipItems[0].label;
+                            return this.chart.originalLabels ? this.chart.originalLabels[index] : tooltipItems[0].label;
                         }
                     }
                 },
@@ -277,10 +398,7 @@ function initializeBarChart() {
                     align: 'top',
                     offset: 4,
                     formatter: function(value) { return value; },
-                    font: {
-                        weight: 'bold',
-                        size: window.innerWidth <= 480 ? 8 : 10
-                    },
+                    font: { weight: 'bold', size: window.innerWidth <= 480 ? 8 : 10 },
                     color: getChartTextColor(),
                     clamp: true
                 }
@@ -288,28 +406,20 @@ function initializeBarChart() {
             scales: {
                 y: {
                     beginAtZero: true,
-                    grid: {
-                        color: document.body.classList.contains('white-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)'
-                    },
+                    grid: { color: document.body.classList.contains('white-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)' },
                     ticks: {
                         color: getChartTextColor(),
                         font: { size: window.innerWidth <= 480 ? 8 : 10 },
                         stepSize: 1,
-                        callback: function(value) {
-                            return Number.isInteger(value) ? value : null;
-                        }
+                        callback: function(value) { return Number.isInteger(value) ? value : null; }
                     },
                     suggestedMax: function(context) {
-                        const maxValue = context.chart.data.datasets[0].data.reduce(
-                            (max, value) => value > max ? value : max, 0
-                        );
+                        const maxValue = context.chart.data.datasets[0].data.reduce((max, value) => value > max ? value : max, 0);
                         return Math.ceil(maxValue * 1.1);
                     }
                 },
                 x: {
-                    grid: {
-                        display: false
-                    },
+                    grid: { display: false },
                     ticks: {
                         color: getChartTextColor(),
                         callback: function(value, index) {
@@ -329,15 +439,9 @@ function initializeBarChart() {
 function initializePieChart() {
     const pieChartNoData = document.getElementById('pieChartNoData');
     const pieChartElement = document.getElementById('pieChart');
-
-    if (!pieChartElement) {
-        console.warn('Pie chart canvas not found');
-        return null;
-    }
-
+    if (!pieChartElement) return null;
     if (pieChartNoData) pieChartNoData.style.display = 'flex';
     pieChartElement.style.display = 'none';
-
     return new Chart(pieChartElement.getContext('2d'), {
         type: 'doughnut',
         data: {
@@ -372,10 +476,7 @@ function initializePieChart() {
                         return percentage;
                     },
                     color: getChartTextColor(),
-                    font: {
-                        weight: 'bold',
-                        size: window.innerWidth <= 480 ? 8 : 10
-                    }
+                    font: { weight: 'bold', size: window.innerWidth <= 480 ? 8 : 10 }
                 }
             }
         }
@@ -384,11 +485,7 @@ function initializePieChart() {
 
 function initializeLineChart() {
     const lineCtx = document.getElementById('lineChart');
-    if (!lineCtx) {
-        console.warn('Line chart canvas not found');
-        return null;
-    }
-
+    if (!lineCtx) return null;
     return new Chart(lineCtx.getContext('2d'), {
         type: 'line',
         data: {
@@ -409,11 +506,7 @@ function initializeLineChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    top: window.innerWidth <= 480 ? 15 : 25
-                }
-            },
+            layout: { padding: { top: window.innerWidth <= 480 ? 15 : 25 } },
             plugins: {
                 legend: { display: false },
                 datalabels: {
@@ -426,27 +519,18 @@ function initializeLineChart() {
                     backgroundColor: document.body.classList.contains('white-mode') ? 'rgba(52, 152, 219, 0.9)' : 'rgba(52, 152, 219, 0.7)',
                     borderRadius: 4,
                     padding: 4,
-                    font: {
-                        weight: 'bold',
-                        size: window.innerWidth <= 480 ? 8 : 10
-                    }
+                    font: { weight: 'bold', size: window.innerWidth <= 480 ? 8 : 10 }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     grid: { color: document.body.classList.contains('white-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)' },
-                    ticks: {
-                        color: getChartTextColor(),
-                        font: { size: window.innerWidth <= 480 ? 8 : 10 }
-                    }
+                    ticks: { color: getChartTextColor(), font: { size: window.innerWidth <= 480 ? 8 : 10 } }
                 },
                 x: {
                     grid: { display: false },
-                    ticks: {
-                        color: getChartTextColor(),
-                        font: { size: window.innerWidth <= 480 ? 8 : 10 }
-                    }
+                    ticks: { color: getChartTextColor(), font: { size: window.innerWidth <= 480 ? 8 : 10 } }
                 }
             }
         }
@@ -457,6 +541,7 @@ function setupEventListeners() {
     setupFilterButtons();
     setupChecksheetSelection();
     setupLineFilter();
+    setupDateFilter();
 }
 
 function setupFilterButtons() {
@@ -469,11 +554,14 @@ function setupFilterButtons() {
             const period = this.dataset.period;
             const chartCard = this.closest('.chart-card');
             if (chartCard.querySelector('#barChart')) {
-                loadChartData(period);
+                const selectedLine = document.getElementById('lineFilter')?.value || 'all';
+                const selectedDate = document.getElementById('dateFilter')?.value || '';
+                loadChartData(period, selectedLine, selectedDate);
             } else if (chartCard.querySelector('#pieChart')) {
                 const checksheetId = document.getElementById('pieChartChecksheet')?.value;
+                const selectedDate = document.getElementById('dateFilter')?.value || '';
                 if (checksheetId) {
-                    loadPieChartData(checksheetId, period);
+                    loadPieChartData(checksheetId, period, selectedDate);
                 }
             } else if (chartCard.querySelector('#lineChart')) {
                 applyVisualEffect(chartCard);
@@ -485,12 +573,11 @@ function setupFilterButtons() {
 function setupChecksheetSelection() {
     const pieChartChecksheet = document.getElementById('pieChartChecksheet');
     if (!pieChartChecksheet) return;
-
     pieChartChecksheet.addEventListener('change', function() {
         if (this.value !== '') {
-            const activePeriod = this.closest('.chart-card')
-                .querySelector('.chart-filter.active')?.dataset.period || 'today';
-            loadPieChartData(this.value, activePeriod);
+            const activePeriod = this.closest('.chart-card').querySelector('.chart-filter.active')?.dataset.period || 'today';
+            const selectedDate = document.getElementById('dateFilter')?.value || '';
+            loadPieChartData(this.value, activePeriod, selectedDate);
         } else {
             const pieChartNoData = document.getElementById('pieChartNoData');
             const pieChartElement = document.getElementById('pieChart');
@@ -506,9 +593,28 @@ function setupLineFilter() {
     if (lineFilter) {
         lineFilter.addEventListener('change', function() {
             const selectedLine = this.value;
+            const selectedDate = document.getElementById('dateFilter')?.value || '';
             filterChecksheetsByLine(selectedLine);
             const activePeriod = document.querySelector('.chart-card:has(#barChart) .chart-filter.active')?.dataset.period || 'today';
-            loadChartData(activePeriod, selectedLine);
+            loadChartData(activePeriod, selectedLine, selectedDate);
+            loadDashboardStats(selectedLine, selectedDate);
+        });
+    }
+}
+
+function setupDateFilter() {
+    const dateFilter = document.getElementById('dateFilter');
+    if (dateFilter) {
+        dateFilter.addEventListener('change', function() {
+            const selectedDate = this.value;
+            const selectedLine = document.getElementById('lineFilter')?.value || 'all';
+            const activePeriod = document.querySelector('.chart-card:has(#barChart) .chart-filter.active')?.dataset.period || 'today';
+            const checksheetId = document.getElementById('pieChartChecksheet')?.value;
+            loadChartData(activePeriod, selectedLine, selectedDate);
+            if (checksheetId) {
+                loadPieChartData(checksheetId, activePeriod, selectedDate);
+            }
+            loadDashboardStats(selectedLine, selectedDate);
         });
     }
 }
@@ -516,16 +622,10 @@ function setupLineFilter() {
 function filterChecksheetsByLine(line) {
     const pieChartDropdown = document.getElementById('pieChartChecksheet');
     if (!pieChartDropdown) return;
-
-    if (!window.checksheets || !Array.isArray(window.checksheets)) {
-        console.error('Checksheets data is not available');
-        return;
-    }
-
+    if (!window.checksheets || !Array.isArray(window.checksheets)) return;
     while (pieChartDropdown.options.length > 1) {
         pieChartDropdown.remove(1);
     }
-
     window.checksheets.forEach(sheet => {
         if (line === 'all' || sheet.line === line) {
             const option = document.createElement('option');
@@ -535,11 +635,11 @@ function filterChecksheetsByLine(line) {
             pieChartDropdown.appendChild(option);
         }
     });
-
     if (pieChartDropdown.options.length > 1) {
         pieChartDropdown.value = pieChartDropdown.options[1].value;
         const activePeriod = document.querySelector('.chart-card:has(#pieChart) .chart-filter.active')?.dataset.period || 'today';
-        loadPieChartData(pieChartDropdown.value, activePeriod);
+        const selectedDate = document.getElementById('dateFilter')?.value || '';
+        loadPieChartData(pieChartDropdown.value, activePeriod, selectedDate);
     } else {
         pieChartDropdown.value = '';
         const pieChartNoData = document.getElementById('pieChartNoData');
@@ -551,8 +651,11 @@ function filterChecksheetsByLine(line) {
 
 function loadInitialData() {
     const lineFilter = document.getElementById('lineFilter');
+    const dateFilter = document.getElementById('dateFilter');
     const selectedLine = lineFilter ? lineFilter.value : 'all';
-    loadChartData('today', selectedLine);
+    const selectedDate = dateFilter ? dateFilter.value : '';
+    loadChartData('today', selectedLine, selectedDate);
+    loadDashboardStats(selectedLine, selectedDate);
     if (typeof today_yes_counts_json !== 'undefined') {
         try {
             const initialData = JSON.parse(today_yes_counts_json);
@@ -563,29 +666,35 @@ function loadInitialData() {
     }
 }
 
-function loadChartData(period, line = 'all') {
+function loadChartData(period, line = 'all', date = '') {
     if (line === 'all') {
         const lineFilter = document.getElementById('lineFilter');
-        if (lineFilter) {
-            line = lineFilter.value;
-        }
+        if (lineFilter) line = lineFilter.value;
     }
-
-    fetch(`/get_chart_data/?period=${period}&line=${line}`)
+    let url = `/get_chart_data/?period=${period}&line=${line}`;
+    if (date) url += `&date=${date}`;
+    fetch(url)
         .then(response => response.json())
-        .then(data => {
-            updateBarChart(data);
-        })
+        .then(data => updateBarChart(data))
         .catch(error => console.error('Error loading chart data:', error));
 }
 
-function loadPieChartData(checksheetId, period) {
-    fetch(`/get_pie_chart_data/?checksheet_id=${checksheetId}&period=${period}`)
+function loadPieChartData(checksheetId, period, date = '') {
+    let url = `/get_pie_chart_data/?checksheet_id=${checksheetId}&period=${period}`;
+    if (date) url += `&date=${date}`;
+    fetch(url)
         .then(response => response.json())
-        .then(data => {
-            updatePieChart(data);
-        })
+        .then(data => updatePieChart(data))
         .catch(error => console.error('Error loading pie chart data:', error));
+}
+
+function loadDashboardStats(line = 'all', date = '') {
+    let url = `/get_dashboard_stats/?line=${line}`;
+    if (date) url += `&date=${date}`;
+    fetch(url)
+        .then(response => response.json())
+        .then(data => updateDashboardElements(data))
+        .catch(error => console.error('Error loading dashboard stats:', error));
 }
 
 function updateBarChart(data) {
@@ -623,45 +732,53 @@ function updatePieChart(data) {
 function setupWebSocketUpdates() {
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const wsUrl = `${protocol}://${window.location.host}/ws/production/`;
-    console.log(`Connecting to WebSocket URL: ${wsUrl}`);
-
     const socket = new WebSocket(wsUrl);
-
     socket.onopen = function () {
-        console.log("WebSocket connected");
+        const dateFilter = document.getElementById('dateFilter');
+        if (dateFilter && dateFilter.value) {
+            socket.send(JSON.stringify({
+                type: "set_date_filter",
+                date: dateFilter.value
+            }));
+        }
     };
-
     socket.onmessage = function (event) {
-        console.log("Raw WebSocket message received:", event.data);
         try {
             const data = JSON.parse(event.data);
-            console.log("Parsed WebSocket data:", data);
             if (data.type === "send_production_update") {
-                console.log("Processing production update with data:", data.data);
                 updateDashboardElements(data.data);
-            } else {
-                console.log("Received non-production update message:", data);
             }
         } catch (e) {
             console.error("Error parsing WebSocket message:", e);
         }
     };
-
     socket.onerror = function (error) {
         console.error("WebSocket error:", error);
         setErrorState();
     };
-
     socket.onclose = function () {
         console.warn("WebSocket closed");
         setErrorState();
     };
+    const dateFilter = document.getElementById('dateFilter');
+    if (dateFilter) {
+        dateFilter.addEventListener('change', function() {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: "set_date_filter",
+                    date: this.value
+                }));
+            }
+        });
+    }
 }
 
 function updateDashboardElements(data) {
-    console.log("Updating dashboard elements with data:", data);
     if (!data) {
-        console.warn("No data received for dashboard update");
+        updateElementText("production-count", "N/A");
+        updateElementText("reject-count", "N/A");
+        updateElementText("actual-production", "N/A");
+        updateElementText("efficiency-percent", "N/A");
         return;
     }
     updateElementText("production-count", data.production_count ?? "N/A");
@@ -671,21 +788,14 @@ function updateDashboardElements(data) {
     if (data.connection_status) {
         updateElementText("connection-status", data.connection_status);
     }
-    console.log("Dashboard elements updated");
 }
 
 function updateElementText(id, text) {
     const element = document.getElementById(id);
-    if (element) {
-        console.log(`Updating element ${id} with text: ${text}`);
-        element.textContent = text;
-    } else {
-        console.warn(`Element with ID ${id} not found`);
-    }
+    if (element) element.textContent = text;
 }
 
 function setErrorState() {
-    console.log("Setting error state for dashboard elements");
     updateElementText("production-count", "58");
     updateElementText("reject-count", "17");
     updateElementText("actual-production", "41");
@@ -700,17 +810,11 @@ function setupResizeHandlers() {
 function setupSidebarObserver() {
     const sidebarToggle = document.querySelector('.sidebar-toggle');
     if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', () => {
-            setTimeout(resizeCharts, 300);
-        });
+        sidebarToggle.addEventListener('click', () => setTimeout(resizeCharts, 300));
     }
-    const resizeObserver = new ResizeObserver(() => {
-        setTimeout(resizeCharts, 300);
-    });
+    const resizeObserver = new ResizeObserver(() => setTimeout(resizeCharts, 300));
     const chartsContainer = document.querySelector('.charts-container');
-    if (chartsContainer) {
-        resizeObserver.observe(chartsContainer);
-    }
+    if (chartsContainer) resizeObserver.observe(chartsContainer);
 }
 
 function resizeCharts() {
@@ -735,43 +839,9 @@ function applyVisualEffect(chartCard) {
     const chartContent = chartCard.querySelector('.chart-content');
     if (chartContent) {
         chartContent.style.opacity = '0.6';
-        setTimeout(() => {
-            chartContent.style.opacity = '1';
-        }, 300);
+        setTimeout(() => { chartContent.style.opacity = '1'; }, 300);
     }
 }
-
-// Navbar line filter integration
-document.addEventListener('DOMContentLoaded', function() {
-    if (document.querySelector('.dashboard')) {
-        const navbar = document.querySelector('.navbar');
-        if (navbar) {
-            const logoutBtn = navbar.querySelector('.logout-btn');
-            if (logoutBtn) {
-                const navbarRight = document.createElement('div');
-                navbarRight.className = 'navbar-right';
-                const lineFilterContainer = document.querySelector('.line-filter-container');
-                if (lineFilterContainer) {
-                    const lineFilter = lineFilterContainer.cloneNode(true);
-                    logoutBtn.parentNode.removeChild(logoutBtn);
-                    navbarRight.appendChild(logoutBtn);
-                    navbarRight.appendChild(lineFilter);
-                    navbar.appendChild(navbarRight);
-                    lineFilterContainer.style.display = 'none';
-                    const navbarLineFilter = lineFilter.querySelector('#lineFilter');
-                    const dashboardLineFilter = lineFilterContainer.querySelector('#lineFilter');
-                    if (navbarLineFilter && dashboardLineFilter) {
-                        navbarLineFilter.addEventListener('change', function() {
-                            dashboardLineFilter.value = this.value;
-                            const event = new Event('change');
-                            dashboardLineFilter.dispatchEvent(event);
-                        });
-                    }
-                }
-            }
-        }
-    }
-});
 </script>
 
 {% endblock %}

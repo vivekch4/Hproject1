@@ -142,6 +142,7 @@ body.white-mode .user-info {
     padding: 0.5rem 1.25rem;
     background: var(--accent-color);
     color: white;
+    margin-left: auto;
     border: 1px solid var(--accent-color-solid);
     border-radius: 10px;
     font-size: 0.875rem;
@@ -1324,3 +1325,47 @@ button.fullscreen-btn {
     color: var(--accent-color-solid, #11aabb);
 }
 
+
+
+
+
+.logo-collapsed {
+    display: none; /* Hidden by default when sidebar is expanded */
+}
+
+.logo-expanded {
+    display: inline-block; /* Shown by default when sidebar is expanded */
+}
+
+body.sidebar-collapsed .logo-collapsed {
+    display: inline-block; /* Shown when sidebar is collapsed */
+}
+
+body.sidebar-collapsed .logo-expanded {
+    display: none; /* Hidden when sidebar is collapsed */
+}
+
+/* Adjust sidebar logo sizes */
+.sidebar-logo.logo-collapsed {
+    width: 25px; /* Smaller size for collapsed state */
+    height: 25px;
+}
+
+
+.sidebar-logo.logo-expanded {
+    width: 125px; /* Larger size for expanded state */
+    height: 41px;
+    margin-right: 10px; /* Space between logo and text */
+}
+
+/* Ensure logos align properly */
+.sidebar-header h3 {
+    display: flex
+;
+    align-items: center;
+    flex-direction: column;
+}
+/* Logo hidden state (from toggle) */
+.logo-hidden {
+    display: none !important;
+}

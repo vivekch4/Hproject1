@@ -474,49 +474,53 @@ def home(request):
             "startersheet_pending_count": pending_count,
             "startersheet_acknowledged_count": approved_count,
             "lines_list": lines_list,
+            "today": today,  
         },
     )
-
-
 @login_required
 def get_pie_chart_data(request):
-    """API endpoint to get overall pie chart data for a specific checksheet"""
     checksheet_id = request.GET.get("checksheet_id")
     time_period = request.GET.get("period", "week")
+    selected_date = request.GET.get("date", None)
+    print(f"Selected date: {selected_date}")
 
-    # Validate checksheet_id
     if not checksheet_id:
         return JsonResponse({"error": "Checksheet ID is required"}, status=400)
 
-    # Get current date and time
     today = timezone.now()
 
-    # Calculate start and end dates based on the time period
-    if time_period == "today":
-        # Start of today
-        start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
-        # End of today
-        end_date = today.replace(hour=23, minute=59, second=59, microsecond=999999)
-    elif time_period == "week":
-        start_date = today - timedelta(days=today.weekday())  # Monday
-        start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_date = start_date + timedelta(days=6, hours=23, minutes=59, seconds=59)
-    elif time_period == "month":
-        start_date = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        end_date = today.replace(hour=23, minute=59, second=59, microsecond=999999)
-    elif time_period == "year":
-        start_date = today.replace(
-            month=1, day=1, hour=0, minute=0, second=0, microsecond=0
-        )
-        end_date = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+    # Calculate start and end dates
+    if selected_date:
+        try:
+            selected_date = timezone.datetime.strptime(selected_date, "%Y-%m-%d")
+            selected_date = timezone.make_aware(selected_date, timezone.get_current_timezone())
+            start_date = selected_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = start_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+            print(f"Query range: {start_date} to {end_date}")
+        except ValueError:
+            print("Invalid date format")
+            return JsonResponse({"error": "Invalid date format"}, status=400)
     else:
-        # Default to week if unknown period
-        start_date = today - timedelta(days=today.weekday())
-        start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_date = start_date + timedelta(days=6, hours=23, minutes=59, seconds=59)
+        if time_period == "today":
+            start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+        elif time_period == "week":
+            start_date = today - timezone.timedelta(days=today.weekday())
+            start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = start_date + timezone.timedelta(days=6, hours=23, minutes=59, seconds=59)
+        elif time_period == "month":
+            start_date = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            end_date = (start_date + timezone.timedelta(days=32)).replace(day=1) - timezone.timedelta(microseconds=1)
+        elif time_period == "year":
+            start_date = today.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            end_date = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+        else:
+            start_date = today - timezone.timedelta(days=today.weekday())
+            start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = start_date + timezone.timedelta(days=6, hours=23, minutes=59, seconds=59)
+        print(f"Query range (period={time_period}): {start_date} to {end_date}")
 
     try:
-        # Check if user has access to this checksheet
         checksheet = CheckSheet.objects.get(id=checksheet_id)
         if (
             request.user.role != "admin"
@@ -525,38 +529,40 @@ def get_pie_chart_data(request):
             and not checksheet.assigned_users.filter(id=request.user.id).exists()
         ):
             return JsonResponse({"error": "Access denied"}, status=403)
-        # Filter by time range
+
         filled_sheets = FilledCheckSheet.objects.filter(
             checksheet=checksheet, timestamp__gte=start_date, timestamp__lte=end_date
         )
+        print(f"Queryset: {filled_sheets}")
+        print(f"Queryset count: {filled_sheets.count()}")
+        for sheet in filled_sheets:
+            print(f"Sheet timestamp: {sheet.timestamp}, Status: {sheet.status_data}")
+
+        field_yes_counts = {}
+        for filled in filled_sheets:
+            status_data = filled.status_data
+            for field, value in status_data.items():
+                if field != "completely_reject":
+                    if value == "Yes":
+                        field_yes_counts[field] = field_yes_counts.get(field, 0) + 1
+                    elif isinstance(value, int):
+                        field_yes_counts[field] = field_yes_counts.get(field, 0) + value
+
+        all_fields = get_checksheet_fields(checksheet_id)
+        for field in all_fields:
+            if field not in field_yes_counts:
+                field_yes_counts[field] = 0
+
+        print(f"{checksheet.name} {field_yes_counts} {time_period} pie chart")
+        return JsonResponse(
+            {
+                "checksheet_name": checksheet.name,
+                "zone_yes_counts": field_yes_counts,
+                "time_period": time_period,
+            }
+        )
     except CheckSheet.DoesNotExist:
         return JsonResponse({"error": "Checksheet not found"}, status=404)
-
-    # Initialize field counts
-    field_yes_counts = {}
-
-    for filled in filled_sheets:
-        status_data = filled.status_data
-        for field, value in status_data.items():
-            if field != "completely_reject":
-                if value == "Yes":
-                    field_yes_counts[field] = field_yes_counts.get(field, 0) + 1
-                elif isinstance(value, int):
-                    field_yes_counts[field] = field_yes_counts.get(field, 0) + value
-
-    # Fill zero for fields that weren't in this time range
-    all_fields = get_checksheet_fields(checksheet_id)
-    for field in all_fields:
-        if field not in field_yes_counts:
-            field_yes_counts[field] = 0
-
-    return JsonResponse(
-        {
-            "checksheet_name": checksheet.name,
-            "zone_yes_counts": field_yes_counts,
-            "time_period": time_period,
-        }
-    )
 
 
 def get_checksheet_fields(checksheet_id):
@@ -576,86 +582,157 @@ def get_checksheet_fields(checksheet_id):
     except Exception:
         return []
 
-
 @login_required
 def get_chart_data(request):
-    period = request.GET.get("period", "today")  # Default to today
-    line = request.GET.get("line", "all")  # Get the selected line, default to "all"
+    period = request.GET.get("period", "today")
+    line = request.GET.get("line", "all")
+    selected_date = request.GET.get("date", None)
     today = timezone.now()
 
-    # Determine date range based on period
-    if period == "today":
-        start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_date = start_date + timedelta(days=1)
-    elif period == "week":
-        start_date = today - timedelta(days=today.weekday())
-        start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_date = start_date + timedelta(days=6, hours=23, minutes=59, seconds=59)
-    elif period == "month":
-        start_date = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        end_date = today.replace(hour=23, minute=59, second=59, microsecond=999999)
-    elif period == "year":
-        start_date = today.replace(
-            month=1, day=1, hour=0, minute=0, second=0, microsecond=0
-        )
-        end_date = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+    # Determine date range
+    if selected_date:
+        try:
+            selected_date = timezone.datetime.strptime(selected_date, "%Y-%m-%d")
+            selected_date = timezone.make_aware(selected_date, timezone.get_current_timezone())
+            start_date = selected_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = start_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+            print(f"Query range: {start_date} to {end_date}")
+        except ValueError:
+            print("Invalid date format")
+            return JsonResponse({"error": "Invalid date format"}, status=400)
     else:
-        return JsonResponse({"error": "Invalid period"}, status=400)
+        if period == "today":
+            start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = start_date + timezone.timedelta(days=1)
+        elif period == "week":
+            start_date = today - timezone.timedelta(days=today.weekday())
+            start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = start_date + timezone.timedelta(days=6, hours=23, minutes=59, seconds=59)
+        elif period == "month":
+            start_date = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            end_date = (start_date + timezone.timedelta(days=32)).replace(day=1) - timezone.timedelta(microseconds=1)
+        elif period == "year":
+            start_date = today.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            end_date = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+        else:
+            return JsonResponse({"error": "Invalid period"}, status=400)
+        print(f"Query range (period={period}): {start_date} to {end_date}")
 
-    # Filter checksheets by line if a specific line is selected
+    # Filter checksheets by line
     if line == "all":
         checksheets = CheckSheet.objects.all()
     else:
         checksheets = CheckSheet.objects.filter(line=line)
 
     yes_counts = get_yes_counts(checksheets, start_date, end_date)
+    print(f"Yes counts: {yes_counts}")
     return JsonResponse(yes_counts, safe=False)
-
 
 def get_yes_counts(checksheets, start_date, end_date):
     """Helper function to get yes counts for a given date range"""
     yes_counts = []
 
-    # Make timezone-naive for comparison with naive database timestamps
-    start_date_naive = (
-        timezone.make_naive(start_date) if timezone.is_aware(start_date) else start_date
-    )
-    end_date_naive = (
-        timezone.make_naive(end_date) if timezone.is_aware(end_date) else end_date
-    )
-
-    print(f"Naive timestamps: {start_date_naive} to {end_date_naive}")
+    print(f"Timestamps: {start_date} to {end_date}")
     for sheet in checksheets:
-        # Get all filled checksheets for this sheet within the date range
         filled_sheets = FilledCheckSheet.objects.filter(
             checksheet=sheet, timestamp__gte=start_date, timestamp__lte=end_date
         )
 
-        # Print for debugging
         print(f"Sheet: {sheet.name}, Count: {filled_sheets.count()}")
-        # Print the first few timestamps for debugging
-        for fs in filled_sheets[:3]:  # Just the first 3 for brevity
+        for fs in filled_sheets[:3]:
             print(f"  - Timestamp: {fs.timestamp}")
             print(f"  - Status data: {fs.status_data}")
 
-        # Count all "Yes" responses and sum up integer values in the status_data JSON field, except "completely_reject"
         yes_count = 0
         for filled in filled_sheets:
-            # Parse the JSON data
             status_data = filled.status_data
             for key, value in status_data.items():
-                if key == "completely_reject":  # Skip this field
+                if key == "completely_reject":
                     continue
                 if value == "Yes":
                     yes_count += 1
                     print(f"  - Found 'Yes' for key: {key}")
-                elif isinstance(value, int):  # If it's an integer, add it to the count
+                elif isinstance(value, int):
                     yes_count += value
                     print(f"  - Found integer {value} for key: {key}")
 
         yes_counts.append({"name": sheet.name, "yes_count": yes_count})
 
     return yes_counts
+
+
+@login_required
+def get_dashboard_stats(request):
+    line = request.GET.get("line", "all")
+    selected_date = request.GET.get("date", None)
+    today = timezone.now()
+
+    # Determine date range
+    if selected_date:
+        try:
+            selected_date = timezone.datetime.strptime(selected_date, "%Y-%m-%d")
+            selected_date = timezone.make_aware(selected_date, timezone.get_current_timezone())
+            start_date = selected_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = start_date + timezone.timedelta(days=1, microseconds=-1)
+            print(f"Query range: {start_date} to {end_date}")
+        except ValueError:
+            print("Invalid date format")
+            return JsonResponse({"error": "Invalid date format"}, status=400)
+    else:
+        start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_date = start_date + timezone.timedelta(days=1, microseconds=-1)
+        print(f"Query range (today): {start_date} to {end_date}")
+
+    # Filter checksheets by line
+    if line == "all":
+        checksheets = CheckSheet.objects.all()
+    else:
+        checksheets = CheckSheet.objects.filter(line=line)
+
+    # Calculate stats
+    filled_sheets = FilledCheckSheet.objects.filter(
+        checksheet__in=checksheets, timestamp__gte=start_date, timestamp__lte=end_date
+    )
+    print(f"Queryset: {filled_sheets}")
+    print(f"Queryset count: {filled_sheets.count()}")
+    for sheet in filled_sheets:
+        print(f"Sheet timestamp: {sheet.timestamp}, Status: {sheet.status_data}")
+
+    total_rejects = 0
+
+    # Count rejects from filled sheets
+    for filled in filled_sheets:
+        status_data = filled.status_data
+        for key, value in status_data.items():
+            if key == "completely_reject" and value == "Yes":
+                total_rejects += 1
+
+    # Get total production from last ProductionDb entry for the date
+    try:
+        last_production = ProductionDb.objects.filter(
+            timestamp__gte=start_date,
+            timestamp__lte=end_date
+        ).latest('timestamp')
+        total_production = int(last_production.Production_count)
+    except ProductionDb.DoesNotExist:
+        total_production = 0
+
+    # Calculate actual production
+    actual_production = total_production - total_rejects
+
+    # Calculate efficiency
+    efficiency = (
+        (actual_production / total_production * 100) if total_production > 0 else 0
+    )
+
+    response_data = {
+        "production_count": total_production,
+        "total_rejects": total_rejects,
+        "actual_production": actual_production,
+        "efficiency": f"{efficiency:.2f}%",
+    }
+    print(f"Dashboard stats: {response_data}")
+    return JsonResponse(response_data)
 
 
 # ----------------------------------------- Create Checksheet--------------------------------#

@@ -16,6 +16,16 @@
                 document.documentElement.classList.add('sidebar-collapsed-init');
             }
         })();
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
     </script>
     {% block extra_css %}
   
@@ -40,6 +50,9 @@
             <i class="fas fa-sign-out-alt"></i>
             Logout
         </a>
+         <button class="fullscreen-btn" onclick="toggleFullScreen()" title="Toggle Full Screen">
+                <i class="fas fa-expand"></i>
+            </button>
     </nav>
     {% endif %}
 
@@ -49,7 +62,11 @@
 
     <div class="sidebar">
         <div class="sidebar-header">
-            <h3><img src="{% static 'images/logo-.png' %}" alt="Checksheet Logo" class="sidebar-logo logo-toggle"> <span>Checksheet</span></h3>
+            <h3>
+                <img src="{% static 'images/logo-.png' %}" alt="Collapsed Logo" class="sidebar-logo logo-toggle logo-collapsed">
+                <img src="{% static 'images/logo.jpg' %}" alt="Expanded Logo" class="sidebar-logo logo-toggle logo-expanded">
+                <span>Checksheet</span>
+            </h3>
         </div>
         
         {% if request.user.is_authenticated %}
@@ -324,13 +341,13 @@ if (themeToggle) {
 }
 const savedLogoState = localStorage.getItem('logoState');
 const logoToggle = document.getElementById('logoToggle');
-const logoElement = document.querySelector('.logo-toggle');
+const logoElements = document.querySelectorAll('.logo-toggle');
 
 if (savedLogoState === 'hidden') {
-    logoElement.classList.add('logo-hidden');
+    logoElements.forEach(element => element.classList.add('logo-hidden'));
     if (logoToggle) logoToggle.checked = false;
 } else {
-    logoElement.classList.remove('logo-hidden');
+    logoElements.forEach(element => element.classList.remove('logo-hidden'));
     if (logoToggle) logoToggle.checked = true;
 }
 
@@ -338,15 +355,18 @@ if (savedLogoState === 'hidden') {
 if (logoToggle) {
     logoToggle.addEventListener('change', function() {
         const isVisible = this.checked;
-        if (isVisible) {
-            logoElement.classList.remove('logo-hidden');
-            localStorage.setItem('logoState', 'visible');
-        } else {
-            logoElement.classList.add('logo-hidden');
-            localStorage.setItem('logoState', 'hidden');
-        }
+        logoElements.forEach(element => {
+            if (isVisible) {
+                element.classList.remove('logo-hidden');
+                localStorage.setItem('logoState', 'visible');
+            } else {
+                element.classList.add('logo-hidden');
+                localStorage.setItem('logoState', 'hidden');
+            }
+        });
     });
 }
+
         
             // Load saved color from localStorage
             const savedColor = localStorage.getItem('themeColor');
