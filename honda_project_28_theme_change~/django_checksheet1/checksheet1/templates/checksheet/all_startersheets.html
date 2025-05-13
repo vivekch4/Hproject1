@@ -1,25 +1,25 @@
 {% extends 'checksheet/base.html' %}
 {% load static %}
 {% block extra_css %}
-
 <link rel="stylesheet" href="{% static 'css/all_startersheet.css' %}">
 {% endblock %}
-{% block title %}All StarterSheet{% endblock %}
+{% block title %}All StarterSheets{% endblock %}
 {% block content %}
-
-
 
 <div class="page-container">
     <div class="header">
         <h2 class="page-title">All StarterSheets</h2>
         <div class="header-actions">
-        <a href="{% url 'create_startersheet' %}" class="create-btn">
-            <i class="fas fa-plus"></i> Create
-        </a>
-        <a href="{% url 'assign_poc_bulk' %}" class="create-btn">
-            <i class="fas fa-file"></i> Assign Q-Gallery
-        </a>
-    </div>
+            <a href="{% url 'create_startersheet' %}" class="create-btn">
+                <i class="fas fa-plus"></i> Create
+            </a>
+            <a href="{% url 'assign_poc_bulk' %}" class="create-btn">
+                <i class="fas fa-file"></i> Assign Q-Gallery
+            </a>
+            <button id="viewToggleBtn" class="toggle-btn" title="Toggle View">
+                <i class="fas fa-table"></i>
+            </button>
+        </div>
     </div>
 
     {% if Starter %}
@@ -29,285 +29,276 @@
             <input type="text" id="startersheetSearch" class="search-input" placeholder="Search by startersheet name or assigned user...">
         </div>
     </div>
-        <div class="table-responsive">
-            <table class="startersheets-container">
-                <thead>
-                    <tr>
-                        <th class="sortable" data-sort="name">Name <i class="fas fa-sort"></i></th>
-                        <th class="sortable" data-sort="parameters">Parameters <i class="fas fa-sort"></i></th>
-                        <th class="sortable" data-sort="line">Line <i class="fas fa-sort"></i></th>
-                        <th class="sortable" data-sort="users">Assigned Users <i class="fas fa-sort"></i></th>
-                        <th>Created By</th>
-                        <th>Created On</th>
-                        <th>Assigned OPS</th>
-                        <!-- New columns for approval levels -->
-                        <th>Level 1</th>
-                        <th>Level 2</th>
-                        <th>Level 3</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="startersheetTableBody">
-                    {% for startersheet in Starter %}
-                    <tr data-id="{{ startersheet.id }}">
-                        <td>
-                            <a href="javascript:void(0);" class="startersheet-name" onclick="showDetailModal({{ startersheet.id }})">
-                                {{ startersheet.name }}
-                            </a>
-                        </td>
-                        <td class="content-cell">
-                            <div class="zone-chips">
-                                {% with zones=startersheet.zones.all %}
-                                    {% if zones|length > 0 %}
-                                        {% for zone in zones|slice:":2" %}
-                                            <span class="zone-chip">{{ zone.name }}</span>
-                                        {% endfor %}
-                                        {% if zones|length > 2 %}
-                                            <span class="view-all-chip">. . .</span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="empty-text">No zones</span>
-                                    {% endif %}
-                                {% endwith %}
-                            </div>
-                            <!-- Store all zones in hidden div -->
-                            <div class="hidden-data zones-data">
-                                {% for zone in startersheet.zones.all %}
-                                    <span class="zone-data">{{ zone.name }}</span>
-                                {% endfor %}
-                            </div>
-                        </td>
-                        <td class="content-cell">
-                            {{startersheet.line}}
-                        </td>
-                        <td class="content-cell">
-                            <div class="user-chips">
-                                {% with users=startersheet.assigned_users.all %}
-                                    {% if users|length > 0 %}
-                                        {% for user in users|slice:":2" %}
-                                            <span class="user-chip">{{ user.username }}</span>
-                                        {% endfor %}
-                                        {% if users|length > 2 %}
-                                            <span class="view-all-chip">. . .</span>
-                                        {% endif %}
-                                    {% endif %}
-                                {% endwith %}
-                                <button class="edit-users-btn" onclick="toggleUserDropdown('starter-{{ startersheet.id }}')">
-                                    <i class="fas fa-{% if startersheet.assigned_users.all %}pencil-alt{% else %}user-plus{% endif %}"></i>
-                                    {% if not startersheet.assigned_users.all %}Assign Users{% endif %}
-                                </button>
-                            </div>
-                            <!-- Store all users in hidden div -->
-                            <div class="hidden-data users-data">
-                                {% for user in startersheet.assigned_users.all %}
-                                    <span class="user-data">{{ user.username }}</span>
-                                {% endfor %}
-                            </div>
-                            <div class="user-dropdown" id="user-dropdown-starter-{{ startersheet.id }}" style="display: none;">
-                                <div class="user-dropdown-header">
-                                    <span class="user-dropdown-title">Assign Users</span>
-                                    <button type="button" class="user-dropdown-close" onclick="toggleUserDropdown('starter-{{ startersheet.id }}')">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <div class="user-dropdown-search-container">
-                                    <i class="fas fa-search search-icon"></i>
-                                    <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterUsers('{{ startersheet.id }}', this.value)">
-                                </div>
-                                <form method="post" action="{% url 'assign_users' 'startersheet' startersheet.id %}" class="user-dropdown-form">
-                                    {% csrf_token %}
-                                    {% for user in all_users %}
-                                        {% if user.role != 'admin' %}
-                                            <div class="user-checkbox-item">
-                                                <label class="user-checkbox-label">
-                                                    <input type="checkbox" name="user_ids" value="{{ user.id }}"
-                                                    {% if user in startersheet.assigned_users.all %}checked{% endif %}>
-                                                    {{ user.username }}
-                                                    <span class="user-role">{{ user.role }}</span>
-                                                </label>
-                                            </div>
-                                        {% endif %}
+    <div class="table-responsive">
+        <table class="startersheets-container">
+            <thead>
+                <tr>
+                    <th class="sortable" data-sort="name">Name <i class="fas fa-sort"></i></th>
+                    <th class="sortable" data-sort="parameters">Parameters <i class="fas fa-sort"></i></th>
+                    <th class="sortable" data-sort="line">Line <i class="fas fa-sort"></i></th>
+                    <th class="sortable" data-sort="users">Assigned Users <i class="fas fa-sort"></i></th>
+                    <th>Created By</th>
+                    <th>Created On</th>
+                    <th>Assigned OPS</th>
+                    <th>Level 1</th>
+                    <th>Level 2</th>
+                    <th>Level 3</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="startersheetTableBody">
+                {% for startersheet in Starter %}
+                <tr data-id="{{ startersheet.id }}">
+                    <td>
+                        <a href="javascript:void(0);" class="startersheet-name" onclick="showDetailModal({{ startersheet.id }})">
+                            {{ startersheet.name }}
+                        </a>
+                    </td>
+                    <td class="content-cell">
+                        <div class="zone-chips">
+                            {% with zones=startersheet.zones.all %}
+                                {% if zones|length > 0 %}
+                                    {% for zone in zones|slice:":2" %}
+                                        <span class="zone-chip">{{ zone.name }}</span>
                                     {% endfor %}
-                                    <button type="submit" class="assign-users-submit">Save Changes</button>
-                                </form>
-                            </div>
-                        </td>
-                        <td>
-                            {{startersheet.created_by.username}}
-                        </td>
-                        <td>
-                            {{startersheet.created_on|date:"Y-m-d"}}
-                        </td>
-                        <td class="content-cell">
-                            <div class="poc-links">
-                                {% with pocs=startersheet.assigned_pocs.all %}
-                                    {% if pocs|length > 0 %}
-                                        {% for poc in pocs|slice:":1" %}
-                                            <a href="javascript:void(0);" class="pdf-link" data-pdf-url="{{ poc.pdf.url }}" data-pdf-name="{{ poc.pdf.name|slice:'9:' }}">
-                                                <i class="fas fa-file-pdf"></i>
-                                                {{ poc.pdf.name|slice:"9:" }}
-                                            </a>
-                                        {% endfor %}
-                                        {% if pocs|length > 1 %}
-                                            <span class="view-all-chip">. . .</span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="empty-text">No OPS assigned</span>
-                                    {% endif %}
-                                {% endwith %}
-                            </div>
-                            <!-- Store all POCs in hidden div -->
-                            <div class="hidden-data pocs-data">
-                                {% for poc in startersheet.assigned_pocs.all %}
-                                    <span class="poc-data"
-                                          data-pdf-url="{{ poc.pdf.url }}"
-                                          data-pdf-name="{{ poc.pdf.name|slice:'9:' }}">
-                                        {{ poc.pdf.name|slice:"9:" }}
-                                    </span>
-                                {% endfor %}
-                            </div>
-                        </td>
-                        <!-- Level 1 Approver Column -->
-                        <td class="content-cell">
-                            <div class="approver-chips">
-                                {% if startersheet.level_1_approver %}
-                                    <span class="approval-chip">{{ startersheet.level_1_approver.username }}</span>
+                                    
                                 {% else %}
-                                    <span class="empty-text">Not assigned</span>
+                                    <span class="empty-text">No zones</span>
                                 {% endif %}
-                                <button class="edit-users-btn" onclick="toggleApproverDropdown('level1-{{ startersheet.id }}')">
-                                    <i class="fas fa-{% if startersheet.level_1_approver %}pencil-alt{% else %}user-plus{% endif %}"></i>
-                                    {% if not startersheet.level_1_approver %}Assign{% endif %}
-                                </button>
-                            </div>
-                            <!-- Level 1 Approver Dropdown -->
-                            <div class="user-dropdown" id="approver-dropdown-level1-{{ startersheet.id }}" style="display: none;">
-                                <div class="user-dropdown-header">
-                                    <span class="user-dropdown-title">Assign Level 1 Approver</span>
-                                    <button type="button" class="user-dropdown-close" onclick="toggleApproverDropdown('level1-{{ startersheet.id }}')">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <div class="user-dropdown-search-container">
-                                    <i class="fas fa-search search-icon"></i>
-                                    <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterApprovers('level1-{{ startersheet.id }}', this.value)">
-                                </div>
-                                <form method="post" action="{% url 'assign_approver' 'startersheet' startersheet.id 'level1' %}" class="user-dropdown-form">
-                                    {% csrf_token %}
-                                    {% for user in all_users %}
-                                        <div class="user-radio-item">
-                                            <label class="user-radio-label">
-                                                <input type="radio" name="approver_id" value="{{ user.id }}"
-                                                {% if user == startersheet.level_1_approver %}checked{% endif %}>
-                                                {{ user.username }}
-                                                <span class="user-role">{{ user.role }}</span>
-                                            </label>
-                                        </div>
+                            {% endwith %}
+                        </div>
+                        <div class="hidden-data zones-data">
+                            {% for zone in startersheet.zones.all %}
+                                <span class="zone-data">{{ zone.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td class="content-cell">
+                        {{ startersheet.line }}
+                    </td>
+                    <td class="content-cell">
+                        <div class="user-chips">
+                            {% with users=startersheet.assigned_users.all %}
+                                {% if users|length > 0 %}
+                                    {% for user in users|slice:":2" %}
+                                        <span class="user-chip">{{ user.username }}</span>
                                     {% endfor %}
-                                    <button type="submit" class="assign-users-submit">Save Changes</button>
-                                </form>
-                            </div>
-                        </td>
-                        <!-- Level 2 Approver Column -->
-                        <td class="content-cell">
-                            <div class="approver-chips">
-                                {% if startersheet.level_2_approver %}
-                                    <span class="approval-chip">{{ startersheet.level_2_approver.username }}</span>
+                                    {% if users|length > 2 %}
+                                        <span class="view-all-chip">. . .</span>
+                                    {% endif %}
+                                {% endif %}
+                            {% endwith %}
+                            <button class="edit-users-btn" onclick="toggleUserDropdown('{{ startersheet.id }}')">
+                                <i class="fas fa-{% if startersheet.assigned_users.all %}pencil-alt{% else %}user-plus{% endif %}"></i>
+                                {% if not startersheet.assigned_users.all %}Assign Users{% endif %}
+                            </button>
+                        </div>
+                        <div class="hidden-data users-data">
+                            {% for user in startersheet.assigned_users.all %}
+                                <span class="user-data">{{ user.username }}</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td class="content-cell">
+                        {{ startersheet.created_by.username }}
+                    </td>
+                    <td class="content-cell">
+                        {{ startersheet.created_on|date:"Y-m-d" }}
+                    </td>
+                    <td class="content-cell">
+                        <div class="poc-links">
+                            {% with pocs=startersheet.assigned_pocs.all %}
+                                {% if pocs|length > 0 %}
+                                    {% for poc in pocs|slice:":1" %}
+                                        <a href="javascript:void(0);" class="pdf-link" data-pdf-url="{{ poc.pdf.url }}" data-pdf-name="{{ poc.pdf.name|slice:'9:' }}">
+                                            <i class="fas fa-file-pdf"></i>
+                                            {{ poc.pdf.name|slice:"9:" }}
+                                        </a>
+                                    {% endfor %}
+                                    {% if pocs|length > 1 %}
+                                        <span class="view-all-chip">. . .</span>
+                                    {% endif %}
                                 {% else %}
-                                    <span class="empty-text">Not assigned</span>
+                                    <span class="empty-text">No OPS assigned</span>
                                 {% endif %}
-                                <button class="edit-users-btn" onclick="toggleApproverDropdown('level2-{{ startersheet.id }}')">
-                                    <i class="fas fa-{% if startersheet.level_2_approver %}pencil-alt{% else %}user-plus{% endif %}"></i>
-                                    {% if not startersheet.level_2_approver %}Assign{% endif %}
-                                </button>
-                            </div>
-                            <!-- Level 2 Approver Dropdown -->
-                            <div class="user-dropdown" id="approver-dropdown-level2-{{ startersheet.id }}" style="display: none;">
-                                <div class="user-dropdown-header">
-                                    <span class="user-dropdown-title">Assign Level 2 Approver</span>
-                                    <button type="button" class="user-dropdown-close" onclick="toggleApproverDropdown('level2-{{ startersheet.id }}')">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <div class="user-dropdown-search-container">
-                                    <i class="fas fa-search search-icon"></i>
-                                    <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterApprovers('level2-{{ startersheet.id }}', this.value)">
-                                </div>
-                                <form method="post" action="{% url 'assign_approver' 'startersheet' startersheet.id 'level2' %}" class="user-dropdown-form">
-                                    {% csrf_token %}
-                                    {% for user in all_users %}
-                                        <div class="user-radio-item">
-                                            <label class="user-radio-label">
-                                                <input type="radio" name="approver_id" value="{{ user.id }}"
-                                                {% if user == startersheet.level_2_approver %}checked{% endif %}>
-                                                {{ user.username }}
-                                                <span class="user-role">{{ user.role }}</span>
-                                            </label>
-                                        </div>
-                                    {% endfor %}
-                                    <button type="submit" class="assign-users-submit">Save Changes</button>
-                                </form>
-                            </div>
-                        </td>
-                        <!-- Level 3 Approval (Admin Radio Button) -->
-                        <td class="content-cell">
-                            <form method="post" action="{% url 'toggle_level3_approval' 'startersheet' startersheet.id %}" class="approval-radio">
-
-                                {% csrf_token %}
-                                <div class="radio-option">
-                         
-                                    <input type="radio" name="require_level_3" id="require_level_3_yes" value="True"
+                            {% endwith %}
+                        </div>
+                        <div class="hidden-data pocs-data">
+                            {% for poc in startersheet.assigned_pocs.all %}
+                                <span class="poc-data" data-pdf-url="{{ poc.pdf.url }}" data-pdf-name="{{ poc.pdf.name|slice:'9:' }}">
+                                    {{ poc.pdf.name|slice:"9:" }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td class="content-cell">
+                        <div class="approver-chips">
+                            {% if startersheet.level_1_approver %}
+                                <span class="approval-chip">{{ startersheet.level_1_approver.username }}</span>
+                            {% else %}
+                                <span class="empty-text">Not assigned</span>
+                            {% endif %}
+                            <button class="edit-users-btn" onclick="toggleApproverDropdown('level1-{{ startersheet.id }}')">
+                                <i class="fas fa-{% if startersheet.level_1_approver %}pencil-alt{% else %}user-plus{% endif %}"></i>
+                                {% if not startersheet.level_1_approver %}Assign{% endif %}
+                            </button>
+                        </div>
+                    </td>
+                    <td class="content-cell">
+                        <div class="approver-chips">
+                            {% if startersheet.level_2_approver %}
+                                <span class="approval-chip">{{ startersheet.level_2_approver.username }}</span>
+                            {% else %}
+                                <span class="empty-text">Not assigned</span>
+                            {% endif %}
+                            <button class="edit-users-btn" onclick="toggleApproverDropdown('level2-{{ startersheet.id }}')">
+                                <i class="fas fa-{% if startersheet.level_2_approver %}pencil-alt{% else %}user-plus{% endif %}"></i>
+                                {% if not startersheet.level_2_approver %}Assign{% endif %}
+                            </button>
+                        </div>
+                    </td>
+                    <td class="content-cell">
+                        <form method="post" action="{% url 'toggle_level3_approval' 'startersheet' startersheet.id %}" class="approval-radio">
+                            {% csrf_token %}
+                            <div class="radio-option">
+                                <input type="radio" name="require_level_3" id="require_level_3_yes_{{ startersheet.id }}" value="True"
                                     {% if startersheet.require_level_3_approval %}checked{% endif %}
                                     onchange="this.form.submit()">
-                                    <label for="require_level_3_yes">
-                                    Yes
-                                </label>
+                                <label for="require_level_3_yes_{{ startersheet.id }}">Yes</label>
                             </div>
                             <div class="radio-option">
-                                 <input type="radio" name="require_level_3" id="require_level_3_no" value="False"
+                                <input type="radio" name="require_level_3" id="require_level_3_no_{{ startersheet.id }}" value="False"
                                     {% if not startersheet.require_level_3_approval %}checked{% endif %}
                                     onchange="this.form.submit()">
-                                    <label for="require_level_3_no">
-                                    No
-                                </label>
+                                <label for="require_level_3_no_{{ startersheet.id }}">No</label>
                             </div>
-                            </form>
-                        </td>
-                        <td>
-                            <div class="action-buttons">
-                                <a href="{% url 'update_startersheet' startersheet.id %}" class="action-button update-btn" title="Update">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <a href="{% url 'Add_start_zone' startersheet.id %}" class="action-button add-zone-btn" title="Add Zone">
-                                    <i class="fas fa-plus"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <div id="noResults" class="no-results" style="display: none;">
-                No startersheets found matching your search.
-            </div>
-            <div class="pagination">
-                <div class="pagination-info">
-                    <span>Total StarterSheets: <span id="startersheetCount">{{ Starter|length }}</span></span>
-                </div>
+                        </form>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'update_startersheet' startersheet.id %}" class="action-button update-btn" title="Update">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'Add_start_zone' startersheet.id %}" class="action-button add-zone-btn" title="Add Zone">
+                                <i class="fas fa-plus"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="noResults" class="no-results" style="display: none;">
+            No startersheets found matching your search.
+        </div>
+        <div class="pagination">
+            <div class="pagination-info">
+                <span>Total StarterSheets: <span id="startersheetCount">{{ Starter|length }}</span></span>
             </div>
         </div>
+    </div>
+
+    <!-- User Assignment Dropdown (Global) -->
+    <div class="user-dropdown" id="user-dropdown" style="display: none;">
+        <div class="user-dropdown-header">
+            <span class="user-dropdown-title">Assign Users</span>
+            <button type="button" class="user-dropdown-close" onclick="toggleUserDropdown('')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="user-dropdown-search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterUsers('', this.value)">
+        </div>
+        <form method="post" id="user-dropdown-form" class="user-dropdown-form">
+            {% csrf_token %}
+            <div class="user-list" id="user-list">
+                {% for user in all_users %}
+                    {% if user.role != 'admin' %}
+                        <div class="user-checkbox-item" data-username="{{ user.username|lower }}">
+                            <label class="user-checkbox-label">
+                                <input type="checkbox" name="user_ids" value="{{ user.id }}">
+                                {{ user.username }}
+                                <span class="user-role">{{ user.role }}</span>
+                            </label>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <button type="submit" class="assign-users-submit">Save Changes</button>
+        </form>
+    </div>
+
+    <!-- Level 1 Approver Dropdown (Global) -->
+    <div class="user-dropdown" id="approver-dropdown-level1" style="display: none;">
+        <div class="user-dropdown-header">
+            <span class="user-dropdown-title">Assign Level 1 Approver</span>
+            <button type="button" class="user-dropdown-close" onclick="toggleApproverDropdown('')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="user-dropdown-search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterApprovers('level1', this.value)">
+        </div>
+        <form method="post" id="approver-dropdown-form-level1" class="user-dropdown-form">
+            {% csrf_token %}
+            <div class="user-list" id="approver-list-level1">
+                {% for user in all_users %}
+                    <div class="user-radio-item">
+                        <label class="user-radio-label">
+                            <input type="radio" name="approver_id" value="{{ user.id }}">
+                            {{ user.username }}
+                            <span class="user-role">{{ user.role }}</span>
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="assign-users-submit">Save Changes</button>
+        </form>
+    </div>
+
+    <!-- Level 2 Approver Dropdown (Global) -->
+    <div class="user-dropdown" id="approver-dropdown-level2" style="display: none;">
+        <div class="user-dropdown-header">
+            <span class="user-dropdown-title">Assign Level 2 Approver</span>
+            <button type="button" class="user-dropdown-close" onclick="toggleApproverDropdown('')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="user-dropdown-search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterApprovers('level2', this.value)">
+        </div>
+        <form method="post" id="approver-dropdown-form-level2" class="user-dropdown-form">
+            {% csrf_token %}
+            <div class="user-list" id="approver-list-level2">
+                {% for user in all_users %}
+                    <div class="user-radio-item">
+                        <label class="user-radio-label">
+                            <input type="radio" name="approver_id" value="{{ user.id }}">
+                            {{ user.username }}
+                            <span class="user-role">{{ user.role }}</span>
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="assign-users-submit">Save Changes</button>
+        </form>
+    </div>
     {% else %}
-        <div class="empty-state">
-            <i class="fas fa-folder-open"></i>
-            <p>No StarterSheets available</p>
-        </div>
+    <div class="empty-state">
+        <i class="fas fa-folder-open"></i>
+        <p>No StarterSheets available</p>
+    </div>
     {% endif %}
 </div>
+
 {% if messages %}
 <div class="toast-container">
     {% for message in messages %}
     {% with message.tags.split as tags_list %}
-        {% if 'StarterSheet_creation' in tags_list or 'StarterSheet_update' in tags_list or 'StarterSheet_zone' in tags_list%}
+        {% if 'StarterSheet_creation' in tags_list or 'StarterSheet_update' in tags_list or 'StarterSheet_zone' in tags_list %}
         <div class="toast-message toast-success">
             <div class="toast-icon">
                 <i class="fas fa-check-circle"></i>
@@ -321,6 +312,7 @@
     {% endfor %}
 </div>
 {% endif %}
+
 <div id="fullPagePdfViewer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); z-index: 1000; flex-direction: column;">
     <div class="pdf-header" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background-color: #1e293b; color: white;">
         <h3 id="pdfDocumentTitle">PDF Document</h3>
@@ -332,444 +324,74 @@
         <!-- PDF will be rendered here -->
     </div>
 </div>
-<div class="detail-modal-backdrop" id="detailModalBackdrop" onclick="closeDetailModal()"></div>
+
+<div class="detail-modal-backdrop" id="detailModalBackdrop"></div>
 <div class="detail-modal" id="detailModal">
     <div class="detail-modal-header">
-        <h2 class="detail-modal-title" id="detailModalTitle">StarterSheet Details</h2>
+        <hassert2 class="detail-modal-title" id="detailModalTitle">StarterSheet Details</h2>
         <button class="detail-modal-close" onclick="closeDetailModal()">
             <i class="fas fa-times"></i>
         </button>
     </div>
-    <div class="detail-content" id="detailModalContent">
-        <!-- Content will be populated by JavaScript -->
-    </div>
+    <div class="detail-content" id="detailModalContent"></div>
 </div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
+// Store the currently active startersheet ID and dropdown type
+let currentStartersheetId = null;
+let currentApproverType = null;
 
-
-    function toggleUserDropdown(id) {
-        const dropdown = document.getElementById(`user-dropdown-${id}`);
-        const backdrop = document.querySelector('.user-dropdown-backdrop') || createBackdrop();
-       
-        if (dropdown.style.display === 'none' || !dropdown.style.display) {
-            dropdown.style.display = 'block';
-            backdrop.style.display = 'block';
-        } else {
-            dropdown.style.display = 'none';
-            backdrop.style.display = 'none';
-        }
-    }
-   
-    // Create backdrop if it doesn't exist
-    function createBackdrop() {
-        const backdrop = document.createElement('div');
-        backdrop.className = 'user-dropdown-backdrop';
-        backdrop.addEventListener('click', function() {
-            const openDropdowns = document.querySelectorAll('.user-dropdown[style="display: block;"]');
-            openDropdowns.forEach(dropdown => {
-                dropdown.style.display = 'none';
-            });
-            this.style.display = 'none';
-        });
-        document.body.appendChild(backdrop);
-        return backdrop;
-    }
-   
-    // Search functionality
-    document.getElementById('startersheetSearch').addEventListener('input', function() {
-        const searchText = this.value.toLowerCase();
-        const rows = document.querySelectorAll('#startersheetTableBody tr');
-        let visibleCount = 0;
-       
-        rows.forEach(row => {
-            const name = row.querySelector('.startersheet-name').textContent.toLowerCase();
-            const users = Array.from(row.querySelectorAll('.user-chip')).map(chip => chip.textContent.toLowerCase());
-           
-            if (name.includes(searchText) || users.some(user => user.includes(searchText))) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-       
-        document.getElementById('startersheetCount').textContent = visibleCount;
-        document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
-    });
-   
-    // Auto-dismiss toast messages
-    document.addEventListener('DOMContentLoaded', function() {
-        const toasts = document.querySelectorAll('.toast-message');
-        toasts.forEach(toast => {
+document.addEventListener('DOMContentLoaded', function() {
+    const toasts = document.querySelectorAll('.toast-message');
+    toasts.forEach(toast => {
+        setTimeout(() => {
+            toast.style.animation = 'fadeOut 0.5s ease forwards';
             setTimeout(() => {
-                toast.style.animation = 'fadeOut 0.5s ease forwards';
-                setTimeout(() => {
-                    toast.remove();
-                }, 500);
-            }, 5000);
-        });
-    });
-   
-    // Detail modal functions
-       // Detail modal functions
-       function showDetailModal(startersheetId) {
-        const row = document.querySelector(`tr[data-id="${startersheetId}"]`);
-        if (!row) return;
-       
-        const name = row.querySelector('.startersheet-name').textContent.trim();
-       
-        // Get ALL zones from the hidden data
-        const zonesData = row.querySelector('.zones-data');
-        const zones = zonesData ? Array.from(zonesData.querySelectorAll('.zone-data')).map(zone => zone.textContent.trim()) : [];
-       
-        // Get ALL users from the hidden data
-        const usersData = row.querySelector('.users-data');
-        const users = usersData ? Array.from(usersData.querySelectorAll('.user-data')).map(user => user.textContent.trim()) : [];
-       
-        // Get ALL POCs from the hidden data
-        const pocsData = row.querySelector('.pocs-data');
-        const pocs = pocsData ? Array.from(pocsData.querySelectorAll('.poc-data')).map(poc => {
-            return {
-                name: poc.textContent.trim(),
-                url: poc.getAttribute('data-pdf-url')
-            };
-        }) : [];
-       
-        // Populate modal
-        document.getElementById('detailModalTitle').textContent = name;
-       
-        // Build content HTML
-        let contentHTML = `
-            <div class="detail-section">
-                <h3 class="detail-section-title">Parameters</h3>
-                <div class="detail-zone-chips">
-                    ${zones.length > 0 ?
-                        zones.map(zone => `<span class="zone-chip">${zone}</span>`).join('') :
-                        '<span class="empty-text">No zones</span>'}
-                </div>
-            </div>
-           
-            <div class="detail-section">
-                <h3 class="detail-section-title">Assigned Users</h3>
-                <div class="detail-user-chips">
-                    ${users.length > 0 ?
-                        users.map(user => `<span class="user-chip">${user}</span>`).join('') :
-                        '<span class="empty-text">No users assigned</span>'}
-                </div>
-            </div>
-           
-            <div class="detail-section">
-                <h3 class="detail-section-title">Assigned OPS</h3>
-                <div class="poc-links">
-                    ${pocs.length > 0 ?
-                        pocs.map(poc => `
-                            <a href="javascript:void(0);" class="pdf-link" data-pdf-url="${poc.url}" data-pdf-name="${poc.name}">
-                                <i class="fas fa-file-pdf"></i> ${poc.name}
-                            </a>`).join('') :
-                        '<span class="empty-text">No OPS assigned</span>'}
-                </div>
-            </div>
-        `;
-       
-        document.getElementById('detailModalContent').innerHTML = contentHTML;
-       
-        // Show modal
-        document.getElementById('detailModal').style.display = 'block';
-        document.getElementById('detailModalBackdrop').style.display = 'block';
-       
-        // Add event listeners to PDF links in the modal
-        attachPdfViewerEventListeners(document.getElementById('detailModalContent').querySelectorAll('.pdf-link'));
-    }
-   
-    function closeDetailModal() {
-        document.getElementById('detailModal').style.display = 'none';
-        document.getElementById('detailModalBackdrop').style.display = 'none';
-    }
-   
-    // Close detail modal when clicking outside
-    document.getElementById('detailModalBackdrop').addEventListener('click', closeDetailModal);
-   
-    // Prevent modal close when clicking inside the modal
-    document.getElementById('detailModal').addEventListener('click', function(event) {
-        event.stopPropagation();
+                toast.remove();
+            }, 500);
+        }, 5000);
     });
 
-    function attachPdfViewerEventListeners(pdfLinks) {
-        const fullPageViewer = document.getElementById('fullPagePdfViewer');
-        const pdfViewerContainer = document.getElementById('pdfViewer');
-        const pdfTitle = document.getElementById('pdfDocumentTitle');
-        const pageContainer = document.querySelector('.page-container');
-       
-        pdfLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const pdfUrl = this.getAttribute('data-pdf-url');
-                const pdfName = this.getAttribute('data-pdf-name');
-               
-                // Clear previous canvas if any
-                pdfViewerContainer.innerHTML = '';
-               
-                // Show the PDF viewer
-                pageContainer.classList.add('hidden');
-                fullPageViewer.style.display = 'flex';
-                pdfTitle.textContent = pdfName || 'PDF Document';
-               
-                // Create canvas for PDF rendering
-                const pdfCanvas = document.createElement('canvas');
-                pdfCanvas.className = 'pdf-canvas';
-                pdfViewerContainer.appendChild(pdfCanvas);
-                const pdfContext = pdfCanvas.getContext('2d');
-               
-                // Load the PDF using PDF.js
-                const loadingTask = pdfjsLib.getDocument(pdfUrl);
-                loadingTask.promise.then(function(pdf) {
-                    const pdfDoc = pdf;
-                    renderPage(pdfDoc, pdfCanvas, pdfContext, 1);
-                }).catch(function(error) {
-                    console.error('Error loading PDF:', error);
-                    pdfViewerContainer.innerHTML = `
-                        <div style="padding: 20px; text-align: center;">
-                            <h3>Error loading PDF</h3>
-                            <p>There was a problem loading the PDF file.</p>
-                            <p>Error details: ${error.message}</p>
-                            <p>Try downloading the file instead:</p>
-                            <a href="${pdfUrl}" target="_blank" class="submit-btn" style="display: inline-block; margin-top: 10px;">
-                                <i class="fas fa-download"></i> Download PDF
-                            </a>
-                        </div>
-                    `;
-                });
-               
-                // Update browser history
-                history.pushState({viewingPdf: true}, '', window.location.href);
-               
-                // Hide the detail modal when showing PDF
-                closeDetailModal();
-            });
-        });
-    }
-   
-    // Update renderPage to accept parameters rather than using globals
-    function renderPage(pdfDoc, canvas, context, pageNumber) {
-        if (!pdfDoc) return;
-       
-        pdfDoc.getPage(pageNumber).then(function(page) {
-            const viewport = page.getViewport({ scale: 1.5 });
-           
-            // Set canvas dimensions to match the PDF page
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-           
-            // Render PDF page into canvas context
-            const renderContext = {
-                canvasContext: context,
-                viewport: viewport
-            };
-           
-            page.render(renderContext);
-        });
-    }
-   
-    // Modify DOMContentLoaded event handler to use the new function
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initial setup for PDF links in the table
-        attachPdfViewerEventListeners(document.querySelectorAll('.pdf-link'));
-       
-        // Rest of the DOMContentLoaded code...
-        const fullPageViewer = document.getElementById('fullPagePdfViewer');
-        const pageContainer = document.querySelector('.page-container');
-        const closePdfBtn = document.querySelector('.pdf-close-btn');
-       
-        closePdfBtn.addEventListener('click', function() {
-            closePdfViewer();
-        });
-       
-        // Handle browser back button
-        window.addEventListener('popstate', function(event) {
-            if (fullPageViewer.style.display === 'flex') {
-                closePdfViewer();
-            }
-        });
-       
-        function closePdfViewer() {
-            // Hide PDF viewer and show main content
-            fullPageViewer.style.display = 'none';
-            pageContainer.classList.remove('hidden');
-           
-            // Clean up
-            const pdfViewerContainer = document.getElementById('pdfViewer');
-            pdfViewerContainer.innerHTML = '';
-        }
-    });
-document.addEventListener('DOMContentLoaded', function() {
-   
-    // Improved PDF viewer using PDF.js
-    const pdfLinks = document.querySelectorAll('.pdf-link');
-    const fullPageViewer = document.getElementById('fullPagePdfViewer');
-    const pdfViewerContainer = document.getElementById('pdfViewer');
-    const pdfTitle = document.getElementById('pdfDocumentTitle');
-    const closePdfBtn = document.querySelector('.pdf-close-btn');
-    const pageContainer = document.querySelector('.page-container');
-   
-    let pdfDoc = null;
-    let currentPage = 1;
-    let pdfCanvas = null;
-    let pdfContext = null;
-   
-    pdfLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const pdfUrl = this.getAttribute('data-pdf-url');
-            const pdfName = this.getAttribute('data-pdf-name');
-           
-            // Clear previous canvas if any
-            pdfViewerContainer.innerHTML = '';
-           
-            // Show the PDF viewer
-            pageContainer.classList.add('hidden');
-            fullPageViewer.style.display = 'flex';
-            pdfTitle.textContent = pdfName || 'PDF Document';
-           
-            // Create canvas for PDF rendering
-            pdfCanvas = document.createElement('canvas');
-            pdfCanvas.className = 'pdf-canvas';
-            pdfViewerContainer.appendChild(pdfCanvas);
-            pdfContext = pdfCanvas.getContext('2d');
-           
-            // Load the PDF using PDF.js
-            const loadingTask = pdfjsLib.getDocument(pdfUrl);
-            loadingTask.promise.then(function(pdf) {
-                pdfDoc = pdf;
-                renderPage(1);
-            }).catch(function(error) {
-                console.error('Error loading PDF:', error);
-                pdfViewerContainer.innerHTML = `
-                    <div style="padding: 20px; text-align: center;">
-                        <h3>Error loading PDF</h3>
-                        <p>There was a problem loading the PDF file.</p>
-                        <p>Error details: ${error.message}</p>
-                        <p>Try downloading the file instead:</p>
-                        <a href="${pdfUrl}" target="_blank" class="submit-btn" style="display: inline-block; margin-top: 10px;">
-                            <i class="fas fa-download"></i> Download PDF
-                        </a>
-                    </div>
-                `;
-            });
-           
-            // Update browser history
-            history.pushState({viewingPdf: true}, '', window.location.href);
-        });
-    });
-   
-    function renderPage(pageNumber) {
-        if (!pdfDoc) return;
-       
-        pdfDoc.getPage(pageNumber).then(function(page) {
-            const viewport = page.getViewport({ scale: 1.5 });
-           
-            // Set canvas dimensions to match the PDF page
-            pdfCanvas.height = viewport.height;
-            pdfCanvas.width = viewport.width;
-           
-            // Center canvas in container and add scrolling if needed
-            pdfViewerContainer.style.overflow = 'auto';
-           
-            // Render PDF page into canvas context
-            const renderContext = {
-                canvasContext: pdfContext,
-                viewport: viewport
-            };
-           
-            page.render(renderContext);
-        });
-    }
-   
-    closePdfBtn.addEventListener('click', function() {
-        closePdfViewer();
-    });
-   
-    // Handle browser back button
-    window.addEventListener('popstate', function(event) {
-        if (fullPageViewer.style.display === 'flex') {
-            closePdfViewer();
-        }
-    });
-   
-    function closePdfViewer() {
-        // Hide PDF viewer and show main content
-        fullPageViewer.style.display = 'none';
-        pageContainer.classList.remove('hidden');
-       
-        // Clean up
-        pdfDoc = null;
-        pdfCanvas = null;
-        pdfContext = null;
-        pdfViewerContainer.innerHTML = '';
-    }
-
-
-
-
-});
-function toggleUserDropdown(sheetId) {
-    // Close all other dropdowns first
-    const allDropdowns = document.querySelectorAll('.user-dropdown');
-    allDropdowns.forEach(dropdown => {
-        if (dropdown.id !== `user-dropdown-${sheetId}`) {
-            dropdown.style.display = 'none';
-        }
-    });
-   
-    // Toggle the current dropdown
-    const dropdown = document.getElementById(`user-dropdown-${sheetId}`);
-    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-}
-
-// Close dropdowns when clicking outside
-document.addEventListener('click', function(event) {
-    if (!event.target.closest('.user-dropdown') && !event.target.closest('.edit-users-btn')) {
-        const allDropdowns = document.querySelectorAll('.user-dropdown');
-        allDropdowns.forEach(dropdown => {
-            dropdown.style.display = 'none';
-        });
-    }
-});
-
-document.addEventListener('DOMContentLoaded', function() {
+    // Table search functionality
     const searchInput = document.getElementById('startersheetSearch');
-    const tableRows = document.querySelectorAll('.startersheets-container tbody tr');
     const tableBody = document.getElementById('startersheetTableBody');
     const noResults = document.getElementById('noResults');
     const startersheetCount = document.getElementById('startersheetCount');
-   
-    // Search functionality
-    searchInput.addEventListener('keyup', function() {
-        const searchTerm = this.value.toLowerCase().trim();
-        let visibleCount = 0;
-       
-        tableRows.forEach(row => {
-            const startersheetName = row.querySelector('.startersheet-name').textContent.toLowerCase();
-            const assignedUsers = Array.from(row.querySelectorAll('.user-chip')).map(chip => chip.textContent.toLowerCase()).join(' ');
-           
-            if (startersheetName.includes(searchTerm) || assignedUsers.includes(searchTerm)) {
-                row.style.display = '';
-                visibleCount++;
+    
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const rows = tableBody.querySelectorAll('tr');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const nameElement = row.querySelector('.startersheet-name');
+                const userChips = row.querySelectorAll('.user-chip');
+                const startersheetName = nameElement ? nameElement.textContent.toLowerCase() : '';
+                const assignedUsers = Array.from(userChips).map(chip => chip.textContent.toLowerCase()).join(' ');
+                
+                if (startersheetName.includes(searchTerm) || assignedUsers.includes(searchTerm)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            if (visibleCount === 0 && rows.length > 0) {
+                noResults.style.display = 'block';
             } else {
-                row.style.display = 'none';
+                noResults.style.display = 'none';
+            }
+            
+            if (startersheetCount) {
+                startersheetCount.textContent = visibleCount;
             }
         });
-       
-        if (visibleCount === 0) {
-            noResults.style.display = 'block';
-        } else {
-            noResults.style.display = 'none';
-        }
-       
-        startersheetCount.textContent = visibleCount;
-    });
+    }
 
     // Sorting functionality
     const sortableHeaders = document.querySelectorAll('.sortable');
@@ -782,21 +404,19 @@ document.addEventListener('DOMContentLoaded', function() {
         header.addEventListener('click', function() {
             const column = this.dataset.sort;
             const direction = currentSort.column === column && currentSort.direction === 'asc' ? 'desc' : 'asc';
-           
-            // Update sort icons
+            
             sortableHeaders.forEach(h => {
                 const icon = h.querySelector('i');
                 icon.className = 'fas fa-sort';
             });
-           
+            
             const icon = this.querySelector('i');
             icon.className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'}`;
-           
-            // Sort the table
+            
             const rows = Array.from(tableBody.querySelectorAll('tr'));
             rows.sort((a, b) => {
                 let aValue, bValue;
-               
+                
                 switch(column) {
                     case 'name':
                         aValue = a.querySelector('.startersheet-name').textContent;
@@ -811,94 +431,366 @@ document.addEventListener('DOMContentLoaded', function() {
                         bValue = Array.from(b.querySelectorAll('.user-chip')).map(chip => chip.textContent).join(' ');
                         break;
                 }
-               
+                
                 if (direction === 'asc') {
                     return aValue.localeCompare(bValue);
                 } else {
                     return bValue.localeCompare(aValue);
                 }
             });
-           
-            // Reorder the table rows
+            
             rows.forEach(row => tableBody.appendChild(row));
-           
+            
             currentSort = { column, direction };
         });
     });
+
+    // Toggle view functionality with localStorage persistence
+    const toggleBtn = document.getElementById('viewToggleBtn');
+    const tableContainer = document.querySelector('.startersheets-container');
+    
+    if (toggleBtn && tableContainer) {
+        const savedView = localStorage.getItem('startersheetView');
+        if (savedView === 'grid-view') {
+            tableContainer.classList.add('grid-view');
+            toggleBtn.querySelector('i').className = 'fas fa-th';
+            toggleBtn.title = 'Switch to Table View';
+        } else {
+            tableContainer.classList.remove('grid-view');
+            toggleBtn.querySelector('i').className = 'fas fa-table';
+            toggleBtn.title = 'Switch to Grid View';
+        }
+
+        toggleBtn.addEventListener('click', function() {
+            tableContainer.classList.toggle('grid-view');
+            const isGridView = tableContainer.classList.contains('grid-view');
+            
+            toggleBtn.querySelector('i').className = isGridView ? 'fas fa-th' : 'fas fa-table';
+            toggleBtn.title = isGridView ? 'Switch to Table View' : 'Switch to Grid View';
+            
+            localStorage.setItem('startersheetView', isGridView ? 'grid-view' : 'table-view');
+        });
+    }
+
+    // PDF viewer functionality
+    const pdfLinks = document.querySelectorAll('.pdf-link');
+    const fullPageViewer = document.getElementById('fullPagePdfViewer');
+    const pdfViewerContainer = document.getElementById('pdfViewer');
+    const pdfTitle = document.getElementById('pdfDocumentTitle');
+    const closePdfBtn = document.querySelector('.pdf-close-btn');
+    const pageContainer = document.querySelector('.page-container');
+    
+    let pdfDoc = null;
+    let currentPage = 1;
+    let pdfCanvas = null;
+    let pdfContext = null;
+
+    function attachPdfViewerEventListeners(pdfLinks) {
+        pdfLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pdfUrl = this.getAttribute('data-pdf-url');
+                const pdfName = this.getAttribute('data-pdf-name');
+                
+                pdfViewerContainer.innerHTML = '';
+                
+                pageContainer.classList.add('hidden');
+                fullPageViewer.style.display = 'flex';
+                pdfTitle.textContent = pdfName || 'PDF Document';
+                
+                pdfCanvas = document.createElement('canvas');
+                pdfCanvas.className = 'pdf-canvas';
+                pdfViewerContainer.appendChild(pdfCanvas);
+                pdfContext = pdfCanvas.getContext('2d');
+                
+                const loadingTask = pdfjsLib.getDocument(pdfUrl);
+                loadingTask.promise.then(function(pdf) {
+                    pdfDoc = pdf;
+                    renderPage(1);
+                }).catch(function(error) {
+                    console.error('Error loading PDF:', error);
+                    pdfViewerContainer.innerHTML = `
+                        <div style="padding: 20px; text-align: center;">
+                            <h3>Error loading PDF</h3>
+                            <p>There was a problem loading the PDF file.</p>
+                            <p>Error details: ${error.message}</p>
+                            <p>Try downloading the file instead:</p>
+                            <a href="${pdfUrl}" target="_blank" class="submit-btn" style="display: inline-block; margin-top: 10px;">
+                                <i class="fas fa-download"></i> Download PDF
+                            </a>
+                        </div>
+                    `;
+                });
+                
+                history.pushState({viewingPdf: true}, '', window.location.href);
+                
+                closeDetailModal();
+            });
+        });
+    }
+
+    function renderPage(pageNumber) {
+        if (!pdfDoc) return;
+        
+        pdfDoc.getPage(pageNumber).then(function(page) {
+            const viewport = page.getViewport({ scale: 1.5 });
+            
+            pdfCanvas.height = viewport.height;
+            pdfCanvas.width = viewport.width;
+            
+            pdfViewerContainer.style.overflow = 'auto';
+            
+            const renderContext = {
+                canvasContext: pdfContext,
+                viewport: viewport
+            };
+            
+            page.render(renderContext);
+        });
+    }
+
+    attachPdfViewerEventListeners(pdfLinks);
+
+    closePdfBtn.addEventListener('click', function() {
+        closePdfViewer();
+    });
+
+    window.addEventListener('popstate', function(event) {
+        if (fullPageViewer.style.display === 'flex') {
+            closePdfViewer();
+        }
+    });
+
+    function closePdfViewer() {
+        fullPageViewer.style.display = 'none';
+        pageContainer.classList.remove('hidden');
+        
+        pdfDoc = null;
+        pdfCanvas = null;
+        pdfContext = null;
+        pdfViewerContainer.innerHTML = '';
+    }
 });
-function filterUsers(startersheetId, searchText) {
-    // Convert search text to lowercase for case-insensitive comparison
-    searchText = searchText.toLowerCase();
-   
-    // Get all user checkbox items in the current dropdown
-    const userItems = document.querySelectorAll(`#user-dropdown-starter-${startersheetId} .user-checkbox-item`);
-   
+function toggleUserDropdown(startersheetId) {
+    const allDropdowns = document.querySelectorAll('.user-dropdown');
+    allDropdowns.forEach(dropdown => {
+        if (dropdown.id !== 'user-dropdown') {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    const dropdown = document.getElementById('user-dropdown');
+    const form = document.getElementById('user-dropdown-form');
+    const userList = document.getElementById('user-list');
+
+    if (!dropdown || !form || !userList) {
+        console.error('Required elements not found:', { dropdown, form, userList });
+        return;
+    }
+
+    // If startersheetId is empty, hide the dropdown and reset currentStartersheetId
+    if (!startersheetId) {
+        dropdown.style.display = 'none';
+        currentStartersheetId = null;
+        return;
+    }
+
+    // Toggle dropdown visibility
+    if (currentStartersheetId === startersheetId && dropdown.style.display === 'block') {
+        dropdown.style.display = 'none';
+        currentStartersheetId = null;
+        return;
+    }
+
+    currentStartersheetId = startersheetId;
+
+    // Update form action dynamically
+    form.action = `/assign-users/startersheet/${startersheetId}/`;
+
+    // Find the table row
+    const row = document.querySelector(`tr[data-id="${startersheetId}"]`);
+    if (!row) {
+        console.error(`No table row found for startersheet ID: ${startersheetId}`);
+        dropdown.style.display = 'none';
+        return;
+    }
+
+    const assignedUsers = row.querySelector('.users-data');
+    const assignedUsernames = assignedUsers ? Array.from(assignedUsers.querySelectorAll('.user-data')).map(user => user.textContent.trim()) : [];
+
+    const checkboxes = userList.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        const username = checkbox.parentElement.textContent.split('\n')[0].trim();
+        checkbox.checked = assignedUsernames.includes(username);
+    });
+
+    dropdown.style.display = 'block';
+}
+function filterUsers(startersheetId, searchTerm) {
+    searchTerm = searchTerm.toLowerCase();
+    const userItems = document.querySelectorAll('#user-list .user-checkbox-item');
     let visibleCount = 0;
-   
-    // Loop through each user item and show/hide based on search
+
     userItems.forEach(item => {
-        const username = item.querySelector('label').textContent.toLowerCase();
-       
-        if (username.includes(searchText)) {
+        const username = item.getAttribute('data-username');
+        if (username.includes(searchTerm)) {
             item.style.display = '';
             visibleCount++;
         } else {
             item.style.display = 'none';
         }
     });
-   
-    // Optionally, show a message if no results found
-    const noResultsMsg = document.querySelector(`#user-dropdown-starter-${startersheetId} .no-results-message`);
-   
-    if (!noResultsMsg && visibleCount === 0) {
-        // Create a "no results" message if it doesn't exist
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'no-results-message';
-        messageDiv.textContent = 'No users found matching your search.';
-        messageDiv.style.padding = '10px';
-        messageDiv.style.textAlign = 'center';
-        messageDiv.style.color = '#666';
-       
-        const form = document.querySelector(`#user-dropdown-starter-${startersheetId} .user-dropdown-form`);
-        form.appendChild(messageDiv);
+
+    let noResultsMsg = document.getElementById('no-user-results');
+    if (visibleCount === 0) {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.id = 'no-user-results';
+            noResultsMsg.className = 'no-results';
+            noResultsMsg.textContent = 'No users found matching your search.';
+            document.getElementById('user-list').appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'block';
     } else if (noResultsMsg) {
-        // Show/hide existing message based on results
-        noResultsMsg.style.display = visibleCount === 0 ? 'block' : 'none';
+        noResultsMsg.style.display = 'none';
     }
 }
-document.addEventListener('DOMContentLoaded', function() {
-    const toastMessages = document.querySelectorAll('.toast-message');
-   
-    toastMessages.forEach(toast => {
-        // Display the toast for 5 seconds then fade out
-        setTimeout(() => {
-            toast.style.animation = 'fadeOut 0.5s ease forwards';
-            setTimeout(() => {
-                toast.remove();
-            }, 500);
-        }, 5000);
+
+document.addEventListener('click', function(event) {
+    const dropdowns = document.querySelectorAll('.user-dropdown');
+    let isClickInsideDropdown = false;
+
+    dropdowns.forEach(dropdown => {
+        if (dropdown.contains(event.target)) {
+            isClickInsideDropdown = true;
+        }
     });
+
+    if (!isClickInsideDropdown && !event.target.closest('.edit-users-btn')) {
+        dropdowns.forEach(dropdown => {
+            dropdown.style.display = 'none';
+        });
+        currentStartersheetId = null;
+        currentApproverType = null;
+    }
+});
+
+function showDetailModal(startersheetId) {
+    const row = document.querySelector(`tr[data-id="${startersheetId}"]`);
+    if (!row) return;
+    
+    const name = row.querySelector('.startersheet-name').textContent.trim();
+    const zonesData = row.querySelector('.zones-data');
+    const zones = zonesData ? Array.from(zonesData.querySelectorAll('.zone-data')).map(zone => zone.textContent.trim()) : [];
+    const usersData = row.querySelector('.users-data');
+    const users = usersData ? Array.from(usersData.querySelectorAll('.user-data')).map(user => user.textContent.trim()) : [];
+    const pocsData = row.querySelector('.pocs-data');
+    const pocs = pocsData ? Array.from(pocsData.querySelectorAll('.poc-data')).map(poc => ({
+        name: poc.textContent.trim(),
+        url: poc.getAttribute('data-pdf-url')
+    })) : [];
+    
+    document.getElementById('detailModalTitle').textContent = name;
+    
+    let contentHTML = `
+        <div class="detail-section">
+            <h3 class="detail-section-title">Parameters</h3>
+            <div class="detail-zone-chips">
+                ${zones.length > 0 ? 
+                    zones.map(zone => `<span class="zone-chip">${zone}</span>`).join('') : 
+                    '<span class="empty-text">No zones</span>'}
+            </div>
+        </div>
+        <div class="detail-section">
+            <h3 class="detail-section-title">Assigned Users</h3>
+            <div class="detail-user-chips">
+                ${users.length > 0 ? 
+                    users.map(user => `<span class="user-chip">${user}</span>`).join('') : 
+                    '<span class="empty-text">No users assigned</span>'}
+            </div>
+        </div>
+        <div class="detail-section">
+            <h3 class="detail-section-title">Assigned OPS</h3>
+            <div class="poc-links">
+                ${pocs.length > 0 ? 
+                    pocs.map(poc => `
+                        <a href="javascript:void(0);" class="pdf-link" data-pdf-url="${poc.url}" data-pdf-name="${poc.name}">
+                            <i class="fas fa-file-pdf"></i> ${poc.name}
+                        </a>`).join('') : 
+                    '<span class="empty-text">No OPS assigned</span>'}
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('detailModalContent').innerHTML = contentHTML;
+    document.getElementById('detailModal').style.display = 'block';
+    document.getElementById('detailModalBackdrop').style.display = 'block';
+    
+    attachPdfViewerEventListeners(document.getElementById('detailModalContent').querySelectorAll('.pdf-link'));
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').style.display = 'none';
+    document.getElementById('detailModalBackdrop').style.display = 'none';
+}
+
+document.getElementById('detailModalBackdrop').addEventListener('click', closeDetailModal);
+
+document.getElementById('detailModal').addEventListener('click', function(event) {
+    event.stopPropagation();
 });
 
 function toggleApproverDropdown(approverType) {
-    // Close all other dropdowns first
     const allDropdowns = document.querySelectorAll('.user-dropdown');
     allDropdowns.forEach(dropdown => {
-        if (dropdown.id !== `approver-dropdown-${approverType}`) {
+        if (dropdown.id !== `approver-dropdown-${approverType.split('-')[0]}`) {
             dropdown.style.display = 'none';
         }
     });
-   
-    // Toggle the current dropdown
-    const dropdown = document.getElementById(`approver-dropdown-${approverType}`);
-    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+
+    const level = approverType.split('-')[0];
+    const dropdown = document.getElementById(`approver-dropdown-${level}`);
+    const form = document.getElementById(`approver-dropdown-form-${level}`);
+    const userList = document.getElementById(`approver-list-${level}`);
+
+    if (!dropdown || !form || !userList) {
+        console.error('Required elements not found:', { dropdown, form, userList });
+        return;
+    }
+
+    const startersheetId = approverType.split('-')[1];
+
+    if (currentApproverType === approverType && dropdown.style.display === 'block') {
+        dropdown.style.display = 'none';
+        currentApproverType = null;
+        return;
+    }
+
+    currentApproverType = approverType;
+
+    form.action = `/assign-approver/startersheet/${startersheetId}/${level}/`;
+
+    const row = document.querySelector(`tr[data-id="${startersheetId}"]`);
+    const approverField = level === 'level1' ? 'level_1_approver' : 'level_2_approver';
+    const approverUsername = row.querySelector(`td:nth-child(${level === 'level1' ? 8 : 9}) .approval-chip`)?.textContent.trim();
+
+    const radios = userList.querySelectorAll('input[type="radio"]');
+    radios.forEach(radio => {
+        const username = radio.parentElement.textContent.split('\n')[0].trim();
+        radio.checked = username === approverUsername;
+    });
+
+    dropdown.style.display = 'block';
 }
 
-// Function to filter users in approver dropdowns
-function filterApprovers(approverType, query) {
-    const dropdown = document.getElementById(`approver-dropdown-${approverType}`);
+function filterApprovers(level, query) {
+    const dropdown = document.getElementById(`approver-dropdown-${level}`);
+    if (!dropdown) {
+        console.error(`Dropdown not found for level: ${level}`);
+        return;
+    }
     const items = dropdown.querySelectorAll('.user-radio-item');
-   
+    
     query = query.toLowerCase();
     items.forEach(item => {
         const username = item.querySelector('label').textContent.toLowerCase();
@@ -908,6 +800,6 @@ function filterApprovers(approverType, query) {
             item.style.display = 'none';
         }
     });
-}   
+}
 </script>
 {% endblock %}

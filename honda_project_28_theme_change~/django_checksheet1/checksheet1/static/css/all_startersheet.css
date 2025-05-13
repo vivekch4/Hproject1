@@ -94,6 +94,7 @@ body.white-mode .search-icon {
     background: var(--accent-color);
     border: 1.5px solid var(--accent-color-solid);
 }
+
 body.white-mode .startersheets-container thead {
     background: var(--accent-color-solid);
     border: 1.5px solid var(--accent-color-solid);
@@ -109,15 +110,16 @@ body.white-mode .startersheets-container thead {
     white-space: nowrap;
     cursor: pointer;
 }
+
 body.white-mode .startersheets-container th {
-
     color: white;
-
 }
+
 .startersheets-container th i {
     margin-left: 5px;
     color: var(--text-light);
 }
+
 body.white-mode .startersheets-container th i {
     margin-left: 5px;
     color: white;
@@ -149,6 +151,413 @@ body.white-mode .startersheets-container td {
 
 body.white-mode .startersheets-container tbody tr:hover {
     background-color: #f8fafc;
+}
+
+/* Enhanced Grid View Styles for Startersheets */
+
+/* Enhanced Grid View Styles for Startersheets */
+.startersheets-container.grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    background: transparent;
+    border-collapse: separate;
+}
+
+.startersheets-container.grid-view thead {
+    display: none;
+}
+
+.startersheets-container.grid-view tbody {
+    display: contents;
+}
+
+/* Card Design */
+.startersheets-container.grid-view tr {
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(30, 35, 45, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    min-height: 380px; /* Fixed height for uniformity */
+    position: relative;
+    overflow: hidden;
+}
+
+body.white-mode .startersheets-container.grid-view tr {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.startersheets-container.grid-view tr:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    background-color: rgba(40, 45, 55, 0.9);
+}
+
+body.white-mode .startersheets-container.grid-view tr:hover {
+    background-color: #f8fafc;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Card Header - Name Field */
+.startersheets-container.grid-view td:nth-child(1) {
+    padding: 0 0 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 12px;
+    order: -1;
+}
+
+body.white-mode .startersheets-container.grid-view td:nth-child(1) {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.startersheets-container.grid-view td:nth-child(1)::before {
+    display: none;
+}
+
+.startersheets-container.grid-view td:nth-child(1) .startersheet-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    text-decoration: none;
+    display: block;
+    line-height: 1.4;
+}
+
+body.white-mode .startersheets-container.grid-view td:nth-child(1) .startersheet-name {
+    color: #1e293b;
+}
+
+/* Card Content Fields */
+.startersheets-container.grid-view td {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+body.white-mode .startersheets-container.grid-view td {
+    color: #4b5563;
+}
+
+/* Field Label Styles */
+.startersheets-container.grid-view td::before {
+    font-weight: 500;
+    margin-right: 8px;
+    min-width: 90px;
+    color: rgba(255, 255, 255, 0.6);
+    flex-shrink: 0;
+}
+
+body.white-mode .startersheets-container.grid-view td::before {
+    color: #64748b;
+}
+
+/* Field Specific Styles */
+.startersheets-container.grid-view td:nth-child(2) {
+    order: 1;
+}
+
+.startersheets-container.grid-view td:nth-child(2)::before {
+    content: "Parameter:";
+}
+
+.startersheets-container.grid-view td:nth-child(3) {
+    order: 2;
+}
+
+.startersheets-container.grid-view td:nth-child(3)::before {
+    content: "Line:";
+}
+
+.startersheets-container.grid-view td:nth-child(4) {
+    order: 3;
+}
+
+.startersheets-container.grid-view td:nth-child(4)::before {
+    content: "Assigned User:";
+}
+
+.startersheets-container.grid-view td:nth-child(5) {
+    order: 4;
+}
+
+.startersheets-container.grid-view td:nth-child(5)::before {
+    content: "Created By:";
+}
+
+.startersheets-container.grid-view td:nth-child(6) {
+    order: 5;
+}
+
+.startersheets-container.grid-view td:nth-child(6)::before {
+    content: "Created On:";
+}
+
+.startersheets-container.grid-view td:nth-child(7) {
+    order: 6;
+}
+
+.startersheets-container.grid-view td:nth-child(7)::before {
+    content: "Assigned OPS:";
+}
+
+.startersheets-container.grid-view td:nth-child(8) {
+    order: 7;
+}
+
+.startersheets-container.grid-view td:nth-child(8)::before {
+    content: "Level 1:";
+}
+
+.startersheets-container.grid-view td:nth-child(9) {
+    order: 8;
+}
+
+.startersheets-container.grid-view td:nth-child(9)::before {
+    content: "Level 2:";
+}
+
+.startersheets-container.grid-view td:nth-child(10) {
+    order: 9;
+}
+
+.startersheets-container.grid-view td:nth-child(10)::before {
+    content: "Level 3:";
+}
+
+/* Actions Row */
+.startersheets-container.grid-view td:nth-child(11) {
+    order: 11;
+    margin-top: auto; /* Pushes actions to the bottom */
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.white-mode .startersheets-container.grid-view td:nth-child(11) {
+    border-top: 1px solid #e2e8f0;
+}
+
+.startersheets-container.grid-view td:nth-child(11)::before {
+    content: "Actions:";
+}
+
+/* Content Cells */
+.startersheets-container.grid-view td.content-cell {
+    max-width: none;
+    flex: 1;
+}
+
+/* Chips Styling */
+.startersheets-container.grid-view .zone-chips,
+.startersheets-container.grid-view .user-chips,
+.startersheets-container.grid-view .approver-chips,
+.startersheets-container.grid-view .poc-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1;
+}
+
+.startersheets-container.grid-view .zone-chip,
+.startersheets-container.grid-view .user-chip,
+.startersheets-container.grid-view .approval-chip,
+.startersheets-container.grid-view .pdf-link {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    display: inline-flex;
+    align-items: center;
+}
+
+body.white-mode .startersheets-container.grid-view .zone-chip,
+body.white-mode .startersheets-container.grid-view .user-chip,
+body.white-mode .startersheets-container.grid-view .approval-chip,
+body.white-mode .startersheets-container.grid-view .pdf-link {
+    background-color: #f1f5f9;
+    color: #334155;
+}
+
+.startersheets-container.grid-view .pdf-link {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+body.white-mode .startersheets-container.grid-view .pdf-link {
+    color: #3b82f6;
+}
+
+.startersheets-container.grid-view .pdf-link i {
+    margin-right: 4px;
+    font-size: 0.75rem;
+    color: #ef4444;
+}
+
+.startersheets-container.grid-view .pdf-link:hover {
+    text-decoration: underline;
+}
+
+/* Button Styling */
+.startersheets-container.grid-view .edit-users-btn {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+body.white-mode .startersheets-container.grid-view .edit-users-btn {
+    background-color: #f1f5f9;
+    color: #64748b;
+}
+
+.startersheets-container.grid-view .edit-users-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+body.white-mode .startersheets-container.grid-view .edit-users-btn:hover {
+    background-color: #e2e8f0;
+}
+
+/* Action Buttons */
+.startersheets-container.grid-view .action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+    flex: 1;
+}
+
+.startersheets-container.grid-view .action-button {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+body.white-mode .startersheets-container.grid-view .action-button {
+    background-color: #f1f5f9;
+    color: #64748b;
+}
+
+.startersheets-container.grid-view .action-button:hover {
+    transform: translateY(-2px);
+}
+
+.startersheets-container.grid-view .action-button.update-btn {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: rgba(209, 250, 229, 0.9);
+}
+
+body.white-mode .startersheets-container.grid-view .action-button.update-btn {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.startersheets-container.grid-view .action-button.update-btn:hover {
+    background-color: rgba(16, 185, 129, 0.3);
+}
+
+body.white-mode .startersheets-container.grid-view .action-button.update-btn:hover {
+    background-color: rgba(16, 185, 129, 0.2);
+}
+
+.startersheets-container.grid-view .action-button.add-zone-btn {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: rgba(224, 231, 255, 0.9);
+}
+
+body.white-mode .startersheets-container.grid-view .action-button.add-zone-btn {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.startersheets-container.grid-view .action-button.add-zone-btn:hover {
+    background-color: rgba(59, 130, 246, 0.3);
+}
+
+body.white-mode .startersheets-container.grid-view .action-button.add-zone-btn:hover {
+    background-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Empty State */
+.startersheets-container.grid-view .empty-text {
+    font-style: italic;
+    opacity: 0.5;
+}
+
+/* Level 3 Radio Buttons */
+.startersheets-container.grid-view .approval-radio {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.startersheets-container.grid-view .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .startersheets-container.grid-view {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .startersheets-container.grid-view td::before {
+        min-width: 80px;
+    }
+
+    .startersheets-container.grid-view tr {
+        min-height: 360px;
+    }
+}
+
+@media (max-width: 480px) {
+    .startersheets-container.grid-view {
+        grid-template-columns: 1fr;
+    }
+
+    .startersheets-container.grid-view tr {
+        min-height: 340px;
+    }
+}
+
+/* For better spacing on mobile (existing rule, retained for consistency) */
+@media (max-width: 640px) {
+    .startersheets-container.grid-view .poc-links {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .startersheets-container.grid-view .pdf-link {
+        max-width: 100%;
+    }
 }
 
 /* Content cells */
@@ -289,8 +698,6 @@ body.white-mode .startersheet-name:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-
-
 .update-btn {
     color: #10b981;
 }
@@ -320,16 +727,14 @@ body.white-mode .startersheet-name:hover {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
+
 body.white-mode .create-btn {
-   
     background-color: var(--accent-color-solid);
     color: white;
-    
 }
 
-
 .create-btn:hover {
-    border:1.5px solid  var(--accent-color);
+    border: 1.5px solid var(--accent-color);
     transform: translateY(-3px);
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
 }
@@ -554,15 +959,12 @@ body.white-mode .user-radio-label {
 
 body.white-mode .assign-users-submit {
     background: var(--accent-color-solid);
-    
 }
 
 .assign-users-submit:hover {
     background-color: #2563eb;
     transform: translateY(-2px);
 }
-
-
 
 .edit-users-btn {
     background: none;
@@ -620,16 +1022,18 @@ body.white-mode .user-dropdown-search {
 .approval-radio {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .approval-radio label {
+    position: relative;
+    padding-left: 22px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.8);
+    user-select: none;
     display: flex;
     align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.875rem;
 }
 
 body.white-mode .approval-radio label {
@@ -637,7 +1041,56 @@ body.white-mode .approval-radio label {
 }
 
 .approval-radio input[type="radio"] {
-    margin-right: 4px;
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.approval-radio label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
+    border: 1px solid var(--accent-color);
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+body.white-mode .approval-radio label::before {
+    border: 1px solid var(--text-light);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.approval-radio input[type="radio"]:checked + label::before {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color-solid);
+}
+
+.approval-radio input[type="radio"]:checked + label::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 4px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Focus state */
+.approval-radio input[type="radio"]:focus + label::before {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Hover state */
+.approval-radio label:hover::before {
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* Detail modal */
@@ -688,11 +1141,39 @@ body.white-mode .detail-modal-header {
     border-bottom: 1px solid #e2e8f0;
 }
 
+.toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+body.white-mode .toggle-btn {
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+body.white-mode .toggle-btn:hover {
+    background-color: #e2e8f0;
+}
 .detail-modal-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #ffffff;
-}
+    color: var(--text-light); }
 
 body.white-mode .detail-modal-title {
     color: #1e293b;
@@ -946,74 +1427,4 @@ body.white-mode .toast-error {
 .table-responsive {
     scrollbar-color: #1a1f2694 rgba(255, 255, 255, 0.1);
     scrollbar-width: thin;
-}
-.approval-radio {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.approval-radio label {
-    position: relative;
-    padding-left: 22px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.8);
-    user-select: none;
-    display: flex;
-    align-items: center;
-}
-
-.approval-radio input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
-}
-
-.approval-radio label::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 15px;
-    height: 15px;
-    border-radius: 3px;
-    border: 1px solid var(--accent-color);
-    background-color: rgba(255, 255, 255, 0.1);
-    transition: all 0.2s ease;
-}
-body.white-mode .approval-radio label::before {
-   
-    border: 1px solid var(--text-light);
-    background-color: rgba(255, 255, 255, 0.1);
-    
-}
-
-.approval-radio input[type="radio"]:checked + label::before {
- background-color: var(--accent-color);
-    border-color: var(--accent-color-solid);
-}
-
-.approval-radio input[type="radio"]:checked + label::after {
-    content: '';
-    position: absolute;
-    left: 6px;
-    top: 2px;
-    width: 4px;
-    height: 9px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-}
-
-/* Focus state */
-.approval-radio input[type="radio"]:focus + label::before {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-}
-
-/* Hover state */
-.approval-radio label:hover::before {
-    border-color: rgba(255, 255, 255, 0.5);
 }

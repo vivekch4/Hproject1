@@ -16,31 +16,41 @@
 body.white-mode .header {
     border-bottom: 1px solid #e2e8f0;
 }
-body.white-mode .user-dropdown{
+
+body.white-mode .page-title {
+    color: #1e293b;
+}
+
+body.white-mode .user-dropdown {
     background-color: #ffffff;
+    border: 1px solid #e2e8f0;
 }
 
 body.white-mode .user-dropdown-title {
-    color:unset;
+    color: unset;
 }
-body.white-mode .assign-users-submit{
-    background:var(--accent-color-solid);
-    color:white;
+
+body.white-mode .assign-users-submit {
+    background: var(--accent-color-solid);
+    color: white;
 }
-body.white-mode .user-dropdown-search{
-    border: 1px solid var(--accent-color-solid);
-    color:unset;
+
+body.white-mode .user-dropdown-search {
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+    background-color: #f8fafc;
 }
-body.white-mode .user-dropdown-close{
+
+body.white-mode .user-dropdown-close {
     background-color: #f1f5f9;
     color: #64748b;
 }
-body.white-mode .user-checkbox-label{
-    color:unset;
+
+body.white-mode .user-checkbox-label {
+    color: #1e293b;
 }
 
-body.white-mode .create-btn:hover{
-    
+body.white-mode .create-btn:hover {
     border: 1.5px solid var(--accent-color-solid);
 }
 
@@ -48,10 +58,6 @@ body.white-mode .create-btn:hover{
     color: #ffffff;
     font-size: 1.25rem;
     font-weight: 600;
-}
-
-body.white-mode .page-title {
-    color: #1e293b;
 }
 
 .search-container {
@@ -80,7 +86,7 @@ body.white-mode .page-title {
 
 body.white-mode .search-input {
     border: 1px solid var(--accent-color);
-    color:unset;
+    color: unset;
 }
 
 .search-input:focus {
@@ -152,43 +158,9 @@ body.white-mode .search-icon {
 
 body.white-mode .checksheets-container td {
     color: unset;
-    background:white;
+    background: white;
     border-bottom: 1px solid #e2e8f0;
 }
-body.white-mode .detail-modal-close {
-  
-    
-    background-color: #f1f5f9;
-    color: #64748b;
-    
-}
-body.white-mode 
-.detail-modal {
-    background: white;
-  
-}
-.detail-images-grid {
-    display: grid
-;
-    grid-template-columns: repeat(4, 1fr);
-    /* gap: 0; */
-}
-img.detail-image {
-    width: 100%;
-    height: 85px;
-    object-fit: contain;
-}
-body.white-mode .detail-modal-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text-light);
-}
-
-body.white-mode .detail-section-title {
-   
-    color: var(--text-light);
-}
-
 
 .checksheets-container tbody tr:hover {
     background-color: rgba(255, 255, 255, 0.05);
@@ -225,36 +197,7 @@ body.white-mode .checksheets-container tbody tr:hover {
 
 body.white-mode .zone-chip,
 body.white-mode .user-chip {
-    
     color: unset;
-  
-}
-
-.poc-links {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.poc-link {
-    display: inline-flex;
-    align-items: center;
-    color: #3b82f6;
-    text-decoration: none;
-    font-size: 0.75rem;
-    max-width: 180px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.poc-link i {
-    margin-right: 4px;
-    font-size: 0.75rem;
-}
-
-.poc-link:hover {
-    text-decoration: underline;
 }
 
 .empty-text {
@@ -297,7 +240,6 @@ body.white-mode .checksheet-name {
     text-decoration: none;
 }
 
-
 .action-buttons {
     display: flex;
     gap: 8px;
@@ -319,7 +261,6 @@ body.white-mode .checksheet-name {
 
 .action-button:hover {
     background-color: rgba(255, 255, 255, 0.2);
-    
     transform: translateY(-2px);
 }
 
@@ -354,7 +295,7 @@ body.white-mode .checksheet-name {
 }
 
 .create-btn:hover {
-    border:1.5px solid var(--accent-color-solid);
+    border: 1.5px solid var(--accent-color-solid);
     transform: translateY(-3px);
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
 }
@@ -404,8 +345,6 @@ body.white-mode .pagination {
     background-color: #f8fafc;
 }
 
-
-
 .pagination-info {
     display: flex;
     align-items: center;
@@ -434,19 +373,14 @@ body.white-mode .pagination {
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
     z-index: 1000;
     padding: 20px;
-    display: none; /* Ensure initial state is hidden */
+    display: none;
     overflow-y: auto;
+    box-sizing: border-box;
+    transform-origin: center;
 }
 
 .user-dropdown-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-    display: none;
+    display: none !important; /* Hide backdrop for all dropdowns */
 }
 
 .user-dropdown-header {
@@ -499,8 +433,8 @@ body.white-mode .pagination {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
-.user-checkbox-item input[type="checkbox"] {
-    margin-right: 10px;
+body.white-mode .user-checkbox-item:hover {
+    background-color: #f8fafc;
 }
 
 .user-checkbox-label {
@@ -510,6 +444,42 @@ body.white-mode .pagination {
     cursor: pointer;
     font-size: 0.875rem;
     color: rgba(255, 255, 255, 0.8);
+}
+
+.user-checkbox-label input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.user-radio-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 6px;
+    border-radius: 4px;
+}
+
+.user-radio-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+body.white-mode .user-radio-item:hover {
+    background-color: #f8fafc;
+}
+
+.user-radio-label {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+body.white-mode .user-radio-label {
+    color: #1e293b;
+}
+
+.user-radio-label input[type="radio"] {
+    margin-right: 10px;
 }
 
 .user-role {
@@ -550,8 +520,9 @@ body.white-mode .pagination {
     border-radius: 6px;
     transition: all 0.2s;
 }
+
 body.white-mode .edit-users-btn {
-   color :unset;
+    color: unset;
 }
 
 .edit-users-btn:hover {
@@ -601,6 +572,10 @@ body.white-mode .edit-users-btn {
     overflow-y: auto;
 }
 
+body.white-mode .detail-modal {
+    background: white;
+}
+
 .detail-modal-backdrop {
     position: fixed;
     top: 0;
@@ -612,11 +587,14 @@ body.white-mode .edit-users-btn {
     display: none;
 }
 
-
 .detail-modal-title {
     font-size: 1.25rem;
     font-weight: 600;
     color: #ffffff;
+}
+
+body.white-mode .detail-modal-title {
+    color: var(--text-light);
 }
 
 .detail-modal-close {
@@ -629,8 +607,13 @@ body.white-mode .edit-users-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left:auto;
+    margin-left: auto;
     border-radius: 4px;
+}
+
+body.white-mode .detail-modal-close {
+    background-color: #f1f5f9;
+    color: #64748b;
 }
 
 .detail-modal-close:hover {
@@ -649,6 +632,10 @@ body.white-mode .edit-users-btn {
     margin-bottom: 8px;
 }
 
+body.white-mode .detail-section-title {
+    color: var(--text-light);
+}
+
 .detail-content {
     background-color: rgba(255, 255, 255, 0.05);
     border-radius: 6px;
@@ -661,6 +648,17 @@ body.white-mode .edit-users-btn {
     flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 16px;
+}
+
+.detail-images-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+img.detail-image {
+    width: 100%;
+    height: 85px;
+    object-fit: contain;
 }
 
 .view-all-chip {
@@ -848,11 +846,10 @@ body.white-mode .edit-users-btn {
 }
 
 body.white-mode .approval-radio label::before {
-   
     border: 1px solid var(--text-light);
     background-color: rgba(255, 255, 255, 0.1);
-    
 }
+
 .approval-radio input[type="radio"]:checked + label::before {
     background-color: var(--accent-color);
     border-color: var(--accent-color-solid);
@@ -878,4 +875,398 @@ body.white-mode .approval-radio label::before {
 /* Hover state */
 .approval-radio label:hover::before {
     border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Toggle Button Styles */
+.toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+body.white-mode .toggle-btn {
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+body.white-mode .toggle-btn:hover {
+    background-color: #e2e8f0;
+}
+
+/* Enhanced Grid View Styles for CheckSheets */
+/* Enhanced Grid View Styles for CheckSheets */
+.checksheets-container.grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    background: transparent;
+    border-collapse: separate;
+}
+
+.checksheets-container.grid-view thead {
+    display: none;
+}
+
+.checksheets-container.grid-view tbody {
+    display: contents;
+}
+
+/* Card Design */
+.checksheets-container.grid-view tr {
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(30, 35, 45, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    min-height: 380px; /* Fixed height for uniformity */
+    position: relative;
+    overflow: hidden;
+}
+
+body.white-mode .checksheets-container.grid-view tr {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.checksheets-container.grid-view tr:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    background-color: rgba(40, 45, 55, 0.9);
+}
+
+body.white-mode .checksheets-container.grid-view tr:hover {
+    background-color: #f8fafc;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Card Header - Name Field */
+.checksheets-container.grid-view td:nth-child(1) {
+    padding: 0 0 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 12px;
+    order: -1;
+}
+
+body.white-mode .checksheets-container.grid-view td:nth-child(1) {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.checksheets-container.grid-view td:nth-child(1)::before {
+    display: none;
+}
+
+.checksheets-container.grid-view td:nth-child(1) .checksheet-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    text-decoration: none;
+    display: block;
+    line-height: 1.4;
+}
+
+body.white-mode .checksheets-container.grid-view td:nth-child(1) .checksheet-name {
+    color: #1e293b;
+}
+
+/* Card Content Fields */
+.checksheets-container.grid-view td {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+body.white-mode .checksheets-container.grid-view td {
+    color: #4b5563;
+}
+
+/* Field Label Styles */
+.checksheets-container.grid-view td::before {
+    font-weight: 500;
+    margin-right: 8px;
+    min-width: 90px;
+    color: rgba(255, 255, 255, 0.6);
+    flex-shrink: 0;
+}
+
+body.white-mode .checksheets-container.grid-view td::before {
+    color: #64748b;
+}
+
+/* Field Specific Styles */
+.checksheets-container.grid-view td:nth-child(2) {
+    order: 1;
+}
+
+.checksheets-container.grid-view td:nth-child(2)::before {
+    content: "Zones:";
+}
+
+.checksheets-container.grid-view td:nth-child(3) {
+    order: 2;
+}
+
+.checksheets-container.grid-view td:nth-child(3)::before {
+    content: "Line:";
+}
+
+.checksheets-container.grid-view td:nth-child(4) {
+    order: 3;
+}
+
+.checksheets-container.grid-view td:nth-child(4)::before {
+    content: "Assigned Users:";
+}
+
+.checksheets-container.grid-view td:nth-child(5) {
+    order: 4;
+}
+
+.checksheets-container.grid-view td:nth-child(5)::before {
+    content: "Created By:";
+}
+
+.checksheets-container.grid-view td:nth-child(6) {
+    order: 5;
+}
+
+.checksheets-container.grid-view td:nth-child(6)::before {
+    content: "Created On:";
+}
+
+.checksheets-container.grid-view td:nth-child(7) {
+    order: 6;
+}
+
+.checksheets-container.grid-view td:nth-child(7)::before {
+    content: "Level 1:";
+}
+
+.checksheets-container.grid-view td:nth-child(8) {
+    order: 7;
+}
+
+.checksheets-container.grid-view td:nth-child(8)::before {
+    content: "Level 2:";
+}
+
+.checksheets-container.grid-view td:nth-child(9) {
+    order: 8;
+}
+
+.checksheets-container.grid-view td:nth-child(9)::before {
+    content: "Level 3:";
+}
+
+/* Actions Row */
+.checksheets-container.grid-view td:nth-child(11) {
+    order: 10;
+    margin-top: auto; /* Pushes actions to the bottom */
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.white-mode .checksheets-container.grid-view td:nth-child(11) {
+    border-top: 1px solid #e2e8f0;
+}
+
+.checksheets-container.grid-view td:nth-child(11)::before {
+    content: "Actions:";
+}
+
+/* Hide Image Column in Grid View (Optional) */
+.checksheets-container.grid-view td.image-column {
+    display: none;
+}
+
+/* Content Cells */
+.checksheets-container.grid-view td.content-cell {
+    max-width: none;
+    flex: 1;
+}
+
+/* Chips Styling */
+.checksheets-container.grid-view .zone-chips,
+.checksheets-container.grid-view .user-chips,
+.checksheets-container.grid-view .approver-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1;
+}
+
+.checksheets-container.grid-view .zone-chip,
+.checksheets-container.grid-view .user-chip,
+.checksheets-container.grid-view .approval-chip {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    display: inline-flex;
+    align-items: center;
+}
+
+body.white-mode .checksheets-container.grid-view .zone-chip,
+body.white-mode .checksheets-container.grid-view .user-chip,
+body.white-mode .checksheets-container.grid-view .approval-chip {
+    background-color: #f1f5f9;
+    color: #334155;
+}
+
+/* Button Styling */
+.checksheets-container.grid-view .edit-users-btn {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+body.white-mode .checksheets-container.grid-view .edit-users-btn {
+    background-color: #f1f5f9;
+    color: #64748b;
+}
+
+.checksheets-container.grid-view .edit-users-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+body.white-mode .checksheets-container.grid-view .edit-users-btn:hover {
+    background-color: #e2e8f0;
+}
+
+/* Action Buttons */
+.checksheets-container.grid-view .action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+    flex: 1;
+}
+
+.checksheets-container.grid-view .action-button {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+body.white-mode .checksheets-container.grid-view .action-button {
+    background-color: #f1f5f9;
+    color: #64748b;
+}
+
+.checksheets-container.grid-view .action-button:hover {
+    transform: translateY(-2px);
+}
+
+.checksheets-container.grid-view .action-button.assi {
+    background-color: rgba(99, 102, 241, 0.2);
+    color: rgba(224, 231, 255, 0.9);
+}
+
+body.white-mode .checksheets-container.grid-view .action-button.assi {
+    background-color: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+}
+
+.checksheets-container.grid-view .action-button.assi:hover {
+    background-color: rgba(99, 102, 241, 0.3);
+}
+
+body.white-mode .checksheets-container.grid-view .action-button.assi:hover {
+    background-color: rgba(99, 102, 241, 0.2);
+}
+
+.checksheets-container.grid-view .action-button.acti {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: rgba(209, 250, 229, 0.9);
+}
+
+body.white-mode .checksheets-container.grid-view .action-button.acti {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.checksheets-container.grid-view .action-button.acti:hover {
+    background-color: rgba(16, 185, 129, 0.3);
+}
+
+body.white-mode .checksheets-container.grid-view .action-button.acti:hover {
+    background-color: rgba(16, 185, 129, 0.2);
+}
+
+/* Level 3 Radio Buttons */
+.checksheets-container.grid-view .approval-radio {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.checksheets-container.grid-view .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .checksheets-container.grid-view {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .checksheets-container.grid-view td::before {
+        min-width: 80px;
+    }
+
+    .checksheets-container.grid-view tr {
+        min-height: 360px;
+    }
+}
+
+@media (max-width: 480px) {
+    .checksheets-container.grid-view {
+        grid-template-columns: 1fr;
+    }
+
+    .checksheets-container.grid-view tr {
+        min-height: 340px;
+    }
 }
