@@ -1353,9 +1353,19 @@ body.sidebar-collapsed .logo-expanded {
 
 
 .sidebar-logo.logo-expanded {
-    width: 125px; /* Larger size for expanded state */
+    width: 125px;
     height: 41px;
-    margin-right: 10px; /* Space between logo and text */
+    /* margin-right: 10px; */
+    position: relative;
+    left: 35px;
+}
+.logospan{
+    display: none;
+}
+.sidebar-footer {
+    margin-top: auto; /* Pushes the footer to the bottom of the flex container */
+    padding: 10px;
+    text-align: center; /* Center the logo horizontally */
 }
 
 /* Ensure logos align properly */

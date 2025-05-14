@@ -25,8 +25,8 @@ SECRET_KEY = "_n$o7+1gt*0-bk0^k0s^(!m=_dz64w4ghs@-sv5q3ybi1g@*t1"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-# ALLOWED_HOSTS = ["worksp.pythonanywhere.com"]
+# ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["worksp.pythonanywhere.com"]
 # ALLOWED_HOSTS = ["192.168.1.60","122.180.247.129"]
 # Application definition
 
@@ -50,6 +50,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'checksheet1.middleware.content_security_policy',
 ]
 
 ROOT_URLCONF = "django_checksheet1.urls"
@@ -154,3 +155,9 @@ CHANNEL_LAYERS = {
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+
+CSRF_COOKIE_HTTPONLY = True
+
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True

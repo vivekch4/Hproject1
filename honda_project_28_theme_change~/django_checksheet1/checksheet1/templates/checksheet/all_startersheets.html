@@ -1,5 +1,6 @@
 {% extends 'checksheet/base.html' %}
 {% load static %}
+{% load custom_tags %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/all_startersheet.css' %}">
 {% endblock %}
@@ -36,9 +37,8 @@
                     <th class="sortable" data-sort="name">Name <i class="fas fa-sort"></i></th>
                     <th class="sortable" data-sort="parameters">Parameters <i class="fas fa-sort"></i></th>
                     <th class="sortable" data-sort="line">Line <i class="fas fa-sort"></i></th>
-                    <th class="sortable" data-sort="users">Assigned Users <i class="fas fa-sort"></i></th>
-                    <th>Created By</th>
-                    <th>Created On</th>
+                    <th class="sortable" data-sort="users">Assignee <i class="fas fa-sort"></i></th>
+                    
                     <th>Assigned OPS</th>
                     <th>Level 1</th>
                     <th>Level 2</th>
@@ -48,7 +48,10 @@
             </thead>
             <tbody id="startersheetTableBody">
                 {% for startersheet in Starter %}
-                <tr data-id="{{ startersheet.id }}">
+                <tr data-id="{{ startersheet.id }}"
+    data-assigned-users="{% for user in startersheet.assigned_users.all %}{{ user.id }},{% endfor %}"
+    data-level1-approver="{% if startersheet.level_1_approver %}{{ startersheet.level_1_approver.id }}{% endif %}"
+    data-level2-approver="{% if startersheet.level_2_approver %}{{ startersheet.level_2_approver.id }}{% endif %}">
                     <td>
                         <a href="javascript:void(0);" class="startersheet-name" onclick="showDetailModal({{ startersheet.id }})">
                             {{ startersheet.name }}
@@ -58,7 +61,7 @@
                         <div class="zone-chips">
                             {% with zones=startersheet.zones.all %}
                                 {% if zones|length > 0 %}
-                                    {% for zone in zones|slice:":2" %}
+                                    {% for zone in zones|slice:":1" %}
                                         <span class="zone-chip">{{ zone.name }}</span>
                                     {% endfor %}
                                     
@@ -74,17 +77,18 @@
                         </div>
                     </td>
                     <td class="content-cell">
-                        {{ startersheet.line }}
+                        {{ startersheet.line|replace_underscore }}
+                        
                     </td>
                     <td class="content-cell">
                         <div class="user-chips">
                             {% with users=startersheet.assigned_users.all %}
                                 {% if users|length > 0 %}
-                                    {% for user in users|slice:":2" %}
+                                    {% for user in users|slice:":1" %}
                                         <span class="user-chip">{{ user.username }}</span>
                                     {% endfor %}
-                                    {% if users|length > 2 %}
-                                        <span class="view-all-chip">. . .</span>
+                                    {% if users|length > 1 %}
+                                        
                                     {% endif %}
                                 {% endif %}
                             {% endwith %}
@@ -99,12 +103,7 @@
                             {% endfor %}
                         </div>
                     </td>
-                    <td class="content-cell">
-                        {{ startersheet.created_by.username }}
-                    </td>
-                    <td class="content-cell">
-                        {{ startersheet.created_on|date:"Y-m-d" }}
-                    </td>
+                 
                     <td class="content-cell">
                         <div class="poc-links">
                             {% with pocs=startersheet.assigned_pocs.all %}
@@ -588,14 +587,12 @@ function toggleUserDropdown(startersheetId) {
         return;
     }
 
-    // If startersheetId is empty, hide the dropdown and reset currentStartersheetId
     if (!startersheetId) {
         dropdown.style.display = 'none';
         currentStartersheetId = null;
         return;
     }
 
-    // Toggle dropdown visibility
     if (currentStartersheetId === startersheetId && dropdown.style.display === 'block') {
         dropdown.style.display = 'none';
         currentStartersheetId = null;
@@ -604,25 +601,30 @@ function toggleUserDropdown(startersheetId) {
 
     currentStartersheetId = startersheetId;
 
-    // Update form action dynamically
     form.action = `/assign-users/startersheet/${startersheetId}/`;
 
-    // Find the table row
     const row = document.querySelector(`tr[data-id="${startersheetId}"]`);
     if (!row) {
-        console.error(`No table row found for startersheet ID: ${startersheetId}`);
+        console.error(`Row not found for startersheetId: ${startersheetId}`);
         dropdown.style.display = 'none';
         return;
     }
 
-    const assignedUsers = row.querySelector('.users-data');
-    const assignedUsernames = assignedUsers ? Array.from(assignedUsers.querySelectorAll('.user-data')).map(user => user.textContent.trim()) : [];
+    // Get assigned user IDs from data attribute
+    const assignedUserIds = row.dataset.assignedUsers ? row.dataset.assignedUsers.split(',').filter(id => id) : [];
 
+    // Update checkbox states
     const checkboxes = userList.querySelectorAll('input[type="checkbox"]');
     checkboxes.forEach(checkbox => {
-        const username = checkbox.parentElement.textContent.split('\n')[0].trim();
-        checkbox.checked = assignedUsernames.includes(username);
+        checkbox.checked = assignedUserIds.includes(checkbox.value);
     });
+
+    // Reset search input and filter
+    const searchInput = dropdown.querySelector('.user-dropdown-search');
+    if (searchInput) {
+        searchInput.value = '';
+        filterUsers(startersheetId, '');
+    }
 
     dropdown.style.display = 'block';
 }
@@ -771,14 +773,27 @@ function toggleApproverDropdown(approverType) {
     form.action = `/assign-approver/startersheet/${startersheetId}/${level}/`;
 
     const row = document.querySelector(`tr[data-id="${startersheetId}"]`);
-    const approverField = level === 'level1' ? 'level_1_approver' : 'level_2_approver';
-    const approverUsername = row.querySelector(`td:nth-child(${level === 'level1' ? 8 : 9}) .approval-chip`)?.textContent.trim();
+    if (!row) {
+        console.error(`Row not found for startersheetId: ${startersheetId}`);
+        dropdown.style.display = 'none';
+        return;
+    }
 
+    // Get the assigned approver ID from the data attribute
+    const approverId = row.dataset[level === 'level1' ? 'level1Approver' : 'level2Approver'];
+
+    // Update radio button states
     const radios = userList.querySelectorAll('input[type="radio"]');
     radios.forEach(radio => {
-        const username = radio.parentElement.textContent.split('\n')[0].trim();
-        radio.checked = username === approverUsername;
+        radio.checked = radio.value === approverId;
     });
+
+    // Reset search input and filter
+    const searchInput = dropdown.querySelector('.user-dropdown-search');
+    if (searchInput) {
+        searchInput.value = '';
+        filterApprovers(level, '');
+    }
 
     dropdown.style.display = 'block';
 }
@@ -792,14 +807,30 @@ function filterApprovers(level, query) {
     const items = dropdown.querySelectorAll('.user-radio-item');
     
     query = query.toLowerCase();
+    let visibleCount = 0;
+
     items.forEach(item => {
-        const username = item.querySelector('label').textContent.toLowerCase();
+        const username = item.querySelector('label').textContent.toLowerCase().split('\n')[0].trim();
         if (username.includes(query)) {
             item.style.display = 'block';
+            visibleCount++;
         } else {
             item.style.display = 'none';
         }
     });
+
+    let noResultsMsg = dropdown.querySelector('.no-results');
+    if (visibleCount === 0) {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.className = 'no-results';
+            noResultsMsg.textContent = 'No users found matching your search.';
+            dropdown.querySelector('.user-list').appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'block';
+    } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+    }
 }
 </script>
 {% endblock %}

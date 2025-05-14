@@ -51,3 +51,7 @@ def split(value, delimiter):
 @register.filter
 def trim(value):
     return value.strip()
+
+@register.filter
+def replace_underscore(value):
+    return value.replace('_', ' ')
