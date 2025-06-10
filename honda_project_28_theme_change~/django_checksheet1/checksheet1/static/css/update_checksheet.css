@@ -123,23 +123,24 @@ body.white-mode .form-container {
 }
 
 .file-input-label {
-    display: flex;
+    display: flex
+;
     align-items: center;
     justify-content: center;
     gap: 8px;
     padding: 8px 12px;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px dashed rgb(161 161 161 / 82%);;
+    border: 1px dashed var(--text-light);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
     font-size: 0.875rem;
     color: var(--text-light);
-    height: 36px;
+    height: 34px;
     box-sizing: border-box;
-    width: 100%;
+    text-align: center;
+    flex-direction: row;
 }
-
 .file-input-label:hover {
     border-color: var(--accent-color);
     background: rgba(255, 255, 255, 0.1);
@@ -180,10 +181,98 @@ body.white-mode .form-container {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.modal-content p {
+    margin: 10px 0 20px;
+    color: #555;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.modal-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.confirm-btn {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.confirm-btn:hover {
+    background-color: #c0392b;
+}
+
+.cancel-btn {
+    background-color: #ccc;
+    color: #333;
+}
+
+.cancel-btn:hover {
+    background-color: #bbb;
+}
+
+/* Ensure delete button styles are consistent */
+.delete-zone-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+/* update_checksheet.css */
+.confirm-btn:disabled {
+    background-color: #a1a1a1;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.delete-zone-btn:hover {
+    background: #c0392b;
+}
 /* Zone inputs styling */
 .zone-inputs-container {
     display: flex;
     flex-direction: column;
+}
+#countdown {
+    color: #555;
+    margin: 10px 0;
 }
 
 .zone-inputs {
@@ -331,3 +420,69 @@ body.white-mode .form-container {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+
+/* Add Zone Section */
+.add-zone-section {
+    margin-top: 20px;
+    padding: 12px;
+    background: rgb(44 38 38 / 5%);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.add-zone-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.add-zone-form .form-group {
+    margin-bottom: 0;
+}
+
+.add-zone-form .submit-btn {
+    align-self: flex-end;
+}
+
+/* Form tip styling */
+.form-tip {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background-color: rgb(18 18 18 / 5%);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-color);
+}
+
+.form-tip-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-light);
+    font-weight: 500;
+    font-size: 0.875rem;
+    margin-bottom: 4px;
+}
+
+.form-tip-content {
+    color: var(--text-light);
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+
+.form-input[multiple] {
+    height: 100px; /* Adjust height for multi-select */
+    overflow-y: auto;
+}
+
+.form-input option {
+    padding: 5px;
+}
+
+.form-input option:checked {
+    background-color: #007bff;
+    color: #fff;
+}
+
+

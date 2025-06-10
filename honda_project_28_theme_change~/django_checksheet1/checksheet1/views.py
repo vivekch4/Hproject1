@@ -24,12 +24,14 @@ from .models import (
     POCUpload,
     PageAccess,
     PasswordResetRequest,
+    ProductionTarget,
     ProductionDb,
     Shifttime,
     StarterSheet,
     StarterZone,
     Zone,
     RejectionAlertConfig,
+    RejectReason
 )
 from django.db.models import Q, F
 import pytz
@@ -45,7 +47,7 @@ from PIL import Image as PILImage
 from dateutil.parser import parse as parse_date, ParserError
 from django.db import transaction
 from django.views.decorators.http import require_http_methods
-from twilio.rest import Client
+
 
 
 User = get_user_model()
@@ -159,16 +161,111 @@ def has_page_access(user, page_name):
         user=user, page_name=page_name, has_access=True
     ).exists()
 
+import random
+import string
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.utils import timezone
+from datetime import timedelta
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from .models import OTP, CustomUser
+from .tasks import send_otp_email
+import json
+
+def generate_otp(length=6):
+    """Generate a random 6-digit OTP."""
+    return ''.join(random.choices(string.digits, k=length))
 
 def login_view(request):
     if request.method == "POST":
         employee_id = request.POST.get("employee_id")
         password = request.POST.get("password")
+        
         user = authenticate(request, employee_id=employee_id, password=password)
+        
+        if user and user.is_authenticated:
+            if not user.is_active:
+                return render(
+                    request,
+                    "checksheet/login.html",
+                    {"error": "Your account is deactivated. Please contact an admin."}
+                )
+            
+            # Store user info in session immediately
+            request.session['otp_user_id'] = user.id
+            request.session['employee_id'] = employee_id
+            request.session.save()
+            
+            # Queue the email task asynchronously (non-blocking)
+            try:
+                print("jjjjjjjjjjjjjjjjjjjjjj")
+                send_otp_email.delay(user.id, employee_id)
+                print("send")
+            except Exception as e:
+                # Log the error but don't block the redirect
+                print(f"Error queuing OTP email: {str(e)}")
+            
+            # Redirect immediately - don't wait for email
+            return redirect('verify_otp')
+        else:
+            return render(
+                request,
+                "checksheet/login.html",
+                {"error": "Invalid credentials"}
+            )
+    
+    return render(request, "checksheet/login.html")
 
-        if user:
+def verify_otp(request):
+    if request.method == "POST":
+        otp_code = request.POST.get("otp_code")
+        user_id = request.session.get('otp_user_id')
+        
+        if not user_id:
+            return render(
+                request,
+                "checksheet/verify_otp.html",
+                {"error": "Session expired. Please login again.", "redirect_to_login": True}
+            )
+        
+        try:
+            user = CustomUser.objects.get(id=user_id)
+            
+            # Get the most recent valid OTP
+            otp = OTP.objects.filter(
+                user=user, 
+                otp_code=otp_code,
+                expires_at__gt=timezone.now()
+            ).first()
+            
+            if not otp:
+                return render(
+                    request,
+                    "checksheet/verify_otp.html",
+                    {"error": "Invalid or expired OTP. Please try again or request a new one."}
+                )
+            
+            # Check if OTP is expired
+            if otp.is_expired():
+                return render(
+                    request,
+                    "checksheet/verify_otp.html",
+                    {"error": "OTP has expired. Please request a new one."}
+                )
+            
+            # Log the user in
+            user.backend = 'checksheet1.authentication.EmployeeIDBackend'
             login(request, user)
-            # Redirect based on user role
+            
+            # Clean up
+            OTP.objects.filter(user=user).delete()
+            request.session.pop('otp_user_id', None)
+            request.session.pop('employee_id', None)
+            request.session.save()
+            
+            # Redirect based on role
             if user.role == "admin":
                 return redirect("home")
             elif user.role == "quality_incharge":
@@ -178,20 +275,32 @@ def login_view(request):
             elif user.role == "operator":
                 return redirect("operator_dashboard")
             else:
-                return redirect("login")  # Default fallback
-
-        else:
+                return redirect("login")
+                
+        except CustomUser.DoesNotExist:
             return render(
-                request, "checksheet/login.html", {"error": "Invalid credentials"}
+                request,
+                "checksheet/verify_otp.html",
+                {"error": "User not found. Please login again.", "redirect_to_login": True}
             )
-    return render(request, "checksheet/login.html")
-
+        except Exception as e:
+            print(f"Error during OTP verification: {str(e)}")
+            return render(
+                request,
+                "checksheet/verify_otp.html",
+                {"error": "An error occurred. Please try again."}
+            )
+    
+    # Check if user session exists when loading the page
+    user_id = request.session.get('otp_user_id')
+    if not user_id:
+        return redirect('login')
+    
+    return render(request, "checksheet/verify_otp.html")
 
 def logout_view(request):
     logout(request)
     return redirect("login")
-
-
 # ----------------------------------------- bashboard function  --------------------------------#
 
 
@@ -299,13 +408,17 @@ def broadcast_production_update():
 @login_required
 def home(request):
     user = request.user
-    today = now()
+    today = timezone.now()  # Use timezone.now() instead of now()
     today_start = today.replace(hour=0, minute=0, second=0, microsecond=0)
-    start_of_week = today - timedelta(days=today.weekday())
+    start_of_week = today - timezone.timedelta(days=today.weekday())
 
     # Get all unique lines from checksheets
     all_lines = CheckSheet.objects.values_list("line", flat=True).distinct()
     lines_list = list(all_lines)
+
+    # Fetch the latest production target
+    latest_target = ProductionTarget.objects.order_by('-updated_at').first()
+    target_value = latest_target.target_value if latest_target else 0  # Default to 0 if no target exists
 
     if user.role == "admin" or has_page_access(user, "home"):
         checksheets = CheckSheet.objects.all()
@@ -474,7 +587,8 @@ def home(request):
             "startersheet_pending_count": pending_count,
             "startersheet_acknowledged_count": approved_count,
             "lines_list": lines_list,
-            "today": today,  
+            "today": today,
+            "target_value": target_value,  # Add target value to context
         },
     )
 @login_required
@@ -735,6 +849,7 @@ def get_dashboard_stats(request):
     return JsonResponse(response_data)
 
 
+
 # ----------------------------------------- Create Checksheet--------------------------------#
 @login_required
 def create_checksheet(request):
@@ -829,115 +944,352 @@ def all_checksheets(request):
     return render(request, "checksheet/access_denied.html")
 
 
+def get_unique_copy_name(original_name):
+    base_name = f"{original_name} copy"
+    counter = 1
+    new_name = base_name
+    while CheckSheet.objects.filter(name=new_name).exists():
+        new_name = f"{base_name} {counter}"
+        counter += 1
+    return new_name
+
+@login_required
+def copy_checksheet(request, checksheet_id):
+    if request.user.role != "admin" and not has_page_access(request.user, "all_checksheets"):
+        return render(request, "checksheet/access_denied.html")
+
+    original_checksheet = get_object_or_404(CheckSheet, id=checksheet_id)
+
+    # Get a unique name for the copy
+    new_name = get_unique_copy_name(original_checksheet.name)
+
+    new_checksheet = CheckSheet.objects.create(
+        name=new_name,
+        line=original_checksheet.line,
+        created_by=request.user,
+        level_1_approver=original_checksheet.level_1_approver,
+        level_2_approver=original_checksheet.level_2_approver,
+        require_level_3_approval=original_checksheet.require_level_3_approval,
+    )
+
+    new_checksheet.assigned_users.set(original_checksheet.assigned_users.all())
+
+    for zone in original_checksheet.zones.all():
+        Zone.objects.create(
+            checksheet=new_checksheet,
+            name=zone.name,
+            input_type=zone.input_type,
+        )
+
+    for image in original_checksheet.images.all():
+        CheckSheetImage.objects.create(
+            checksheet=new_checksheet,
+            image=image.image,
+        )
+
+    messages.success(request, f'CheckSheet "{original_checksheet.name}" copied successfully as "{new_name}".', extra_tags='checksheet_creation')
+    return redirect('all_checksheets')
+import csv
+
+
+def get_unique_starter_copy_name(original_name):
+    base_name = f"{original_name} copy"
+    counter = 1
+    new_name = base_name
+    while StarterSheet.objects.filter(name=new_name).exists():
+        new_name = f"{base_name} {counter}"
+        counter += 1
+    return new_name
+@login_required
+def copy_startersheet(request, startersheet_id):
+    if request.user.role != "admin" and not has_page_access(request.user, "all_startersheet"):
+        return render(request, "startersheet/access_denied.html")
+
+    original_startersheet = get_object_or_404(StarterSheet, id=startersheet_id)
+
+    # Get a unique name for the copy
+    new_name = get_unique_starter_copy_name(original_startersheet.name)
+
+    new_startersheet = StarterSheet.objects.create(
+        name=new_name,
+        line=original_startersheet.line,
+        created_by=request.user,
+        level_1_approver=original_startersheet.level_1_approver,
+        level_2_approver=original_startersheet.level_2_approver,
+        require_level_3_approval=original_startersheet.require_level_3_approval,
+    )
+
+    new_startersheet.assigned_users.set(original_startersheet.assigned_users.all())
+
+    for zone in original_startersheet.zones.all():
+        StarterZone.objects.create(
+            startersheet=new_startersheet,
+            name=zone.name,
+            type=zone.type,
+            min_value=zone.min_value,
+            max_value=zone.max_value,
+            unit=zone.unit,
+            check_method=zone.check_method,
+            image=zone.image,
+            standard=zone.standard,
+        )
+
+    # Copy associated POCUpload PDFs
+    for poc in original_startersheet.assigned_pocs.all():
+        new_poc = POCUpload.objects.create(
+            pdf=poc.pdf,
+        )
+        new_poc.assigned_startersheets.add(new_startersheet)
+
+    messages.success(request, f'StarterSheet "{original_startersheet.name}" copied successfully as "{new_name}".', extra_tags='StarterSheet_creation')
+    return redirect('all_startersheet')
+
+@login_required
+def export_checksheets(request):
+    if request.method == 'POST':
+        import json
+        checksheet_ids = json.loads(request.POST.get('checksheet_ids', '[]'))
+        
+        # Fetch selected checksheets
+        checksheets = CheckSheet.objects.filter(id__in=checksheet_ids).prefetch_related(
+            'zones', 'assigned_users', 'level_1_approver', 'level_2_approver'
+        )
+
+        # Create the CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="checksheets_export.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            'ID', 'Name', 'Zones', 'Line', 'Assigned Users', 
+            'Level 1 Approver', 'Level 2 Approver', 'Level 3 Approval Required'
+        ])
+
+        for checksheet in checksheets:
+            zones = ', '.join([zone.name for zone in checksheet.zones.all()])
+            users = ', '.join([user.username for user in checksheet.assigned_users.all()])
+            level_1 = checksheet.level_1_approver.username if checksheet.level_1_approver else 'Not assigned'
+            level_2 = checksheet.level_2_approver.username if checksheet.level_2_approver else 'Not assigned'
+            level_3 = 'Yes' if checksheet.require_level_3_approval else 'No'
+
+            writer.writerow([
+                checksheet.id,
+                checksheet.name,
+                zones,
+                checksheet.line,
+                users,
+                level_1,
+                level_2,
+                level_3
+            ])
+
+        return response
+
+    return HttpResponse(status=400)
+
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+import csv
+import json
+  # Adjust the import based on your models' location
+
+@login_required
+def export_startersheets(request):
+    if request.method == 'POST':
+        startersheet_ids = json.loads(request.POST.get('startersheet_ids', '[]'))
+        
+        # Fetch selected startersheets
+        startersheets = StarterSheet.objects.filter(id__in=startersheet_ids).prefetch_related(
+            'zones', 'assigned_users', 'assigned_pocs', 'level_1_approver', 'level_2_approver'
+        )
+
+        # Create the CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="startersheets_export.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            'ID', 'Name', 'Parameters', 'Line', 'Assigned Users', 
+            'Assigned OPS', 'Level 1 Approver', 'Level 2 Approver', 'Level 3 Approval Required'
+        ])
+
+        for startersheet in startersheets:
+            zones = ', '.join([zone.name for zone in startersheet.zones.all()])
+            users = ', '.join([user.username for user in startersheet.assigned_users.all()])
+            pocs = ', '.join([poc.pdf.name[9:] for poc in startersheet.assigned_pocs.all()])  # Remove 'media/poc/' prefix
+            level_1 = startersheet.level_1_approver.username if startersheet.level_1_approver else 'Not assigned'
+            level_2 = startersheet.level_2_approver.username if startersheet.level_2_approver else 'Not assigned'
+            level_3 = 'Yes' if startersheet.require_level_3_approval else 'No'
+
+            writer.writerow([
+                startersheet.id,
+                startersheet.name,
+                zones,
+                startersheet.line,
+                users,
+                pocs,
+                level_1,
+                level_2,
+                level_3
+            ])
+
+        return response
+
+    return HttpResponse(status=400)
 # ----------------------------------------- Update CheckSheet--------------------------------#
 
 
 @login_required
 def update_checksheet(request, checksheet_id):
-    if request.user.role == "admin" or has_page_access(request.user, "all_checksheets"):
-        checksheet = get_object_or_404(CheckSheet, id=checksheet_id)
-        zones = checksheet.zones.all()
+    if not (request.user.role == "admin" or has_page_access(request.user, "all_checksheets")):
+        return render(request, "checksheet/access_denied.html")
 
-        # Fetch existing images and fill empty slots with None
-        images = list(checksheet.images.all()[:4])
-        while len(images) < 4:
-            images.append(None)  # Fill empty slots with None
+    checksheet = get_object_or_404(CheckSheet, id=checksheet_id)
+    zones = checksheet.zones.all()
+    images = list(checksheet.images.all()[:4])
+    all_users = CustomUser.objects.all()  # Fetch all users for dropdowns
+    while len(images) < 4:
+        images.append(None)  # Fill empty slots with None
 
-        if request.method == "POST":
-            # Update checksheet name
-            checksheet_name = request.POST.get("checksheet_name")
-            line = request.POST.get("line")
-            if checksheet_name:
-                checksheet.name = checksheet_name
-            if line:
-                checksheet.line = line
-                checksheet.save()
+    if request.method == "POST":
+        # Handle zone deletion
+        delete_zone_id = request.POST.get("delete_zone")
+        if delete_zone_id:
+            try:
+                zone = zones.get(id=delete_zone_id)
+                zone.delete()
+                messages.success(request, "Zone deleted successfully!", extra_tags="zone_delete")
+                return redirect("update_checksheet", checksheet_id=checksheet_id)
+            except Zone.DoesNotExist:
+                messages.error(request, "Zone not found.", extra_tags="zone_delete_error")
+                return redirect("update_checksheet", checksheet_id=checksheet_id)
 
-            # Update existing images or save new ones in empty slots
-            for i in range(4):
-                new_image = request.FILES.get(f"checksheet_image_{i+1}")
-                if new_image:
-                    if images[i] is None:
-                        # Create a new image if slot is empty
-                        CheckSheetImage.objects.create(
-                            checksheet=checksheet, image=new_image
-                        )
-                    else:
-                        # Update existing image
-                        images[i].image = new_image
-                        images[i].save()
+        # Update checksheet name and line
+        checksheet_name = request.POST.get("checksheet_name")
+        line = request.POST.get("line")
+        if checksheet_name:
+            checksheet.name = checksheet_name
+        if line:
+            checksheet.line = line
 
-            # Update zones
-            for zone in zones:
-                zone_name = request.POST.get(f"zone_{zone.id}")
-                zone_type = request.POST.get(f"zone_type_{zone.id}")
+        # Update assigned users
+        user_ids = request.POST.getlist("user_ids")
+        users = CustomUser.objects.filter(id__in=user_ids)
+        checksheet.assigned_users.set(users)
 
-                if zone_name:
-                    zone.name = zone_name
-                if zone_type:
-                    zone.input_type = zone_type
+        # Update Level 1 approver
+        level_1_approver_id = request.POST.get("level_1_approver")
+        checksheet.level_1_approver = CustomUser.objects.filter(id=level_1_approver_id).first() if level_1_approver_id else None
+
+        # Update Level 2 approver
+        level_2_approver_id = request.POST.get("level_2_approver")
+        checksheet.level_2_approver = CustomUser.objects.filter(id=level_2_approver_id).first() if level_2_approver_id else None
+
+        # Update Level 3 approval
+        require_level_3 = request.POST.get("require_level_3") == "True"
+        checksheet.require_level_3_approval = require_level_3
+
+        checksheet.save()
+
+        # Update existing images or save new ones
+        for i in range(4):
+            new_image = request.FILES.get(f"checksheet_image_{i+1}")
+            if new_image:
+                if images[i] is None:
+                    CheckSheetImage.objects.create(checksheet=checksheet, image=new_image)
+                else:
+                    images[i].image = new_image
+                    images[i].save()
+
+        # Update existing zones
+        for zone in zones:
+            zone_name = request.POST.get(f"zone_{zone.id}")
+            zone_type = request.POST.get(f"zone_type_{zone.id}")
+            if zone_name and zone_type:
+                zone.name = zone_name
+                zone.input_type = zone_type
                 zone.save()
+            else:
+                messages.warning(
+                    request,
+                    f"Zone {zone.name} was not updated due to missing name or type.",
+                    extra_tags="zone_update_warning",
+                )
 
-            messages.success(
-                request,
-                "Checksheet updated successfully!",
-                extra_tags="checksheet_update",
-            )
-            return redirect("all_checksheets")
+        # Create new zones
+        new_zone_names = request.POST.getlist("new_zone_names[]")
+        new_zone_types = request.POST.getlist("new_zone_types[]")
+        for name, input_type in zip(new_zone_names, new_zone_types):
+            if name and input_type:
+                Zone.objects.create(
+                    checksheet=checksheet,
+                    name=name,
+                    input_type=input_type
+                )
+            else:
+                messages.warning(
+                    request,
+                    "A new zone was not created due to missing name or type.",
+                    extra_tags="zone_create_warning",
+                )
 
-        return render(
-            request,
-            "checksheet/update_checksheet.html",
-            {
-                "checksheet": checksheet,
-                "zones": zones,
-                "images": images,  # Now has 4 slots (filled or empty)
-            },
-        )
+        messages.success(request, "Checksheet updated successfully!", extra_tags="checksheet_update")
+        return redirect("all_checksheets")
 
-    return render(request, "checksheet/access_denied.html")
+    return render(
+        request,
+        "checksheet/update_checksheet.html",
+        {
+            "checksheet": checksheet,
+            "zones": zones,
+            "images": images,
+            "all_users": all_users,
+        },
+    )
+
+    
 
 
 # ----------------------------------------- Add Zone in CheckSheet--------------------------------#
-@login_required
-def add_zone(request, checksheet_id):
-    if request.user.role == "admin" or has_page_access(request.user, "all_checksheets"):
-        if request.user.role == "admin" or has_page_access(
-            request.user, "all_checksheets"
-        ):
-            # Admin sees all CheckSheets and StarterSheets
-            checksheets = CheckSheet.objects.all()
-            Starter = StarterSheet.objects.all()
-        else:
-            # Operators see only assigned CheckSheets and StarterSheets
-            checksheets = CheckSheet.objects.filter(assigned_users=request.user)
-            Starter = StarterSheet.objects.filter(assigned_users=request.user)
-        checksheet = get_object_or_404(CheckSheet, id=checksheet_id)
+# @login_required
+# def add_zone(request, checksheet_id):
+#     if request.user.role == "admin" or has_page_access(request.user, "all_checksheets"):
+#         if request.user.role == "admin" or has_page_access(
+#             request.user, "all_checksheets"
+#         ):
+#             # Admin sees all CheckSheets and StarterSheets
+#             checksheets = CheckSheet.objects.all()
+#             Starter = StarterSheet.objects.all()
+#         else:
+#             # Operators see only assigned CheckSheets and StarterSheets
+#             checksheets = CheckSheet.objects.filter(assigned_users=request.user)
+#             Starter = StarterSheet.objects.filter(assigned_users=request.user)
+#         checksheet = get_object_or_404(CheckSheet, id=checksheet_id)
 
-        if request.method == "POST":
-            zone_name = request.POST.get("zone_name")
-            zone_type = request.POST.get("zone_type")  # Get selected type
+#         if request.method == "POST":
+#             zone_name = request.POST.get("zone_name")
+#             zone_type = request.POST.get("zone_type")  # Get selected type
 
-            if zone_name and zone_type:
-                Zone.objects.create(
-                    checksheet=checksheet, name=zone_name, input_type=zone_type
-                )
-                messages.success(
-                    request,
-                    "Zone Added successfully!",
-                    extra_tags="zone_add",
-                )
-                # Ensure your Zone model has an `input_type` field
+#             if zone_name and zone_type:
+#                 Zone.objects.create(
+#                     checksheet=checksheet, name=zone_name, input_type=zone_type
+#                 )
+#                 messages.success(
+#                     request,
+#                     "Zone Added successfully!",
+#                     extra_tags="zone_add",
+#                 )
+#                 # Ensure your Zone model has an `input_type` field
 
-            return redirect("all_checksheets")
+#             return redirect("all_checksheets")
 
-        return render(
-            request,
-            "checksheet/add_zone.html",
-            {"checksheet": checksheet, "Starter": Starter, "checksheets": checksheets},
-        )
+#         return render(
+#             request,
+#             "checksheet/add_zone.html",
+#             {"checksheet": checksheet, "Starter": Starter, "checksheets": checksheets},
+#         )
 
-    return render(request, "checksheet/access_denied.html")
+#     return render(request, "checksheet/access_denied.html")
 
 
 # ----------------------------------------- Fill Checksheet--------------------------------#
@@ -958,6 +1310,7 @@ def fill_checksheet(request, checksheet_id=None):
         selected_checksheet = (
             get_object_or_404(CheckSheet, id=checksheet_id) if checksheet_id else None
         )
+        reasons = RejectReason.objects.all()
         if not selected_checksheet and checksheet_id:
             return HttpResponse("CheckSheet not found", status=404)
         images = selected_checksheet.images.all() if selected_checksheet else []
@@ -1052,7 +1405,8 @@ def fill_checksheet(request, checksheet_id=None):
                 return JsonResponse({"success": True})
 
             return redirect("fill_checksheet_detail", checksheet_id=checksheet_id)
-
+        for i in reasons:
+            print(i.reason)
         return render(
             request,
             "checksheet/fill_checksheet.html",
@@ -1066,13 +1420,13 @@ def fill_checksheet(request, checksheet_id=None):
                 "chart_labels": chart_labels,
                 "chart_values": chart_values,
                 "current_shift": current_shift,
+                "reasons":reasons,
             },
         )
     return render(request, "access_denied.html")
 
 
 # ----------------------------------------- Create StarterSheet--------------------------------#
-
 
 @login_required
 def create_startersheet(request):
@@ -1095,47 +1449,49 @@ def create_startersheet(request):
         if request.method == "POST":
             name = request.POST.get("name")
             line = request.POST.get("line")
-            if name:
+            user_ids = request.POST.getlist("user_ids")  # For assigned users
+            level_1_approver_id = request.POST.get("level_1_approver")
+            level_2_approver_id = request.POST.get("level_2_approver")
+            require_level_3 = request.POST.get("require_level_3") == "True"
 
+            if name:
+                # Create the StarterSheet
                 startersheet = StarterSheet.objects.create(
-                    name=name, line=line, created_by=request.user
+                    name=name,
+                    line=line,
+                    created_by=request.user,
+                    level_1_approver_id=level_1_approver_id if level_1_approver_id else None,
+                    level_2_approver_id=level_2_approver_id if level_2_approver_id else None,
+                    require_level_3_approval=require_level_3,
                 )
+
+                # Assign users
+                if user_ids:
+                    startersheet.assigned_users.set(user_ids)
+
+                # Handle zones
                 i = 0
                 while f"zone_{i}" in request.POST:
                     zone_name = request.POST.get(f"zone_{i}")
                     zone_type = request.POST.get(f"zone_type_{i}")
                     min_value = request.POST.get(f"zone_min_{i}")
                     max_value = request.POST.get(f"zone_max_{i}")
-
-                    # Get unit - either from dropdown or custom input
                     unit = request.POST.get(f"zone_unit_{i}")
                     custom_unit = request.POST.get(f"zone_custom_unit_{i}")
-
-                    # Use custom unit if provided, otherwise use the dropdown unit
                     final_unit = custom_unit if custom_unit else unit
-
-                    # Get check method
                     check_method = request.POST.get(f"zone_check_method_{i}")
-
-                    # Get checkbox label for checkbox type
                     checkbox_label = request.POST.get(f"zone_checkbox_label_{i}")
-
                     zone_image = request.FILES.get(f"zone_image_{i}")
                     checkbox_default = request.POST.get(f"zone_default_{i}")
 
                     if zone_name and zone_type:
-                        # Handle checkbox type specifically
                         if zone_type == "checkbox":
-                            # If checkbox is checked, set min and max to Yes/No
                             min_value = "Yes" if checkbox_default else "No"
                             max_value = "Yes" if checkbox_default else "No"
-                            # For checkbox type, we don't need unit
                             final_unit = None
                         else:
-                            # For non-checkbox types, use provided values or None
                             min_value = min_value if min_value else None
                             max_value = max_value if max_value else None
-                            # For non-checkbox types, we don't need checkbox_label
                             checkbox_label = None
 
                         StarterZone.objects.create(
@@ -1147,7 +1503,7 @@ def create_startersheet(request):
                             unit=final_unit,
                             check_method=check_method,
                             image=zone_image,
-                            standard=checkbox_label,  # Save the checkbox label
+                            standard=checkbox_label,
                         )
                     i += 1
                 messages.success(
@@ -1155,7 +1511,6 @@ def create_startersheet(request):
                     "StarterSheet created successfully!",
                     extra_tags="StarterSheet_creation",
                 )
-
                 return redirect("all_startersheet")
 
         return render(
@@ -1201,200 +1556,251 @@ def all_startersheet(request):
 
 # ----------------------------------------- Update StarterSheet-------------------------------#
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from .models import StarterSheet, StarterZone
 
 @login_required
 def update_startersheet(request, startersheet_id):
-    if request.user.role != "admin" and not has_page_access(
-        request.user, "all_startersheet"
-    ):
+    if request.user.role != "admin" and not has_page_access(request.user, "all_startersheet"):
         return render(request, "checksheet/access_denied.html")
 
     # Get the StarterSheet object
     startersheet = get_object_or_404(StarterSheet, id=startersheet_id)
     existing_zones = list(StarterZone.objects.filter(startersheet=startersheet))
+    all_users = get_user_model().objects.all()  # Fetch all users for dropdowns
 
     if request.method == "POST":
-        # Update startersheet name
+        # Handle zone deletion
+        delete_zone_id = request.POST.get("delete_zone")
+        if delete_zone_id:
+            try:
+                zone = StarterZone.objects.get(id=delete_zone_id, startersheet=startersheet)
+                zone.delete()
+                messages.success(request, "Parameter deleted successfully!", extra_tags="zone_delete")
+                return redirect("update_startersheet", startersheet_id=startersheet_id)
+            except StarterZone.DoesNotExist:
+                messages.error(request, "Parameter not found.", extra_tags="zone_delete_error")
+                return redirect("update_startersheet", startersheet_id=startersheet_id)
+
+        # Update startersheet details
         startersheet.name = request.POST.get("name", startersheet.name)
         startersheet.line = request.POST.get("line", startersheet.line)
+
+        # Handle assigned users
+        user_ids = request.POST.getlist("user_ids")  # Get list of selected user IDs
+        if user_ids:
+            startersheet.assigned_users.set(user_ids)  # Update many-to-many relationship
+        else:
+            startersheet.assigned_users.clear()  # Clear if no users selected
+
+        # Handle Level 1 Approver
+        level_1_approver_id = request.POST.get("level_1_approver")
+        startersheet.level_1_approver = get_user_model().objects.get(id=level_1_approver_id) if level_1_approver_id else None
+
+        # Handle Level 2 Approver
+        level_2_approver_id = request.POST.get("level_2_approver")
+        startersheet.level_2_approver = get_user_model().objects.get(id=level_2_approver_id) if level_2_approver_id else None
+
+        # Handle Level 3 Approval
+        require_level_3 = request.POST.get("require_level_3") == "True"
+        startersheet.require_level_3_approval = require_level_3
+
         startersheet.save()
 
         updated_zone_ids = set()
+        new_zones = []
 
+        # Process existing zones
         for i, zone in enumerate(existing_zones):
-            zone_name = request.POST.get(f"zone_{i}", zone.name)
+            zone_name = request.POST.get(f"zone_{i}")
+            if zone_name is None:  # Zone was removed
+                continue
             zone_type = request.POST.get(f"zone_type_{i}", zone.type)
             checkbox_label = request.POST.get(f"zone_checkbox_label_{i}")
             zone_unit = request.POST.get(f"zone_unit_{i}", "")
             zone_custom_unit = request.POST.get(f"zone_custom_unit_{i}", "")
-
-            # Determine which unit to use (custom unit takes precedence if both are provided)
             unit = zone_custom_unit if zone_custom_unit else zone_unit
+            check_method = request.POST.get(f"zone_check_method_{i}", "")
+            zone_image = request.FILES.get(f"zone_image_{i}")
 
-            # Handle values based on zone type
             if zone_type == "checkbox":
-                # Get checkbox state (on if checked, None if unchecked)
                 checkbox_value = request.POST.get(f"zone_default_{i}")
-                # Set min and max to "Yes" if checked, "No" if unchecked
                 min_value = "Yes" if checkbox_value == "on" else "No"
                 max_value = "Yes" if checkbox_value == "on" else "No"
                 zone.unit = None
-                # Set checkbox label
                 zone.standard = checkbox_label
             else:
-                # Handle numeric inputs for non-checkbox types
                 min_value = request.POST.get(f"zone_min_{i}")
                 max_value = request.POST.get(f"zone_max_{i}")
-                min_value = (
-                    int(min_value)
-                    if min_value and min_value.isdigit()
-                    else zone.min_value
-                )
-                max_value = (
-                    int(max_value)
-                    if max_value and max_value.isdigit()
-                    else zone.max_value
-                )
+                min_value = int(min_value) if min_value and min_value.isdigit() else zone.min_value
+                max_value = int(max_value) if max_value and max_value.isdigit() else zone.max_value
                 zone.unit = unit
-                zone.standard = None  #
+                zone.standard = None
 
-            # Get unit and custom unit values
-
-            # Get check method
-            check_method = request.POST.get(f"zone_check_method_{i}", "")
-
-            # Get image if uploaded
-            zone_image = request.FILES.get(f"zone_image_{i}")
-
-            # Update zone fields
             zone.name = zone_name
             zone.type = zone_type
             zone.min_value = min_value
             zone.max_value = max_value
             zone.check_method = check_method
-
             if zone_image:
-                zone.image = zone_image  # Update image only if a new one is uploaded
-
+                zone.image = zone_image
             zone.save()
             updated_zone_ids.add(zone.id)
 
-        # Delete zones that were removed in the form
-        StarterZone.objects.filter(startersheet=startersheet).exclude(
-            id__in=updated_zone_ids
-        ).delete()
-        messages.success(
-            request,
-            "StarterSheet updated successfully!",
-            extra_tags="StarterSheet_update",
-        )
-        return redirect("all_startersheet")
+        # Process new zones
+        i = 1
+        while f"zone_new_{i}" in request.POST:
+            zone_name = request.POST.get(f"zone_new_{i}")
+            zone_type = request.POST.get(f"zone_type_new_{i}")
+            checkbox_label = request.POST.get(f"zone_checkbox_label_new_{i}")
+            zone_unit = request.POST.get(f"zone_unit_new_{i}", "")
+            zone_custom_unit = request.POST.get(f"zone_custom_unit_new_{i}", "")
+            unit = zone_custom_unit if zone_custom_unit else zone_unit
+            check_method = request.POST.get(f"zone_check_method_new_{i}", "")
+            zone_image = request.FILES.get(f"zone_image_new_{i}")
 
-    return render(
-        request,
-        "checksheet/update_startersheet.html",
-        {
-            "startersheet": startersheet,
-            "zones": existing_zones,
-        },
-    )
+            if zone_type == "checkbox":
+                checkbox_value = request.POST.get(f"zone_default_new_{i}")
+                min_value = "Yes" if checkbox_value == "on" else "No"
+                max_value = "Yes" if checkbox_value == "on" else "No"
+                unit = None
+                standard = checkbox_label
+            else:
+                min_value = request.POST.get(f"zone_min_new_{i}")
+                max_value = request.POST.get(f"zone_max_new_{i}")
+                min_value = int(min_value) if min_value and min_value.isdigit() else None
+                max_value = int(max_value) if max_value and max_value.isdigit() else None
+                standard = None
 
-
-# ----------------------------------------- Add StarterSheet Parameter--------------------------------#
-
-
-@login_required
-def Add_start_zone(request, startersheet_id):
-    if request.user.role != "admin" and not has_page_access(
-        request.user, "all_startersheet"
-    ):
-        return render(request, "checksheet/access_denied.html")
-
-    checksheets = (
-        CheckSheet.objects.all()
-        if request.user.role == "admin"
-        else CheckSheet.objects.filter(assigned_users=request.user)
-    )
-    Starter = (
-        StarterSheet.objects.all()
-        if request.user.role == "admin"
-        else StarterSheet.objects.filter(assigned_users=request.user)
-    )
-
-    startersheet = get_object_or_404(StarterSheet, id=startersheet_id)
-
-    if request.method == "POST":
-        # Get the new zone details from the form
-        zone_name = request.POST.get("zone_name")
-        zone_type = request.POST.get("zone_type")
-        zone_image = request.FILES.get("zone_image")
-
-        # Get the new field values
-        zone_unit = request.POST.get("zone_unit")
-        zone_custom_unit = request.POST.get("zone_custom_unit")
-        zone_check_method = request.POST.get("zone_check_method")
-        checkbox_label = request.POST.get("checkbox_text")
-
-        # Determine which unit to use (standard or custom)
-        unit = zone_custom_unit if zone_custom_unit else zone_unit
-
-        # Handle values based on zone type
-        if zone_type == "checkbox":
-            # Get checkbox state (on if checked, None if unchecked)
-            checkbox_value = request.POST.get("zone_default")
-            # Set min and max to "Yes" if checked, "No" if unchecked
-            min_value = "Yes" if checkbox_value == "on" else "No"
-            max_value = "Yes" if checkbox_value == "on" else "No"
-            unit = None
-            standard = checkbox_label
-        else:
-            # Handle numeric inputs for non-checkbox types
-            min_value = request.POST.get("zone_min")
-            max_value = request.POST.get("zone_max")
-            min_value = int(min_value) if min_value and min_value.isdigit() else None
-            max_value = int(max_value) if max_value and max_value.isdigit() else None
-            unit = unit
-            standard = None
-
-        if zone_name and zone_type:
-            # Create a new StarterZone object and associate it with the startersheet
-            StarterZone.objects.create(
+            # Create new zone
+            new_zone = StarterZone.objects.create(
                 startersheet=startersheet,
                 name=zone_name,
                 type=zone_type,
-                image=zone_image,
                 min_value=min_value,
                 max_value=max_value,
-                unit=unit,  # Add the unit field
-                check_method=zone_check_method,
-                standard=standard,  # Add the check method field
+                unit=unit,
+                standard=standard,
+                check_method=check_method,
+                image=zone_image
             )
-            messages.success(
-                request,
-                "Zone Added sucessfully!",
-                extra_tags="StarterSheet_zone",
-            )
-            return redirect("all_startersheet")
+            new_zones.append(new_zone)
+            i += 1
 
-    return render(
-        request,
-        "checksheet/add_startzone.html",
-        {
-            "startersheet": startersheet,
-            "checksheets": checksheets,
-            "Starter": Starter,
-        },
-    )
+        messages.success(request, "StarterSheet updated successfully!", extra_tags="StarterSheet_zone")
+        return redirect("all_startersheet")
+
+    # GET request - render the form
+    context = {
+        'startersheet': startersheet,
+        'zones': existing_zones,
+        'all_users': all_users,  # Add all_users to context
+        'success': any(msg.tags == "StarterSheet_zone" for msg in messages.get_messages(request)),
+    }
+    return render(request, 'checksheet/update_startersheet.html', context)
+# ----------------------------------------- Add StarterSheet Parameter--------------------------------#
+
+
+# @login_required
+# def Add_start_zone(request, startersheet_id):
+#     if request.user.role != "admin" and not has_page_access(
+#         request.user, "all_startersheet"
+#     ):
+#         return render(request, "checksheet/access_denied.html")
+
+#     checksheets = (
+#         CheckSheet.objects.all()
+#         if request.user.role == "admin"
+#         else CheckSheet.objects.filter(assigned_users=request.user)
+#     )
+#     Starter = (
+#         StarterSheet.objects.all()
+#         if request.user.role == "admin"
+#         else StarterSheet.objects.filter(assigned_users=request.user)
+#     )
+
+#     startersheet = get_object_or_404(StarterSheet, id=startersheet_id)
+
+#     if request.method == "POST":
+#         # Get the new zone details from the form
+#         zone_name = request.POST.get("zone_name")
+#         zone_type = request.POST.get("zone_type")
+#         zone_image = request.FILES.get("zone_image")
+
+#         # Get the new field values
+#         zone_unit = request.POST.get("zone_unit")
+#         zone_custom_unit = request.POST.get("zone_custom_unit")
+#         zone_check_method = request.POST.get("zone_check_method")
+#         checkbox_label = request.POST.get("checkbox_text")
+
+#         # Determine which unit to use (standard or custom)
+#         unit = zone_custom_unit if zone_custom_unit else zone_unit
+
+#         # Handle values based on zone type
+#         if zone_type == "checkbox":
+#             # Get checkbox state (on if checked, None if unchecked)
+#             checkbox_value = request.POST.get("zone_default")
+#             # Set min and max to "Yes" if checked, "No" if unchecked
+#             min_value = "Yes" if checkbox_value == "on" else "No"
+#             max_value = "Yes" if checkbox_value == "on" else "No"
+#             unit = None
+#             standard = checkbox_label
+#         else:
+#             # Handle numeric inputs for non-checkbox types
+#             min_value = request.POST.get("zone_min")
+#             max_value = request.POST.get("zone_max")
+#             min_value = int(min_value) if min_value and min_value.isdigit() else None
+#             max_value = int(max_value) if max_value and max_value.isdigit() else None
+#             unit = unit
+#             standard = None
+
+#         if zone_name and zone_type:
+#             # Create a new StarterZone object and associate it with the startersheet
+#             StarterZone.objects.create(
+#                 startersheet=startersheet,
+#                 name=zone_name,
+#                 type=zone_type,
+#                 image=zone_image,
+#                 min_value=min_value,
+#                 max_value=max_value,
+#                 unit=unit,  # Add the unit field
+#                 check_method=zone_check_method,
+#                 standard=standard,  # Add the check method field
+#             )
+#             messages.success(
+#                 request,
+#                 "Zone Added sucessfully!",
+#                 extra_tags="StarterSheet_zone",
+#             )
+#             return redirect("all_startersheet")
+
+#     return render(
+#         request,
+#         "checksheet/add_startzone.html",
+#         {
+#             "startersheet": startersheet,
+#             "checksheets": checksheets,
+#             "Starter": Starter,
+#         },
+#     )
 
 
 # -----------------------------------------Fill StarterSheet--------------------------------#
 
 
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.utils import timezone
+from .models import CheckSheet, StarterSheet, FilledStarterSheet, Shifttime
+import json
+import pytz
+
 @login_required
 def fill_starter_sheet(request, startersheet_id=None):
-    if request.user.role in ["operator","admin"] or has_page_access(
-        request.user, "fill_starter_sheet"
-    ):
+    if request.user.role in ["operator", "admin"] or has_page_access(request.user, "fill_starter_sheet"):
         if request.user.role == "admin":
             checksheets = CheckSheet.objects.all()
             Starter = StarterSheet.objects.all()
@@ -1402,27 +1808,17 @@ def fill_starter_sheet(request, startersheet_id=None):
             checksheets = CheckSheet.objects.filter(assigned_users=request.user)
             Starter = StarterSheet.objects.filter(assigned_users=request.user)
 
-        selected_startersheet = (
-            get_object_or_404(StarterSheet, id=startersheet_id)
-            if startersheet_id
-            else None
-        )
+        selected_startersheet = get_object_or_404(StarterSheet, id=startersheet_id) if startersheet_id else None
         zones = selected_startersheet.zones.all() if selected_startersheet else []
-        today = now().date()
+        today = timezone.now().date()
 
-        # Get current time and determine current shift
         IST = pytz.timezone("Asia/Kolkata")
-        current_time = now().astimezone(IST).time()
+        current_time = timezone.now().astimezone(IST).time()
         try:
-            shift_times = (
-                Shifttime.objects.first()
-            )  # Get the first record from Shifttime model
-            current_shift = "None"  # Default value
-
-            # Check if current time is in shift A
+            shift_times = Shifttime.objects.first()
+            current_shift = "None"
             if shift_times.shift_A_start <= current_time <= shift_times.shift_A_end:
                 current_shift = "A"
-            # Check if current time is in shift B
             elif shift_times.shift_B_start <= current_time <= shift_times.shift_B_end:
                 current_shift = "B"
         except Shifttime.DoesNotExist:
@@ -1432,13 +1828,10 @@ def fill_starter_sheet(request, startersheet_id=None):
             try:
                 data = json.loads(request.body)
                 shift = data.get("shift")
-                user = request.user  # Get the logged-in user
-                line = data.get(
-                    "line",
-                    selected_startersheet.line if selected_startersheet else None,
-                )
+                user = request.user
+                line = data.get("line", selected_startersheet.line if selected_startersheet else None)
+                out_of_range_reason = data.get("out_of_range_reason")
 
-                # Check if data already exists for today, same user, shift, line, and startersheet
                 existing_entry = FilledStarterSheet.objects.filter(
                     startersheet=selected_startersheet,
                     filled_by=user,
@@ -1449,44 +1842,37 @@ def fill_starter_sheet(request, startersheet_id=None):
 
                 if existing_entry:
                     return JsonResponse(
-                        {
-                            "error": "Data already filled for this user, shift, line, and sheet today"
-                        },
+                        {"error": "Data already filled for this user, shift, line, and sheet today"},
                         status=400,
                     )
 
-                # Collect all zone statuses in a dictionary with zone names
                 status_data = {}
                 for zone_data in data["zones"]:
                     zone_id = zone_data["id"]
                     user_input = zone_data["value"]
-
                     zone = next((z for z in zones if str(z.id) == zone_id), None)
                     if not zone:
                         continue
 
-                    zone_name = zone.name  # Get zone name
-
+                    zone_name = zone.name
                     if zone.type == "checkbox":
                         status_data[zone_name] = "Yes" if user_input == "Yes" else "No"
                     elif zone.type == "int":
-                        status_data[zone_name] = (
-                            int(user_input) if user_input.isdigit() else 0
-                        )
+                        status_data[zone_name] = int(user_input) if user_input.isdigit() else 0
                     elif zone.type == "float":
                         try:
                             float(user_input)
-                            status_data[zone_name] = user_input  # Keep as string
+                            status_data[zone_name] = user_input
                         except ValueError:
                             status_data[zone_name] = "0.0"
 
-                # Save the filled data in a single JSON field
                 FilledStarterSheet.objects.create(
                     startersheet=selected_startersheet,
                     filled_by=user,
                     status_data=status_data,
                     shift=shift,
                     line=line,
+                    out_of_range_reason=out_of_range_reason
                 )
 
                 return JsonResponse({"message": "Data saved successfully"}, status=200)
@@ -1588,11 +1974,9 @@ def user_list(request):
 @user_passes_test(lambda u: u.is_superuser)
 def edit_user(request, user_id):
     if request.user.role == "admin":
-        # Admin sees all CheckSheets and StarterSheets
         checksheets = CheckSheet.objects.all()
         Starter = StarterSheet.objects.all()
     else:
-        # Operators see only assigned CheckSheets and StarterSheets
         checksheets = CheckSheet.objects.filter(assigned_users=request.user)
         Starter = StarterSheet.objects.filter(assigned_users=request.user)
 
@@ -1603,6 +1987,8 @@ def edit_user(request, user_id):
         user.email = request.POST.get("email")
         user.role = request.POST.get("role")
         user.phone_number = request.POST.get("phone_number")
+        # Update is_active field
+        user.is_active = request.POST.get("is_active") == "on"  # Checkbox returns "on" if checked
 
         # Handle password change if provided
         password = request.POST.get("password")
@@ -4901,7 +5287,7 @@ def is_time_near(current_time, target_time, minutes=3):
 @login_required
 def setting_view(request):
     """
-    Combined view for the tabbed interface that includes shift page and error editor
+    Combined view for the tabbed interface that includes shift page, error editor, rejection alert, target, and reject reason
     """
     # Get shift data
     shift_instance = Shifttime.objects.first()
@@ -4910,72 +5296,254 @@ def setting_view(request):
     checksheets = CheckSheet.objects.all()
 
     # Get RejectionAlertConfig, handle case where it doesn't exist
-    config = RejectionAlertConfig.objects.first()  # Returns None if no record exists
-    phone_numbers = (
-        config.get_phone_numbers() if config else []
-    )  # Default to empty list if no config
+    config = RejectionAlertConfig.objects.first()
+    # Get recipients from config, default to empty list if config doesn't exist
+    recipients = config.get_alert_recipients() if config else []
+    print("Recipients:", recipients)
+
+    # Get ProductionTarget, handle case where it doesn't exist
+    production_target = ProductionTarget.objects.first() or ProductionTarget(target_value=0)
+
+    # Get Reject Reasons
+    reject_reasons = RejectReason.objects.all()
 
     context = {
         "checksheets": checksheets,
         "config": config,
         "shift": shift_instance,
-        "phone_numbers": phone_numbers,
+        "recipients": recipients,  # Add recipients to context
+        "recipient_count": len(recipients) or 1,  # Add recipient_count for consistency
+        "production_target": production_target,
+        "reject_reasons": reject_reasons,
+        "users": CustomUser.objects.all(),
+        "reason_count": 0,
     }
 
     return render(request, "checksheet/settings.html", context)
+
+@login_required
+def save_reject_reasons(request):
+    """
+    API endpoint to save (create or update) reject reasons
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            reasons = data.get('reasons', [])
+            response_reasons = []
+
+            for reason_data in reasons:
+                reason_id = reason_data.get('id')
+                reason_text = reason_data.get('reason')
+
+                if not reason_text:
+                    continue
+
+                if reason_id:  # Update existing reason
+                    try:
+                        reason_obj = RejectReason.objects.get(id=reason_id)
+                        reason_obj.reason = reason_text
+                        reason_obj.save()
+                        response_reasons.append({'id': reason_obj.id, 'reason': reason_obj.reason})
+                    except RejectReason.DoesNotExist:
+                        continue
+                else:  # Create new reason
+                    reason_obj = RejectReason.objects.create(reason=reason_text)
+                    response_reasons.append({'id': reason_obj.id, 'reason': reason_obj.reason})
+
+            return JsonResponse({'reasons': response_reasons}, status=200)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+
+@login_required
+def reject_reason_config(request):
+    """
+    Handle the reject reason configuration form submission
+    """
+    if request.method == 'POST':
+        try:
+            # Handle new reasons
+            new_reasons = request.POST.getlist('reject_reason')
+            
+            # Handle existing reasons - Updated to match new form structure
+            existing_reasons = []
+            for key, value in request.POST.items():
+                if key.startswith('edit_reason_') and value.strip():
+                    reason_id = key.replace('edit_reason_', '')
+                    existing_reasons.append((reason_id, value.strip()))
+            
+            print(f"New reasons: {new_reasons}")
+            print(f"Existing reasons: {existing_reasons}")
+            
+            # Update existing reasons
+            for reason_id, new_reason_text in existing_reasons:
+                try:
+                    reason = RejectReason.objects.get(id=reason_id)
+                    reason.reason = new_reason_text
+                    reason.save()
+                    print(f"Updated reason {reason_id}: {new_reason_text}")
+                except RejectReason.DoesNotExist:
+                    messages.error(request, f"Reason with ID {reason_id} not found.")
+                    continue
+                except Exception as e:
+                    messages.error(request, f"Error updating reason {reason_id}: {str(e)}")
+                    continue
+
+            # Add new reasons only if they are provided
+            new_reasons_created = 0
+            for reason in new_reasons:
+                if reason.strip():
+                    try:
+                        RejectReason.objects.create(reason=reason.strip())
+                        new_reasons_created += 1
+                        print(f"Created new reason: {reason.strip()}")
+                    except Exception as e:
+                        messages.error(request, f"Error creating reason '{reason}': {str(e)}")
+                        continue
+
+            # Success message
+            success_parts = []
+            if existing_reasons:
+                success_parts.append(f"{len(existing_reasons)} existing reason(s) updated")
+            if new_reasons_created > 0:
+                success_parts.append(f"{new_reasons_created} new reason(s) created")
+            
+            if success_parts:
+                messages.success(request, f"Reject reasons updated successfully! {', '.join(success_parts)}")
+            else:
+                messages.info(request, "No changes were made.")
+                
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+            print(f"Error in reject_reason_config: {str(e)}")
+
+        return redirect('setting_view')
+
+    return redirect('setting_view')
+
+@login_required
+def delete_reject_reason(request, reason_id):
+    """
+    API endpoint to delete a reject reason
+    """
+    from django.http import JsonResponse
+    try:
+        reason = RejectReason.objects.get(id=reason_id)
+        reason.delete()
+        return JsonResponse({"status": "success", "message": "Reject reason deleted successfully"})
+    except RejectReason.DoesNotExist:
+        return JsonResponse({"status": "error", "message": "Reject reason not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+@login_required
+def production_target_view(request):
+    """
+    View to handle production target form submission
+    """
+    if request.method == "POST":
+        target_value = request.POST.get("production_target")
+        try:
+            target_value = int(target_value)
+            if target_value < 0:
+                messages.error(request, "Production target must be a positive number.")
+            else:
+                # Update or create the production target
+                production_target, created = ProductionTarget.objects.get_or_create(
+                    id=1, defaults={"target_value": target_value}
+                )
+                if not created:
+                    production_target.target_value = target_value
+                    production_target.save()
+                messages.success(request, "Production target saved successfully!")
+        except ValueError:
+            messages.error(request, "Please enter a valid number for the production target.")
+        
+        return redirect(setting_view)
+    
+    return redirect(setting_view)
+
 
 
 # --------------rejection alert functions------------------#
 def rejection_alert_config(request):
-    # Try to get existing config or create new one
     config, created = RejectionAlertConfig.objects.get_or_create(pk=1)
 
     if request.method == "POST":
         try:
-            # Get the rejection threshold from the form
             rejection_threshold = int(request.POST.get("rejection_threshold", 2))
+            recipient_count = int(request.POST.get("recipient_count", 1))
+            recipients = []
 
-            # Get phone numbers from the form (multiple inputs with same name)
-            phone_numbers = request.POST.getlist("phone_number")
+            for i in range(recipient_count):
+                user_id = request.POST.get(f"user_id_{i}")
+                phone_number = request.POST.get(f"phone_number_{i}")
+                percentage = request.POST.get(f"percentage_{i}")
+                if user_id and phone_number and percentage:
+                    # Preserve existing last_sms_sent if recipient exists, else set to None
+                    existing_recipients = config.get_alert_recipients()
+                    last_sms_sent = None
+                    for existing in existing_recipients:
+                        if existing.get("user_id") == user_id:
+                            last_sms_sent = existing.get("last_sms_sent")
+                            break
+                    recipients.append({
+                        "user_id": user_id,
+                        "phone_number": phone_number,
+                        "percentage": float(percentage),
+                        "last_sms_sent": last_sms_sent  # Preserve or initialize
+                    })
 
-            # Filter out empty strings
-            phone_numbers = [num for num in phone_numbers if num.strip()]
+            # Validate individual percentages
+            for recipient in recipients:
+                percentage = float(recipient["percentage"])
+                if percentage <= 0 or percentage > 100:
+                    messages.error(request, f"Percentage for user {recipient['user_id']} must be between 0 and 100.")
+                    return redirect("rejection_alert_config")
 
-            # Update the configuration
             config.rejection_threshold = rejection_threshold
-            config.set_phone_numbers(phone_numbers)
+            config.set_alert_recipients(recipients)
             config.save()
 
             messages.success(request, "Alert configuration saved successfully!")
         except Exception as e:
-            # Log the error for debugging
             print(f"Error saving configuration: {str(e)}")
             messages.error(request, f"Error saving configuration: {str(e)}")
 
-        # Redirect to the same page to avoid form resubmission
         return redirect("rejection_alert_config")
 
-    # For GET requests, prepare the template context
-    shift_instance = Shifttime.objects.first()
     context = {
         "config": config,
-        "shift": shift_instance,
-        "phone_numbers": config.get_phone_numbers(),
+        "users": CustomUser.objects.all(),
+        "recipients": config.get_alert_recipients(),
+        "recipient_count": len(config.get_alert_recipients()) or 1,
     }
-
     return render(request, "checksheet/settings.html", context)
 
+@login_required
+def delete_recipient(request, index):
+    """
+    API endpoint to delete a specific recipient from the RejectionAlertConfig by index.
+    """
+    if request.method != "DELETE":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
 
-def send_sms(phone_number, message_text):
-    account_sid = "ACd7994a397edfc86cb7966dd4178c6815"  # Your Twilio Account SID
-    auth_token = "f33dc07256b0fc4e3af2b7242c33417b"  # Your Auth Token
+    try:
+        config = RejectionAlertConfig.objects.first()
+        if not config:
+            return JsonResponse({"error": "No configuration found"}, status=404)
 
-    client = Client(account_sid, auth_token)
+        recipients = config.get_alert_recipients()
+        if index < 0 or index >= len(recipients):
+            return JsonResponse({"error": "Invalid recipient index"}, status=400)
 
-    message = client.messages.create(
-        body=message_text,
-        from_="+19515403815",  # Your Twilio number
-        to=phone_number,
-    )
+        # Remove the recipient at the specified index
+        recipients.pop(index)
+        config.set_alert_recipients(recipients)
+        config.save()
 
-    print(f"Message sent! SID: {message.sid}")
+        return JsonResponse({"message": "Recipient deleted successfully"}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": f"Error deleting recipient: {str(e)}"}, status=500)

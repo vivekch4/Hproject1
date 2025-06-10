@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to right, #1e293b, #334155);
+            padding: 1.5rem;
+        }
+        
+        .otp-container {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 3rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 450px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .otp-container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .otp-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        
+        .otp-icon {
+            background: linear-gradient(to right, #f59e0b, #f97316);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .otp-icon i {
+            color: white;
+            font-size: 24px;
+        }
+        
+        .otp-header h1 {
+            color: #ffffff;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .otp-header p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+        }
+        
+        .email-status {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .email-status i {
+            margin-right: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.75rem;
+            position: relative;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+        
+        .input-container {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 16px 12px 36px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            font-weight: 600;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+        }
+        
+        input:focus + .input-icon {
+            color: #3b82f6;
+        }
+        
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: normal;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            background: #10b981;
+            color: white;
+            margin-top: 1.5rem;
+        }
+        
+        button:hover:not(:disabled) {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+        
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            margin: auto;
+            border: 2px solid transparent;
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-left: 3px solid #ef4444;
+        }
+        
+        .error-message i {
+            margin-right: 0.5rem;
+        }
+        
+        .success-message {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-left: 3px solid #10b981;
+        }
+        
+        .success-message i {
+            margin-right: 0.5rem;
+        }
+        
+        .back-to-login {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        
+        .back-to-login a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .back-to-login a:hover {
+            color: #2563eb;
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 480px) {
+            .otp-container {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="otp-container">
+        <div class="otp-header">
+            <div class="otp-icon">
+                <i class="fas fa-key"></i>
+            </div>
+            <h1>Verify OTP</h1>
+            <p>We've sent a verification code to your email</p>
+        </div>
+        
+        <div class="email-status">
+            <i class="fas fa-paper-plane"></i>
+            OTP is being sent to your email address
+        </div>
+        
+        <form method="post" id="otpForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="otp_code">Enter 6-Digit OTP</label>
+                <div class="input-container">
+                    <input
+                        type="text"
+                        id="otp_code"
+                        name="otp_code"
+                        placeholder="000000"
+                        required
+                        maxlength="6"
+                        pattern="[0-9]{6}"
+                        autocomplete="one-time-code"
+                    >
+                    <span class="input-icon">
+                        <i class="fas fa-key"></i>
+                    </span>
+                </div>
+            </div>
+            
+            <button type="submit" id="verifyBtn">
+                Verify OTP
+            </button>
+        </form>
+        
+        {% if error %}
+        <div class="error-message">
+            <i class="fas fa-exclamation-circle"></i>
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <div id="messageContainer"></div>
+        
+        {% if redirect_to_login %}
+        <div class="back-to-login">
+            <a href="{% url 'login' %}">← Back to Login</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Auto-format OTP input
+        const otpInput = document.getElementById('otp_code');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const messageContainer = document.getElementById('messageContainer');
+        
+        // Format OTP input
+        otpInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 6) value = value.slice(0, 6);
+            e.target.value = value;
+            
+            // Auto-submit when 6 digits are entered
+            if (value.length === 6) {
+                setTimeout(() => {
+                    document.getElementById('otpForm').submit();
+                }, 100);
+            }
+        });
+        
+        // Form submission loading state
+        document.getElementById('otpForm').addEventListener('submit', function() {
+            verifyBtn.classList.add('loading');
+            verifyBtn.disabled = true;
+        });
+        
+        // Focus on OTP input when page loads
+        window.addEventListener('load', function() {
+            otpInput.focus();
+        });
+        
+        // Handle paste events for OTP
+        otpInput.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            const otpValue = paste.replace(/\D/g, '').slice(0, 6);
+            otpInput.value = otpValue;
+            
+            if (otpValue.length === 6) {
+                setTimeout(() => {
+                    document.getElementById('otpForm').submit();
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

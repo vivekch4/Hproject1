@@ -10,7 +10,7 @@ urlpatterns = [
     path("fill/<int:checksheet_id>/", fill_checksheet, name="fill_checksheet_detail"),
     path("all-checksheets/", all_checksheets, name="all_checksheets"),
     path("update/<int:checksheet_id>/", update_checksheet, name="update_checksheet"),
-    path("add-zone/<int:checksheet_id>/", add_zone, name="add_zone"),
+    # path("add-zone/<int:checksheet_id>/", add_zone, name="add_zone"),
     path("", login_view, name="login"),
     path("logout/", logout_view, name="logout"),
     path("create-user/", create_user, name="create_user"),
@@ -35,15 +35,15 @@ urlpatterns = [
         fill_starter_sheet,
         name="fill_starter_sheet",
     ),
+    path('checksheet/<int:checksheet_id>/copy/', copy_checksheet, name='copy_checksheet'),
     path("all_startersheet/", all_startersheet, name="all_startersheet"),
     path(
         "update_startersheet/<int:startersheet_id>/",
         update_startersheet,
         name="update_startersheet",
     ),
-    path(
-        "Add_start_zone/<int:startersheet_id>/", Add_start_zone, name="Add_start_zone"
-    ),
+
+    path('export-checksheets/', export_checksheets, name='export_checksheets'),
     path("acknowledgment/", acknowledgment_list, name="acknowledgment_list"),
     path(
         "view-filled/<int:startersheet_id>/<int:user_id>/<str:shift>/<int:id>/",
@@ -140,4 +140,16 @@ urlpatterns = [
     path("get-shift-data/", get_shift_data, name="get-shift-data"),
     path("verify-shift-change/", verify_shift_change, name="verify-shift-change"),
       path('get_dashboard_stats/', get_dashboard_stats, name='get_dashboard_stats'),
+      path('export-startersheets/', export_startersheets, name='export_startersheets'),
+       path('startersheet/<int:startersheet_id>/copy/', copy_startersheet, name='copy_startersheet'),
+       path("production_target/", production_target_view, name="production_target"),
+    path('reject-reason-config/', reject_reason_config, name='reject_reason_config'),
+    path('api/delete-reject-reason/<int:reason_id>/', delete_reject_reason, name='delete_reject_reason'),
+    path('verify-otp/', verify_otp, name='verify_otp'),
+    path('api/delete-recipient/<int:index>/', delete_recipient, name='delete_recipient'),
+    
+
+path('api/save-reject-reasons/', save_reject_reasons, name='save_reject_reasons'),
 ]
+
+

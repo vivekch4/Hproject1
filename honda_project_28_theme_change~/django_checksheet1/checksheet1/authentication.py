@@ -7,6 +7,7 @@ class EmployeeIDBackend(ModelBackend):
         try:
             user = CustomUser.objects.get(employee_id=employee_id)
             if user.check_password(password):
+                user.backend = 'checksheet.auth_backend.EmployeeIDBackend'
                 return user
         except CustomUser.DoesNotExist:
             return None

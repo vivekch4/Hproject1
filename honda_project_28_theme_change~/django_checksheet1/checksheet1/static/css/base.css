@@ -232,8 +232,9 @@ body.white-mode .logout-btn {
 }
 
 .sidebar-toggle {
-    background: rgb(108 108 141 / 70%);
-    border: none;
+    background: var(--accent-color);
+    border: 1.5px solid var(--accent-color-solid);
+    
     color: var(--text-light);
     cursor: pointer;
     font-size: 1rem;
@@ -256,8 +257,8 @@ body.sidebar-collapsed .sidebar-toggle {
 }
 
 .sidebar-toggle:hover {
-    background: var(--accent-color);
-    border: 1.5px solid var(--accent-color-solid);
+    background: rgb(108 108 141 / 70%);
+    border: none;
 }
 body.white-mode .sidebar a{
     color:white;

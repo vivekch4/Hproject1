@@ -1,392 +1,1738 @@
 {% extends 'checksheet/base.html' %}
-{% load static %}
+{% block title %}Update Startersheet{% endblock %}
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+     /* Custom Dropdown Styling */
+    .custom-dropdown {
+        position: relative;
+        width: 100%;
+    }
+.form-section.parameter-inputs-section {
+    display: none;
+}
+    .form-section {
+    margin-bottom: 12px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.02);
+}
 
-<link rel="stylesheet" href="{% static 'css/update_startersheet.css' %}">
+    /* Disabled Input Styling */
+input:disabled,
+select:disabled,
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.custom-select-container:disabled .custom-select-toggle {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.custom-select-container:disabled .custom-select-dropdown {
+    pointer-events: none;
+}
+    
+    .dropdown-button {
+        
+        border: 1px solid rgb(161 161 161 / 82%);
+        border-radius: 6px;
+        color: #ecf0f1;
+        padding: 8px 12px;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        min-height: 36px;
+        box-sizing: border-box;
+    }
+    
+  
+    
+  
+    
+    .dropdown-arrow {
+        transition: transform 0.3s ease;
+        color: #bdc3c7;
+    }
+    
+    .dropdown-arrow.rotated {
+        transform: rotate(180deg);
+    }
+    
+    .dropdown-content {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        scrollbar-width:none;
+        background-color: rgba(255, 255, 255, 0.02);
+        border: 1px solid #2c3e50;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        max-height: 250px;
+        overflow-y: auto;
+        display: none;
+        margin-top: 2px;
+    }
+    
+    .dropdown-content.show {
+        display: block;
+    }
+    tr .para-table {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+    tbody#parameter_inputs tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.dropdown-content.above{
+    bottom:100%;
+    top:auto;
+}
+    .dropdown-search {
+        padding: 12px;
+        border-bottom: 1px solid #2c3e50;
+        position: sticky;
+        top: 0;
+        background: #081628f0;
+        z-index: 1001;
+    }
+    
+    .dropdown-search input {
+        width: 100%;
+        padding: 8px 12px;
+        background-color: #2c3e50;
+        border: 1px solid #34495e;
+        border-radius: 4px;
+        color: #ecf0f1;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+    
+    .dropdown-search input::placeholder {
+        color: #95a5a6;
+    }
+    
+    .dropdown-search input:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+    
+    .dropdown-options {
+        background: #081628f0;
+        padding: 8px 0;
+    }
+    
+    .dropdown-option {
+        padding: 10px 16px;
+        cursor: pointer;
+        color: #ecf0f1;
+        display: flex;
+        align-items: center;
+        transition: background-color 0.2s ease;
+    }
+    
+    .dropdown-option:hover {
+        background-color: #3498db;
+        color: white;
+    }
+    
+    .dropdown-option input[type="checkbox"],
+    .dropdown-option input[type="radio"] {
+        margin-right: 10px;
+        cursor: pointer;
+        transform: scale(1.2);
+    }
+    
+    .dropdown-option input[type="checkbox"] {
+        accent-color: #3498db;
+    }
+    
+    .dropdown-option input[type="radio"] {
+        accent-color: #3498db;
+    }
+    
+    .dropdown-option.no-results {
+        color: #95a5a6;
+        font-style: italic;
+        cursor: default;
+    }
+    
+    .dropdown-option.no-results:hover {
+        background-color: transparent;
+        color: #95a5a6;
+    }
+    
+    .dropdown-text {
+        color: #95a5a6;
+        font-size: 14px;
+    }
+    
+    .dropdown-text.has-selection {
+        color: #ecf0f1;
+    }
+    
+    .selection-badge {
+        background-color: #3498db;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        margin-left: 8px;
+        min-width: 20px;
+        text-align: center;
+    }
+
+    /* Page Layout */
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 16px;
+    }
+    
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.3rem 0;
+        margin-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .page-title {
+        color: var(--text-light);
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .back-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .back-button:hover {
+        background-color: #e2e8f0;
+        color: #334155;
+    }
+    
+    .form-container {
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+            background-color: rgba(0, 0, 0, 0.2);
+    }
+    
+    body.white-mode .form-container {
+        box-shadow: 0 4px 10px rgb(0 0 0 / 25%);
+    }
+    
+    .form-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    
+    .form-table th,
+    .form-table td {
+       
+        padding: 8px;
+        text-align: left;
+        vertical-align: top;
+    }
+    
+
+     
+    .form-table th {
+        
+        color: #ecf0f1;
+        font-weight: 500;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: var(--text-light);
+        font-size: 0.875rem;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: var(--text-light);
+        background-color: unset;
+        transition: all 0.2s;
+        box-sizing: border-box;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 1px var(--accent-color);
+    }
+    
+ 
+    .file-input {
+        display: none;
+    }
+    
+    .file-input-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px dashed rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.875rem;
+        color: var(--text-light);
+        box-sizing: border-box;
+    }
+    
+    .file-input-label:hover {
+        border-color: var(--accent-color-solid);
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .parameter-type-select {
+        padding: 7px 12px;
+        border: 1px solid rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        background-color: unset;
+        color: var(--text-light);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .parameter-type-select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+    
+    .submit-btn {
+        background-color: var(--accent-color);
+        color: var(--text-light);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .submit-btn:hover {
+        border: 1.5px solid var(--accent-color-solid);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 10px var(--accent-color);
+    }
+    
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal {
+        padding: 2rem;
+        background-color: #1e293b;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+        animation: fadeIn 0.3s ease forwards;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .modal-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .modal-icon {
+        color: #3b82f6;
+        font-size: 1.5rem;
+        margin-right: 0.75rem;
+    }
+    
+    .modal-title {
+        color: #ffffff;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .modal-content {
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .modal-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+    
+    .modal-button {
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        border: none;
+    }
+    
+    .modal-cancel {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .modal-cancel:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .modal-confirm {
+        background: linear-gradient(45deg, #3b82f6, #2563eb);
+        color: white;
+    }
+    
+    .modal-confirm:hover {
+        background: linear-gradient(45deg, #2563eb, #1d4ed8);
+    }
+    
+    .check-method-textarea {
+        width: 100%;
+        height:34px;
+        overflow:hidden;
+        padding: 8px 12px;
+        border: 1px solid rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: white;
+        background-color: unset;
+        transition: all 0.2s;
+        resize: vertical;
+    }
+    
+    .check-method-textarea:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+    
+    .custom-select-container {
+        position: relative;
+        width: 100%;
+    }
+    
+    .custom-select-toggle {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid rgb(161 161 161 / 82%);
+        border-radius: 8px;
+        background-color: unset;
+        color: var(--text-light);
+        cursor: pointer;
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.875rem;
+        box-sizing: border-box;
+        transition: all 0.2s;
+    }
+    
+    .custom-select-toggle:focus {
+        outline: none;
+        border-color: var(--accent-color-solid);
+        box-shadow: 0 0 0 1px var(--accent-color);
+    }
+    
+    .custom-select-toggle:after {
+        content: '\25BC';
+        font-size: 0.7em;
+    }
+    
+    .custom-select-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 200px;
+        overflow-y: auto;
+        background-color: #1e293b;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        z-index: 1000;
+        display: none;
+    }
+    
+    .custom-select-dropdown.show {
+        display: block;
+    }
+    
+    .custom-select-search {
+        width: 100%;
+        padding: 8px 12px;
+        border: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        box-sizing: border-box;
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        font-size: 0.875rem;
+    }
+    
+    .custom-select-search:focus {
+        outline: none;
+        border-bottom-color: #3b82f6;
+    }
+    .approval-radio{
+        display:flex;
+        gap:10px;
+    }
+    
+    .custom-select-options {
+        max-height: 150px;
+        overflow-y: auto;
+        scrollbar-width: none;
+    }
+    
+    .custom-select-option {
+        padding: 8px 12px;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.875rem;
+    }
+    
+    .custom-select-option:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .custom-select-option.selected {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .checkbox-label {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.875rem;
+        margin-left: 8px;
+    }
+    
+    .table-section-title {
+        font-weight: 500;
+        color: var(--text-light);
+        font-size: 1rem;
+        padding: 12px 0;
+        margin-bottom: 10px;
+        border-bottom: 1px solid rgb(161 161 161 / 82%);
+    }
+    
+    .parameter-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px;
+    }
+    
+    .delete-zone-btn {
+        background: none;
+        border: none;
+        color: #e3342f;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .delete-zone-btn:hover {
+        color: #cc1f1a;
+    }
+    
+    .zone-image-preview img {
+        max-width: 100px;
+        max-height: 100px;
+        margin-top: 8px;
+        border-radius: 4px;
+    }
+</style>
 {% endblock %}
-{% block title %}Update StarterSheet{% endblock %}
 {% block content %}
-
 <div class="page-container">
     <div class="header">
-        <h2 class="page-title">Update StarterSheet</h2>
-        <a href="javascript:history.back()" class="back-button">
-            <i class="fas fa-times"></i>
-        </a>
+        <h2 class="page-title">Update Startersheet</h2>
+        <div class="header-actions">
+            <button type="button" class="submit-btn" id="submit-btn">
+                <i class="fas fa-save"></i>
+                Save Changes
+            </button>
+            <button type="button" class="submit-btn" id="add-parameter-btn">
+                <i class="fas fa-plus"></i>
+                Add New Parameter
+            </button>
+            <a href="javascript:history.back()" class="back-button">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
     </div>
 
     <div class="form-container">
-        <form method="POST" enctype="multipart/form-data">
+        <form id="startersheet-form" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
-            <div class="form-layout">
-                <!-- Basic inputs now at the top -->
-                <div class="basic-inputs">
-                    <div class="form-group">
-                        <label class="form-label" for="startersheet_name">StarterSheet Name</label>
-                        <input type="text" id="startersheet_name" name="name" required
-                               class="form-input" value="{{ startersheet.name }}" placeholder="Enter startersheet name">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="line">Production Line</label>
-                    <select id="line" name="line" required class="form-input">
-                        <option value="line_1" {% if startershee.line == "line_1" %}selected{% endif %}>Line 1</option>
-                        <option value="line_2" {% if startershee.line == "line_2" %}selected{% endif %}>Line 2</option>
-                    </select>
-                </div>
-               
-                <!-- Zone inputs container now takes full width -->
-                <div class="zone-inputs-container">
-                    <div class="zone-inputs-title">Parameter Inputs</div>
-                    <div class="zone-inputs">
-                        {% for zone in zones %}
-                        <div class="zone-input-container">
-                            <div class="zone-number">{{ forloop.counter }}</div>
-                            <div class="zone-content">
-                                <div class="form-group">
-                                    <label class="form-label">Parameter Name</label>
-                                    <input type="text" name="zone_{{ forloop.counter0 }}" value="{{ zone.name }}"
-                                           class="form-input" placeholder="Parameter name" required>
-                                </div>
-                               
-                                <div class="form-group">
-                                    <label class="form-label">Parameter Type</label>
-                                    <select name="zone_type_{{ forloop.counter0 }}" class="zone-type-select" required>
-                                        <option value="int" {% if zone.type == 'int' %}selected{% endif %}>Integer</option>
-                                        <option value="float" {% if zone.type == 'float' %}selected{% endif %}>Decimal</option>
-                                        <option value="checkbox" {% if zone.type == 'checkbox' %}selected{% endif %}>Checkbox</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group min-max-group">
-                                    <label class="form-label">Min Value</label>
-                                    <input type="number" name="zone_min_{{ forloop.counter0 }}"
-                                           value="{% if zone.type != 'checkbox' %}{{ zone.min_value }}{% endif %}" 
-                                           class="form-input" placeholder="Min Value">
-                                </div>
-                               
-                                <div class="form-group min-max-group">
-                                    <label class="form-label">Max Value</label>
-                                    <input type="number" name="zone_max_{{ forloop.counter0 }}"
-                                           value="{% if zone.type != 'checkbox' %}{{ zone.max_value }}{% endif %}" 
-                                           class="form-input" placeholder="Max Value">
-                                </div>
-                                
-                                <div class="checkbox-container" style="{% if zone.type != 'checkbox' %}display: none;{% endif %}">
-                                    <label class="form-label">Default Value</label>
-                                    <input type="checkbox" name="zone_default_{{ forloop.counter0 }}"
-                                    {% if zone.min_value == 'Yes' and zone.max_value == 'Yes' %}checked{% endif %}>
-                                </div>
-                                
-                                <!-- Add checkbox label text input -->
-                                <div class="text-input-container" style="{% if zone.type != 'checkbox' %}display: none;{% endif %}">
-                                    <label class="form-label">Standard</label>
-                                    <input type="text" name="zone_checkbox_label_{{ forloop.counter0 }}" 
-                                           class="form-input" value="{{ zone.standard }}"
-                                           placeholder="Enter text to display next to checkbox">
-                                </div>
-
-                                <div class="unit-row" style="{% if zone.type == 'checkbox' %}display: none;{% endif %}">
-                                    <div class="unit-select-container">
-                                        <label class="form-label">Unit</label>
-                                        <div class="custom-select-container" id="unit-select-{{ forloop.counter0 }}">
-                                            <input type="hidden" name="zone_unit_{{ forloop.counter0 }}" class="custom-select-input" value="{{ zone.unit }}">
-                                            <button type="button" class="custom-select-toggle">{{ zone.unit|default:"Select Unit" }}</button>
-                                            <div class="custom-select-dropdown">
-                                                <input type="text" class="custom-select-search" placeholder="Search units...">
-                                                <div class="custom-select-options">
-                                                    <!-- Options will be populated by JavaScript -->
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="custom-unit-container">
-                                        <label class="form-label">Custom Unit</label>
-                                        <input type="text" name="zone_custom_unit_{{ forloop.counter0 }}" 
-                                               class="form-input" placeholder="Or enter custom unit"
-                                               value="{{ zone.custom_unit }}">
-                                    </div>
-                                </div>
-                                
-                                <!-- Check Method Container -->
-                                <div class="check-method-container">
-                                    <label class="form-label">Check Method</label>
-                                    <textarea name="zone_check_method_{{ forloop.counter0 }}" 
-                                              class="check-method-textarea" 
-                                              placeholder="Enter check method details">{{ zone.check_method }}</textarea>
-                                </div>
-                                
-                                <div class="zone-image-container">
-                                    <label class="form-label">Parameter Image</label>
-                                    <div class="file-input-container">
-                                        <label class="file-input-label">
-                                            <i class="fas fa-cloud-upload-alt"></i>
-                                            <span>Choose image</span>
-                                            <input type="file" name="zone_image_{{ forloop.counter0 }}" accept="image/*" class="file-input">
-                                        </label>
-                                    </div>
-                                    {% if zone.image %}
-                                    <div class="zone-image-preview">
-                                        <img src="{{ zone.image.url }}" alt="Zone {{ forloop.counter }} preview">
-                                    </div>
-                                    {% endif %}
+            <!-- Basic Details Section -->
+            <div class="form-section">
+            <div class="table-section-title">Basic Details</div>
+            <table class="form-table">
+                <thead>
+                    <tr>
+                        <th>Startersheet Name</th>
+                        <th>Production Line</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <input type="text" id="startersheet_name" name="name" required
+                                   class="form-input" value="{{ startersheet.name }}" placeholder="Enter startersheet name">
+                        </td>
+                        <td>
+                            <select id="line" name="line" required class="form-input">
+                                <option value="line_1" {% if startersheet.line == "line_1" %}selected{% endif %}>Line 1</option>
+                                <option value="line_2" {% if startersheet.line == "line_2" %}selected{% endif %}>Line 2</option>
+                            </select>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="form-section">
+            <!-- Parameter Inputs Section -->
+            <div class="table-section-title">Parameter Inputs</div>
+            <table class="form-table" id="parameter_inputs_table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th class="min-value-header">Min Value</th>
+                        <th class="max-value-header">Max Value</th>
+                        <th class="default-header">Default</th>
+                        <th class="standard-header">Standard</th>
+                        <th class="unit-header">Unit</th>
+                        <th class="custom-unit-header">Custom Unit</th>
+                        <th class="check-method-header">Check Method</th>
+                        <th>Image</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="parameter_inputs">
+                    {% for zone in zones %}
+                    <tr data-index="{{ forloop.counter0 }}" data-zone-id="{{ zone.id }}">
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <input type="text" name="zone_{{ forloop.counter0 }}" value="{{ zone.name }}"
+                                   class="form-input" placeholder="Parameter name" required>
+                        </td>
+                        <td>
+                            <select name="zone_type_{{ forloop.counter0 }}" class="parameter-type-select" required>
+                                <option value="int" {% if zone.type == 'int' %}selected{% endif %}>Integer</option>
+                                <option value="float" {% if zone.type == 'float' %}selected{% endif %}>Decimal</option>
+                                <option value="checkbox" {% if zone.type == 'checkbox' %}selected{% endif %}>Checkbox</option>
+                            </select>
+                        </td>
+                        <td class="min-value-cell">
+                            {% if zone.type != 'checkbox' %}
+                            <input type="number" name="zone_min_{{ forloop.counter0 }}"
+                                   value="{{ zone.min_value }}" class="form-input" placeholder="Min Value">
+                            {% endif %}
+                        </td>
+                        <td class="max-value-cell">
+                            {% if zone.type != 'checkbox' %}
+                            <input type="number" name="zone_max_{{ forloop.counter0 }}"
+                                   value="{{ zone.max_value }}" class="form-input" placeholder="Max Value">
+                            {% endif %}
+                        </td>
+                        <td class="default-cell">
+                            {% if zone.type == 'checkbox' %}
+                            <div class="checkbox-container">
+                                <input type="checkbox" name="zone_default_{{ forloop.counter0 }}"
+                                       id="checkbox_zone_{{ forloop.counter0 }}"
+                                       {% if zone.min_value == 'Yes' and zone.max_value == 'Yes' %}checked{% endif %}>
+                                <label class="checkbox-label" for="checkbox_zone_{{ forloop.counter0 }}">Default checked</label>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="standard-cell">
+                            {% if zone.type == 'checkbox' %}
+                            <div class="text-input-container">
+                                <input type="text" name="zone_checkbox_label_{{ forloop.counter0 }}"
+                                       class="form-input" value="{{ zone.standard }}"
+                                       placeholder="Enter standard text">
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="unit-cell">
+                            {% if zone.type != 'checkbox' %}
+                            <div class="custom-select-container">
+                                <input type="hidden" name="zone_unit_{{ forloop.counter0 }}" class="custom-select-input" value="{{ zone.unit }}">
+                                <button type="button" class="custom-select-toggle">{{ zone.unit|default:"Select Unit" }}</button>
+                                <div class="custom-select-dropdown">
+                                    <input type="text" class="custom-select-search" placeholder="Search units...">
+                                    <div class="custom-select-options"></div>
                                 </div>
                             </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-           
-            <div class="form-actions">
-                <button type="submit" class="submit-btn">
-                    <i class="fas fa-save"></i>
-                    Save Changes
-                </button>
-            </div>
+                            {% endif %}
+                        </td>
+                        <td class="custom-unit-cell">
+                            {% if zone.type != 'checkbox' %}
+                            <input type="text" name="zone_custom_unit_{{ forloop.counter0 }}"
+                                   class="form-input" placeholder="Custom unit" value="{{ zone.custom_unit }}"
+                                   {% if zone.unit %}disabled{% endif %}>
+                            {% endif %}
+                        </td>
+                        <td class="check-method-cell">
+                            <div class="check-method-container">
+                                <textarea name="zone_check_method_{{ forloop.counter0 }}"
+                                          class="check-method-textarea"
+                                          placeholder="Enter check method details">{{ zone.check_method }}</textarea>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="file-input-container">
+                                <label class="file-input-label">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span>{{ zone.name|default:"No name" }}</span> <!-- Use zone name instead of "Choose image" -->
+                                    <input type="file" name="zone_image_{{ forloop.counter0 }}" accept="image/*" class="file-input">
+                                </label>
+                            </div>
+                            {% if zone.image %}
+                            {% comment %} <div class="zone-image-preview">
+                                <img src="{{ zone.image.url }}" alt="Zone {{ forloop.counter }} preview">
+                            </div> {% endcomment %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button type="button" class="delete-zone-btn" data-zone-id="{{ zone.id }}" title="Delete Parameter">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="form-section">
+            <!-- Approvals Section -->
+            <div class="table-section-title">Approvals</div>
+            <table class="form-table">
+                <thead>
+                    <tr>
+                        <th>Assigned Users</th>
+                        <th>Level 1 Approver</th>
+                        <th>Level 2 Approver</th>
+                        <th>Level 3 Approval</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="custom-dropdown" id="assigned-users-dropdown">
+                                <div class="dropdown-button" id="assigned-users-button">
+                                    <span class="dropdown-text" id="assigned-users-text">
+                                        {% if startersheet.assigned_users.count > 0 %}
+                                            {% if startersheet.assigned_users.count == 1 %}
+                                                {{ startersheet.assigned_users.first.username }} ({{ startersheet.assigned_users.first.role }})
+                                            {% else %}
+                                                {{ startersheet.assigned_users.count }} users selected <span class="selection-badge">{{ startersheet.assigned_users.count }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            Select users to assign
+                                        {% endif %}
+                                    </span>
+                                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                </div>
+                                <div class="dropdown-content">
+                                    <div class="dropdown-search">
+                                        <input type="text" placeholder="Search users..." id="assigned-users-search">
+                                    </div>
+                                    <div class="dropdown-options">
+                                        {% for user in all_users %}
+                                            {% if user.role != 'admin' %}
+                                                <div class="dropdown-option" data-value="{{ user.id }}">
+                                                    <input type="checkbox" name="user_ids" value="{{ user.id }}"
+                                                           {% if user in startersheet.assigned_users.all %}checked{% endif %}
+                                                           class="assigned-user-checkbox">
+                                                    <span>{{ user.username }} ({{ user.role }})</span>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="custom-dropdown" id="level1-approver-dropdown">
+                                <div class="dropdown-button" id="level1-approver-button">
+                                    <span class="dropdown-text" id="level1-approver-text">
+                                        {% if startersheet.level_1_approver %}
+                                            {{ startersheet.level_1_approver.username }} ({{ startersheet.level_1_approver.role }})
+                                        {% else %}
+                                            Select Level 1 Approver
+                                        {% endif %}
+                                    </span>
+                                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                </div>
+                                <div class="dropdown-content">
+                                    <div class="dropdown-search">
+                                        <input type="text" placeholder="Search users..." id="level1-approver-search">
+                                    </div>
+                                    <div class="dropdown-options">
+                                        <div class="dropdown-option" data-value="">
+                                            <input type="radio" name="level_1_approver" value=""
+                                                   {% if not startersheet.level_1_approver %}checked{% endif %}
+                                                   class="level1-approver-radio">
+                                            <span>Not assigned</span>
+                                        </div>
+                                        {% for user in all_users %}
+                                            <div class="dropdown-option" data-value="{{ user.id }}">
+                                                <input type="radio" name="level_1_approver" value="{{ user.id }}"
+                                                       {% if startersheet.level_1_approver == user %}checked{% endif %}
+                                                       class="level1-approver-radio">
+                                                <span>{{ user.username }} ({{ user.role }})</span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="custom-dropdown" id="level2-approver-dropdown">
+                                <div class="dropdown-button" id="level2-approver-button">
+                                    <span class="dropdown-text" id="level2-approver-text">
+                                        {% if startersheet.level_2_approver %}
+                                            {{ startersheet.level_2_approver.username }} ({{ startersheet.level_2_approver.role }})
+                                        {% else %}
+                                            Select Level 2 Approver
+                                        {% endif %}
+                                    </span>
+                                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                </div>
+                                <div class="dropdown-content">
+                                    <div class="dropdown-search">
+                                        <input type="text" placeholder="Search users..." id="level2-approver-search">
+                                    </div>
+                                    <div class="dropdown-options">
+                                        <div class="dropdown-option" data-value="">
+                                            <input type="radio" name="level_2_approver" value=""
+                                                   {% if not startersheet.level_2_approver %}checked{% endif %}
+                                                   class="level2-approver-radio">
+                                            <span>Not assigned</span>
+                                        </div>
+                                        {% for user in all_users %}
+                                            <div class="dropdown-option" data-value="{{ user.id }}">
+                                                <input type="radio" name="level_2_approver" value="{{ user.id }}"
+                                                       {% if startersheet.level_2_approver == user %}checked{% endif %}
+                                                       class="level2-approver-radio">
+                                                <span>{{ user.username }} ({{ user.role }})</span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="approval-radio">
+                                <div class="radio-option">
+                                    <input type="radio" name="require_level_3" id="require_level_3_yes" value="True"
+                                           {% if startersheet.require_level_3_approval %}checked{% endif %}>
+                                    <label for="require_level_3_yes">Yes</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" name="require_level_3" id="require_level_3_no" value="False"
+                                           {% if not startersheet.require_level_3_approval %}checked{% endif %}>
+                                    <label for="require_level_3_no">No</label>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <input type="hidden" name="delete_zone" id="delete_zone" value="">
+        </div>
         </form>
     </div>
 </div>
 
-<div id="success-popup" class="success-popup">
-    <h3>StarterSheet Updated Successfully!</h3>
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <i class="fas fa-question-circle modal-icon"></i>
+            <h3 class="modal-title">Confirm Startersheet Update</h3>
+        </div>
+        <div class="modal-content">
+            Are you sure you want to update this Startersheet? This action cannot be undone.
+        </div>
+        <div class="modal-buttons">
+            <button id="cancelBtn" class="modal-button modal-cancel">Cancel</button>
+            <button id="confirmBtn" class="modal-button modal-confirm">Update Startersheet</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-confirmation-popup" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <i class="fas fa-question-circle modal-icon"></i>
+            <h3 class="modal-title">Confirm Deletion</h3>
+        </div>
+        <div class="modal-content">
+            Are you sure you want to delete this parameter? This action cannot be undone.
+            <p id="countdown" style="color: #555;">Please wait <span id="timer">10</span> seconds...</p>
+        </div>
+        <div class="modal-buttons">
+            <button id="confirm-delete" class="modal-button modal-confirm" disabled>Yes</button>
+            <button id="cancel-delete" class="modal-button modal-cancel">No</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    const UNITS = ["", "kg", "g", "mg", "l", "ml", "m", "cm", "mm", "km", "m²", "m³", "pascal", "bar", "psi", "N", "kN", "°C", "°F", "A", "V", "W", "kW", "Hz", "rpm", "s", "min", "h", "%"];
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the custom select dropdowns
-        initializeCustomSelects();
-        
-        // Setup the unit input relationships
-        setupUnitInputs();
-        
-        // Initialize parameter type toggles
-        initializeTypeToggles();
-    });
-    
-    // Function to initialize custom selects
-    function initializeCustomSelects() {
-        document.querySelectorAll('.custom-select-container').forEach((container, index) => {
-            const hiddenInput = container.querySelector('.custom-select-input');
-            const toggleButton = container.querySelector('.custom-select-toggle');
-            const dropdown = container.querySelector('.custom-select-dropdown');
-            const searchInput = container.querySelector('.custom-select-search');
-            const optionsContainer = container.querySelector('.custom-select-options');
-            
-            // Clear existing options
-            optionsContainer.innerHTML = '';
-            
-            // Add the options
-            UNITS.forEach(unit => {
-                const option = document.createElement("div");
-                option.className = "custom-select-option";
-                option.textContent = unit || "None";
-                option.dataset.value = unit;
-                
-                // Mark selected option if it matches current value
-                if (unit === hiddenInput.value) {
-                    option.classList.add('selected');
-                }
-                
-                option.addEventListener("click", () => {
-                    // Update the hidden input and toggle button
-                    hiddenInput.value = unit;
-                    toggleButton.textContent = unit || "Select Unit";
-                    
-                    // Close the dropdown
-                    dropdown.classList.remove("show");
-                    
-                    // Enable/disable custom unit input based on selection
-                    const zoneContainer = container.closest('.zone-input-container');
-                    const customUnitInput = zoneContainer.querySelector(`input[name^="zone_custom_unit_"]`);
-                    if (customUnitInput) {
-                        if (unit) {
-                            customUnitInput.disabled = true;
-                            customUnitInput.value = '';
-                        } else {
-                            customUnitInput.disabled = false;
-                        }
-                    }
-                    
-                    // Add selected class to this option and remove from others
-                    optionsContainer.querySelectorAll('.custom-select-option').forEach(opt => {
-                        opt.classList.remove('selected');
-                    });
-                    option.classList.add('selected');
-                });
-                
-                optionsContainer.appendChild(option);
-            });
-            
-            // Toggle dropdown on button click
-            toggleButton.addEventListener("click", (e) => {
-                e.preventDefault();
-                dropdown.classList.toggle("show");
-                if (dropdown.classList.contains("show")) {
-                    searchInput.focus();
-                }
-            });
-            
-            // Filter options based on search input
-            searchInput.addEventListener("input", () => {
-                const searchTerm = searchInput.value.toLowerCase();
-                optionsContainer.querySelectorAll(".custom-select-option").forEach(option => {
-                    const text = option.textContent.toLowerCase();
-                    option.style.display = text.includes(searchTerm) ? "block" : "none";
-                });
-            });
-        });
-        
-        // Close dropdowns when clicking outside
-        document.addEventListener("click", (event) => {
-            document.querySelectorAll('.custom-select-container').forEach(container => {
-                if (!container.contains(event.target)) {
-                    container.querySelector('.custom-select-dropdown').classList.remove("show");
-                }
-            });
-        });
+   // Units array for the custom select
+const UNITS = ["", "kg", "g", "mg", "l", "ml", "m", "cm", "mm", "km", "m²", "m³", "pascal", "bar", "psi", "N", "kN", "°C", "°F", "A", "V", "W", "kW", "Hz", "rpm", "s", "min", "h", "%"];
+let newParameterCounter = {{ zones|length }};
+
+// Function to create or reinitialize a custom searchable select
+function initializeCustomSelect(container, name, index, initialValue = '') {
+    let customSelectContainer = container.querySelector('.custom-select-container');
+    if (!customSelectContainer) {
+        // Create new custom select if it doesn't exist
+        customSelectContainer = document.createElement("div");
+        customSelectContainer.className = "custom-select-container";
+        container.appendChild(customSelectContainer);
+    } else {
+        // Clear existing content to reinitialize
+        customSelectContainer.innerHTML = '';
     }
-    
-    // Function to toggle between dropdown and custom unit
-    function setupUnitInputs() {
-        document.querySelectorAll('.zone-input-container').forEach(container => {
-            const unitSelect = container.querySelector('.custom-select-container');
-            const customUnitInput = container.querySelector('input[name^="zone_custom_unit_"]');
-            
-            if (unitSelect && customUnitInput) {
-                const unitToggle = unitSelect.querySelector('.custom-select-toggle');
-                const hiddenInput = unitSelect.querySelector('.custom-select-input');
-                
-                // Add click event to the label of custom unit to enable the field
-                const customUnitLabel = customUnitInput.closest('.custom-unit-container').querySelector('.form-label');
-                
-                customUnitLabel.addEventListener('click', function() {
-                    // Enable the custom unit input even if it was disabled
-                    customUnitInput.disabled = false;
-                    customUnitInput.focus(); // Set focus to the input
-                    
-                    // Disable the unit dropdown
-                    unitToggle.disabled = true;
-                    hiddenInput.value = '';
-                    unitToggle.textContent = 'Select Unit';
-                    unitSelect.style.opacity = '0.7';
-                });
-                
-                // Also add click event to the custom unit input container
-                customUnitInput.closest('.custom-unit-container').addEventListener('click', function(e) {
-                    if (e.target !== customUnitInput) { // Avoid duplicate events if clicking directly on input
-                        // Enable the custom unit input even if it was disabled
-                        customUnitInput.disabled = false;
-                        customUnitInput.focus(); // Set focus to the input
-                        
-                        // Disable the unit dropdown
-                        unitToggle.disabled = true;
-                        hiddenInput.value = '';
-                        unitToggle.textContent = 'Select Unit';
-                        unitSelect.style.opacity = '0.7';
-                    }
-                });
-                
-                // Custom unit input event listener
-                customUnitInput.addEventListener('input', function() {
-                    if (this.value) {
-                        // If something is typed in custom unit, disable dropdown
-                        unitToggle.disabled = true;
-                        hiddenInput.value = '';
-                        unitToggle.textContent = 'Select Unit';
-                        unitSelect.style.opacity = '0.7';
-                    } else {
-                        // If custom unit is cleared, enable dropdown
-                        unitToggle.disabled = false;
-                        unitSelect.style.opacity = '1';
-                    }
-                });
-                
-                // Unit dropdown selection event
-                unitToggle.addEventListener('click', function() {
-                    if (!this.disabled) {
-                        // When clicking on the dropdown, disable custom unit
-                        customUnitInput.disabled = true;
-                        customUnitInput.value = '';
-                    }
-                });
-                
-                // Initial state based on existing data
-                if (customUnitInput.value) {
-                    unitToggle.disabled = true;
-                    unitSelect.style.opacity = '0.7';
-                } else if (hiddenInput.value) {
+
+    const hiddenInput = document.createElement("input");
+    hiddenInput.type = "hidden";
+    hiddenInput.name = name;
+    hiddenInput.className = "custom-select-input";
+    hiddenInput.value = initialValue;
+    customSelectContainer.appendChild(hiddenInput);
+
+    const toggleButton = document.createElement("button");
+    toggleButton.type = "button";
+    toggleButton.className = "custom-select-toggle";
+    toggleButton.textContent = initialValue || " Unit";
+    customSelectContainer.appendChild(toggleButton);
+
+    const dropdown = document.createElement("div");
+    dropdown.className = "custom-select-dropdown";
+    const searchInput = document.createElement("input");
+    searchInput.type = "text";
+    searchInput.className = "custom-select-search";
+    searchInput.placeholder = "Search units...";
+    dropdown.appendChild(searchInput);
+
+    const optionsContainer = document.createElement("div");
+    optionsContainer.className = "custom-select-options";
+    UNITS.forEach(unit => {
+        const option = document.createElement("div");
+        option.className = "custom-select-option";
+        option.textContent = unit || "None";
+        option.dataset.value = unit;
+        if (unit === initialValue) {
+            option.classList.add('selected');
+        }
+        option.addEventListener("click", () => {
+            hiddenInput.value = unit;
+            toggleButton.textContent = unit || " Unit";
+            dropdown.classList.remove("show");
+            const customUnitInput = container.parentElement.querySelector(`input[name="zone_custom_unit_${index}"], input[name="zone_custom_unit_new_${index}"]`);
+            if (customUnitInput) {
+                if (unit) {
                     customUnitInput.disabled = true;
+                    customUnitInput.value = '';
+                } else {
+                    customUnitInput.disabled = false;
                 }
             }
-        });
-    }
-
-    // Function to initialize type toggle behavior for all parameter inputs
-    function initializeTypeToggles() {
-        document.querySelectorAll('.zone-input-container').forEach(container => {
-            const select = container.querySelector('.zone-type-select');
-            
-            // Initialize the toggle based on current selection
-            toggleParameterInputs(select, container);
-            
-            // Add event listener for changes
-            select.addEventListener('change', () => {
-                toggleParameterInputs(select, container);
+            optionsContainer.querySelectorAll('.custom-select-option').forEach(opt => {
+                opt.classList.remove('selected');
             });
+            option.classList.add('selected');
         });
-    }
+        optionsContainer.appendChild(option);
+    });
+    dropdown.appendChild(optionsContainer);
+    customSelectContainer.appendChild(dropdown);
 
-    // Function to toggle appropriate inputs based on parameter type
-    function toggleParameterInputs(select, container) {
-        const minMaxGroups = container.querySelectorAll('.min-max-group');
-        const checkboxContainer = container.querySelector('.checkbox-container');
-        const unitRow = container.querySelector('.unit-row');
-        const textInputContainer = container.querySelector('.text-input-container');
-        
-        if (select.value === 'checkbox') {
-            // Hide min/max inputs and unit row for checkbox type
-            minMaxGroups.forEach(group => group.style.display = 'none');
-            unitRow.style.display = 'none';
-            
-            // Show checkbox container and text input container
-            checkboxContainer.style.display = 'flex';
-            textInputContainer.style.display = 'block';
-        } else {
-            // Show min/max inputs and unit row for non-checkbox types
-            minMaxGroups.forEach(group => group.style.display = 'block');
-            unitRow.style.display = 'grid';
-            
-            // Hide checkbox container and text input container
-            checkboxContainer.style.display = 'none';
-            textInputContainer.style.display = 'none';
+    toggleButton.addEventListener("click", () => {
+        dropdown.classList.toggle("show");
+        if (dropdown.classList.contains("show")) {
+            searchInput.focus();
         }
-    }
+    });
 
-    // Show file name when an image is selected
-    document.querySelectorAll('.file-input').forEach(input => {
-        input.addEventListener('change', function(e) {
-            const fileName = e.target.files[0]?.name || 'Choose image';
-            this.previousElementSibling.textContent = fileName;
+    searchInput.addEventListener("input", () => {
+        const searchTerm = searchInput.value.toLowerCase();
+        optionsContainer.querySelectorAll(".custom-select-option").forEach(option => {
+            const text = option.textContent.toLowerCase();
+            option.style.display = text.includes(searchTerm) ? "block" : "none";
         });
     });
 
-    // Show success popup if the form is submitted successfully
-    {% if success %}
-        window.onload = function() {
-            var successPopup = document.getElementById('success-popup');
-            successPopup.style.display = 'block'; // Show the popup
-            setTimeout(() => {
-                successPopup.style.animation = 'slideOut 0.3s ease forwards';
-                setTimeout(() => {
-                    successPopup.style.display = 'none';
-                    successPopup.style.animation = '';
-                }, 300);
-            }, 3000);
-        };
-    {% endif %}
+    document.addEventListener("click", (event) => {
+        if (!customSelectContainer.contains(event.target)) {
+            dropdown.classList.remove("show");
+        }
+    });
+
+    return customSelectContainer;
+}
+
+// Function to toggle between dropdown and custom unit
+function toggleUnitInputs(unitSelect, customUnitInput) {
+    if (!unitSelect || !customUnitInput) return;
+
+    const toggleButton = unitSelect.querySelector('.custom-select-toggle');
+    const hiddenInput = unitSelect.querySelector('.custom-select-input');
+
+    // Initialize disabled state based on initial unit value
+    if (hiddenInput.value) {
+        customUnitInput.disabled = true;
+        unitSelect.style.opacity = '1';
+    } else {
+        customUnitInput.disabled = false;
+        unitSelect.style.opacity = hiddenInput.value ? '1' : '0.7';
+    }
+
+    customUnitInput.addEventListener('input', function () {
+        if (this.value) {
+            toggleButton.disabled = true;
+            hiddenInput.value = '';
+            toggleButton.textContent = ' Unit';
+            unitSelect.style.opacity = '0.7';
+        } else {
+            toggleButton.disabled = false;
+            unitSelect.style.opacity = '1';
+        }
+    });
+}
+
+// Function to toggle parameter inputs and headers based on type
+function toggleParameterInputs(select, row) {
+    const minValueCell = row.querySelector('.min-value-cell');
+    const maxValueCell = row.querySelector('.max-value-cell');
+    const defaultCell = row.querySelector('.default-cell');
+    const standardCell = row.querySelector('.standard-cell');
+    const unitCell = row.querySelector('.unit-cell');
+    const customUnitCell = row.querySelector('.custom-unit-cell');
+    const checkMethodCell = row.querySelector('.check-method-cell');
+
+    const minValueHeader = document.querySelector('.min-value-header');
+    const maxValueHeader = document.querySelector('.max-value-header');
+    const defaultHeader = document.querySelector('.default-header');
+    const standardHeader = document.querySelector('.standard-header');
+    const unitHeader = document.querySelector('.unit-header');
+    const customUnitHeader = document.querySelector('.custom-unit-header');
+    const checkMethodHeader = document.querySelector('.check-method-header');
+
+    minValueCell.style.display = 'table-cell';
+    maxValueCell.style.display = 'table-cell';
+    defaultCell.style.display = 'table-cell';
+    standardCell.style.display = 'table-cell';
+    unitCell.style.display = 'table-cell';
+    customUnitCell.style.display = 'table-cell';
+    checkMethodCell.style.display = 'table-cell';
+
+    minValueHeader.style.display = 'table-cell';
+    maxValueHeader.style.display = 'table-cell';
+    defaultHeader.style.display = 'table-cell';
+    standardHeader.style.display = 'table-cell';
+    unitHeader.style.display = 'table-cell';
+    customUnitHeader.style.display = 'table-cell';
+    checkMethodHeader.style.display = 'table-cell';
+
+    if (select.value === 'checkbox') {
+        minValueCell.innerHTML = '';
+        maxValueCell.innerHTML = '';
+        unitCell.innerHTML = '';
+        customUnitCell.innerHTML = '';
+
+        let defaultContainer = defaultCell.querySelector('.checkbox-container');
+        if (!defaultContainer) {
+            defaultContainer = document.createElement('div');
+            defaultContainer.className = 'checkbox-container';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = row.dataset.zoneId.startsWith('new_') ? `zone_default_new_${row.dataset.index}` : `zone_default_${row.dataset.index}`;
+            checkbox.id = `checkbox_zone_${row.dataset.index}`;
+            const label = document.createElement('label');
+            label.className = 'checkbox-label';
+            label.htmlFor = checkbox.id;
+            label.textContent = 'Default checked';
+            defaultContainer.appendChild(checkbox);
+            defaultContainer.appendChild(label);
+            defaultCell.innerHTML = '';
+            defaultCell.appendChild(defaultContainer);
+        }
+        defaultContainer.style.display = 'flex';
+
+        let standardContainer = standardCell.querySelector('.text-input-container');
+        if (!standardContainer) {
+            standardContainer = document.createElement('div');
+            standardContainer.className = 'text-input-container';
+            const textInput = document.createElement('input');
+            textInput.type = 'text';
+            textInput.name = row.dataset.zoneId.startsWith('new_') ? `zone_checkbox_label_new_${row.dataset.index}` : `zone_checkbox_label_${row.dataset.index}`;
+            textInput.className = 'form-input';
+            textInput.placeholder = 'Enter standard text';
+            standardContainer.appendChild(textInput);
+            standardCell.innerHTML = '';
+            standardCell.appendChild(standardContainer);
+        }
+        standardContainer.style.display = 'block';
+
+        let checkMethodContainer = checkMethodCell.querySelector('.check-method-container');
+        if (!checkMethodContainer) {
+            checkMethodContainer = document.createElement('div');
+            checkMethodContainer.className = 'check-method-container';
+            const checkMethodTextarea = document.createElement('textarea');
+            checkMethodTextarea.name = row.dataset.zoneId.startsWith('new_') ? `zone_check_method_new_${row.dataset.index}` : `zone_check_method_${row.dataset.index}`;
+            checkMethodTextarea.className = 'check-method-textarea';
+            checkMethodTextarea.placeholder = 'Enter check method details';
+            checkMethodContainer.appendChild(checkMethodTextarea);
+            checkMethodCell.innerHTML = '';
+            checkMethodCell.appendChild(checkMethodContainer);
+        }
+        checkMethodContainer.style.display = 'block';
+    } else {
+        defaultCell.innerHTML = '';
+        standardCell.innerHTML = '';
+
+        if (!minValueCell.querySelector('input')) {
+            const minInput = document.createElement('input');
+            minInput.type = 'number';
+            minInput.name = row.dataset.zoneId.startsWith('new_') ? `zone_min_new_${row.dataset.index}` : `zone_min_${row.dataset.index}`;
+            minInput.className = 'form-input';
+            minInput.placeholder = 'Min Value';
+            minValueCell.innerHTML = '';
+            minValueCell.appendChild(minInput);
+        }
+
+        if (!maxValueCell.querySelector('input')) {
+            const maxInput = document.createElement('input');
+            maxInput.type = 'number';
+            maxInput.name = row.dataset.zoneId.startsWith('new_') ? `zone_max_new_${row.dataset.index}` : `zone_max_${row.dataset.index}`;
+            maxInput.className = 'form-input';
+            maxInput.placeholder = 'Max Value';
+            maxValueCell.innerHTML = '';
+            maxValueCell.appendChild(maxInput);
+        }
+
+        if (!unitCell.querySelector('.custom-select-container')) {
+            const unitName = row.dataset.zoneId.startsWith('new_') ? `zone_unit_new_${row.dataset.index}` : `zone_unit_${row.dataset.index}`;
+            const initialUnit = row.querySelector('.custom-select-input')?.value || '';
+            const customSelect = initializeCustomSelect(unitCell, unitName, row.dataset.index, initialUnit);
+            unitCell.innerHTML = '';
+            unitCell.appendChild(customSelect);
+        }
+
+        if (!customUnitCell.querySelector('input')) {
+            const customUnitInput = document.createElement('input');
+            customUnitInput.type = 'text';
+            customUnitInput.name = row.dataset.zoneId.startsWith('new_') ? `zone_custom_unit_new_${row.dataset.index}` : `zone_custom_unit_${row.dataset.index}`;
+            customUnitInput.className = 'form-input';
+            customUnitInput.placeholder = 'Custom unit';
+            customUnitCell.innerHTML = '';
+            customUnitCell.appendChild(customUnitInput);
+        }
+
+        let checkMethodContainer = checkMethodCell.querySelector('.check-method-container');
+        if (!checkMethodContainer) {
+            checkMethodContainer = document.createElement('div');
+            checkMethodContainer.className = 'check-method-container';
+            const checkMethodTextarea = document.createElement('textarea');
+            checkMethodTextarea.name = row.dataset.zoneId.startsWith('new_') ? `zone_check_method_new_${row.dataset.index}` : `zone_check_method_${row.dataset.index}`;
+            checkMethodTextarea.className = 'check-method-textarea';
+            checkMethodTextarea.placeholder = 'Enter check method details';
+            checkMethodContainer.appendChild(checkMethodTextarea);
+            checkMethodCell.innerHTML = '';
+            checkMethodCell.appendChild(checkMethodContainer);
+        }
+        checkMethodContainer.style.display = 'block';
+
+        const unitSelect = unitCell.querySelector('.custom-select-container');
+        const customUnitInput = customUnitCell.querySelector('input');
+        if (unitSelect && customUnitInput) {
+            toggleUnitInputs(unitSelect, customUnitInput);
+        }
+    }
+}
+
+// Function to toggle dropdown
+function toggleDropdown(dropdownId) {
+    const dropdown = document.getElementById(dropdownId);
+    const content = dropdown.querySelector('.dropdown-content');
+    const button = dropdown.querySelector('.dropdown-button');
+    const arrow = dropdown.querySelector('.dropdown-arrow');
+    
+    document.querySelectorAll('.custom-dropdown').forEach(dd => {
+        if (dd.id !== dropdownId) {
+            dd.querySelector('.dropdown-content').classList.remove('show','above');
+            dd.querySelector('.dropdown-button').classList.remove('active');
+            dd.querySelector('.dropdown-arrow').classList.remove('rotated');
+        }
+    });
+    
+    content.classList.toggle('show');
+    button.classList.toggle('active');
+    arrow.classList.toggle('rotated');
+    
+    if (content.classList.contains('show')) {
+        const buttonRect = button.getBoundingClientRect();
+        const contentRect = content.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const spaceBelow = viewportHeight - buttonRect.bottom;
+        const spaceAbove = buttonRect.top;
+        const dropdownHeight = contentRect.height;
+
+        // Check if there's enough space below; if not, open above
+        if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+            content.classList.add('above');
+        } else {
+            content.classList.remove('above');
+        }
+
+        // Focus search input when opening
+        const searchInput = content.querySelector('input[type="text"]');
+        setTimeout(() => searchInput.focus(), 100);
+    }
+}
+
+// Function to filter dropdown options
+function filterOptions(dropdownId, searchTerm) {
+    const dropdown = document.getElementById(dropdownId);
+    const options = dropdown.querySelectorAll('.dropdown-option');
+    let hasVisibleOptions = false;
+
+    options.forEach(option => {
+        const text = option.querySelector('span').textContent.toLowerCase();
+        const matches = text.includes(searchTerm.toLowerCase());
+        option.style.display = matches ? 'flex' : 'none';
+        if (matches) hasVisibleOptions = true;
+    });
+
+    let noResultsMsg = dropdown.querySelector('.no-results');
+    if (!hasVisibleOptions && searchTerm.length > 0) {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.className = 'dropdown-option no-results';
+            noResultsMsg.innerHTML = '<span>No users found</span>';
+            dropdown.querySelector('.dropdown-options').appendChild(noResultsMsg);
+        }
+        noResultsMsg.style.display = 'flex';
+    } else if (noResultsMsg) {
+        noResultsMsg.style.display = 'none';
+    }
+}
+
+// Function to update multi-select dropdown text
+function updateMultiSelectText(dropdownId) {
+    const dropdown = document.getElementById(dropdownId);
+    const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]:checked');
+    const textElement = dropdown.querySelector('.dropdown-text');
+
+    if (checkboxes.length === 0) {
+        textElement.textContent = 'Select users to assign';
+        textElement.classList.remove('has-selection');
+    } else {
+        const selectedNames = Array.from(checkboxes).map(cb => {
+            return cb.parentElement.querySelector('span').textContent;
+        });
+        if (checkboxes.length === 1) {
+            textElement.innerHTML = selectedNames[0];
+        } else {
+            textElement.innerHTML = `${checkboxes.length} users selected <span class="selection-badge">${checkboxes.length}</span>`;
+        }
+        textElement.classList.add('has-selection');
+    }
+}
+
+// Function to update single-select dropdown text
+function updateSingleSelectText(dropdownId, text, value) {
+    const dropdown = document.getElementById(dropdownId);
+    const textElement = dropdown.querySelector('.dropdown-text');
+
+    textElement.textContent = text;
+    if (value) {
+        textElement.classList.add('has-selection');
+    } else {
+        textElement.classList.remove('has-selection');
+    }
+
+    setTimeout(() => {
+        dropdown.querySelector('.dropdown-content').classList.remove('show');
+        dropdown.querySelector('.dropdown-button').classList.remove('active');
+        dropdown.querySelector('.dropdown-arrow').classList.remove('rotated');
+    }, 200);
+}
+
+// Function to add new parameter row
+function addNewParameter() {
+    const parameterInputs = document.getElementById("parameter_inputs");
+    const existingRows = parameterInputs.querySelectorAll('tr').length;
+    const index = newParameterCounter;
+    newParameterCounter++;
+
+    let row = document.createElement("tr");
+    row.dataset.index = index;
+    row.dataset.zoneId = `new_${index}`;
+
+    // Parameter Number
+    let numberCell = document.createElement("td");
+    numberCell.textContent = existingRows + 1;
+    row.appendChild(numberCell);
+
+    // Parameter Name
+    let nameCell = document.createElement("td");
+    let nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.name = `zone_new_${index}`;
+    nameInput.className = "form-input";
+    nameInput.placeholder = `Parameter ${existingRows + 1} name`;
+    nameInput.required = true;
+    nameCell.appendChild(nameInput);
+    row.appendChild(nameCell);
+
+    // Parameter Type
+    let typeCell = document.createElement("td");
+    let select = document.createElement("select");
+    select.name = `zone_type_new_${index}`;
+    select.className = "parameter-type-select";
+    select.required = true;
+    let options = ["int", "float", "checkbox"];
+    options.forEach(type => {
+        let option = document.createElement("option");
+        option.value = type;
+        option.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+        select.appendChild(option);
+    });
+    typeCell.appendChild(select);
+    row.appendChild(typeCell);
+
+    // Min Value
+    let minValueCell = document.createElement("td");
+    minValueCell.className = "min-value-cell";
+    let minInput = document.createElement("input");
+    minInput.type = "number";
+    minInput.name = `zone_min_new_${index}`;
+    minInput.className = "form-input";
+    minInput.placeholder = "Min Value";
+    minValueCell.appendChild(minInput);
+    row.appendChild(minValueCell);
+
+    // Max Value
+    let maxValueCell = document.createElement("td");
+    maxValueCell.className = "max-value-cell";
+    let maxInput = document.createElement("input");
+    maxInput.type = "number";
+    maxInput.name = `zone_max_new_${index}`;
+    maxInput.className = "form-input";
+    maxInput.placeholder = "Max Value";
+    maxValueCell.appendChild(maxInput);
+    row.appendChild(maxValueCell);
+
+    // Default
+    let defaultCell = document.createElement("td");
+    defaultCell.className = "default-cell";
+    row.appendChild(defaultCell);
+
+    // Standard
+    let standardCell = document.createElement("td");
+    standardCell.className = "standard-cell";
+    row.appendChild(standardCell);
+
+    // Unit
+    let unitCell = document.createElement("td");
+    unitCell.className = "unit-cell";
+    const customSelect = initializeCustomSelect(unitCell, `zone_unit_new_${index}`, index);
+    unitCell.appendChild(customSelect);
+    row.appendChild(unitCell);
+
+    // Custom Unit
+    let customUnitCell = document.createElement("td");
+    customUnitCell.className = "custom-unit-cell";
+    let customUnitInput = document.createElement("input");
+    customUnitInput.type = "text";
+    customUnitInput.name = `zone_custom_unit_new_${index}`;
+    customUnitInput.className = "form-input";
+    customUnitInput.placeholder = "Custom unit";
+    customUnitCell.appendChild(customUnitInput);
+    row.appendChild(customUnitCell);
+
+    // Check Method
+    let checkMethodCell = document.createElement("td");
+    checkMethodCell.className = "check-method-cell";
+    let checkMethodContainer = document.createElement("div");
+    checkMethodContainer.className = "check-method-container";
+    let checkMethodTextarea = document.createElement("textarea");
+    checkMethodTextarea.name = `zone_check_method_new_${index}`;
+    checkMethodTextarea.className = "check-method-textarea";
+    checkMethodTextarea.placeholder = "Enter check method details";
+    checkMethodContainer.appendChild(checkMethodTextarea);
+    checkMethodCell.appendChild(checkMethodContainer);
+    row.appendChild(checkMethodCell);
+
+    // Parameter Image
+    let fileCell = document.createElement("td");
+    let fileContainer = document.createElement("div");
+    fileContainer.className = "file-input-container";
+    let fileLabel = document.createElement("label");
+    fileLabel.className = "file-input-label";
+    fileLabel.innerHTML = `<i class="fas fa-cloud-upload-alt"></i><span>${nameInput.placeholder}</span>`;
+    let fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.name = `zone_image_new_${index}`;
+    fileInput.accept = "image/*";
+    fileInput.className = "file-input";
+    fileLabel.appendChild(fileInput);
+    fileContainer.appendChild(fileLabel);
+    fileCell.appendChild(fileContainer);
+    row.appendChild(fileCell);
+
+    // Update span text when name input changes
+    nameInput.addEventListener('input', function () {
+        fileLabel.querySelector('span').textContent = this.value || this.placeholder;
+    });
+
+    // Delete Button
+    let deleteCell = document.createElement("td");
+    let deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "delete-zone-btn";
+    deleteButton.dataset.zoneId = `new_${index}`;
+    deleteButton.title = "Delete Parameter";
+    deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+    deleteCell.appendChild(deleteButton);
+    row.appendChild(deleteCell);
+
+    parameterInputs.appendChild(row);
+
+    toggleUnitInputs(customSelect, customUnitInput);
+
+    select.addEventListener('change', () => toggleParameterInputs(select, row));
+    toggleParameterInputs(select, row);
+
+    fileInput.addEventListener('change', function () {
+        const nameInput = row.querySelector('input[type="text"][name^="zone_new_"]');
+        const fileName = this.files[0]?.name || (nameInput.value || nameInput.placeholder);
+        this.parentElement.querySelector('span').textContent = fileName;
+    });
+
+    deleteButton.addEventListener('click', function () {
+        const zoneId = this.dataset.zoneId;
+        if (zoneId.startsWith('new_')) {
+            row.remove();
+            updateParameterNumbers();
+        } else {
+            document.getElementById('delete_zone').value = zoneId;
+            const modal = document.getElementById('delete-confirmation-popup');
+            const confirmDeleteBtn = document.getElementById('confirm-delete');
+            const timerElement = document.getElementById('timer');
+            const countdownElement = document.getElementById('countdown');
+            confirmDeleteBtn.disabled = true;
+            modal.style.display = 'flex';
+            countdownElement.style.display = 'block';
+            timerElement.textContent = '10';
+            let seconds = 10;
+            const countdown = setInterval(() => {
+                seconds--;
+                timerElement.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(countdown);
+                    confirmDeleteBtn.disabled = false;
+                    countdownElement.style.display = 'none';
+                }
+            }, 1000);
+            modal.dataset.countdownId = countdown;
+        }
+    });
+
+    updateParameterNumbers();
+}
+
+// Function to update parameter numbers
+function updateParameterNumbers() {
+    const parameterInputs = document.getElementById("parameter_inputs");
+    const rows = parameterInputs.querySelectorAll('tr');
+    rows.forEach((row, index) => {
+        const numberCell = row.querySelector('td:first-child');
+        numberCell.textContent = index + 1;
+    });
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function () {
+    // Initialize unit dropdowns and name inputs for existing parameters
+    document.querySelectorAll('#parameter_inputs tr').forEach(row => {
+        const select = row.querySelector('.parameter-type-select');
+        if (select) {
+            const unitCell = row.querySelector('.unit-cell');
+            const customUnitCell = row.querySelector('.custom-unit-cell');
+            const initialUnit = row.querySelector('.custom-select-input')?.value || '';
+            const unitName = row.dataset.zoneId.startsWith('new_') ? `zone_unit_new_${row.dataset.index}` : `zone_unit_${row.dataset.index}`;
+            
+            // Reinitialize unit dropdown only for non-checkbox types
+            let customSelect = null;
+            if (unitCell && select.value !== 'checkbox') {
+                unitCell.innerHTML = '';
+                customSelect = initializeCustomSelect(unitCell, unitName, row.dataset.index, initialUnit);
+                unitCell.appendChild(customSelect);
+            }
+
+            const customUnitInput = customUnitCell?.querySelector('input');
+            if (customSelect && customUnitInput) {
+                toggleUnitInputs(customSelect, customUnitInput);
+            }
+
+            // Update file input label when name input changes
+            const nameInput = row.querySelector('input[type="text"][name^="zone_"], input[type="text"][name^="zone_new_"]');
+            const fileLabel = row.querySelector('.file-input-label span');
+            if (nameInput && fileLabel) {
+                nameInput.addEventListener('input', function () {
+                    fileLabel.textContent = this.value || this.placeholder;
+                });
+            }
+
+            toggleParameterInputs(select, row);
+            select.addEventListener('change', () => toggleParameterInputs(select, row));
+        }
+    });
+
+    // Initialize multi-select dropdown text
+    updateMultiSelectText('assigned-users-dropdown');
+
+    // Attach dropdown button event listeners
+    const dropdownButtons = [
+        { buttonId: 'assigned-users-button', dropdownId: 'assigned-users-dropdown' },
+        { buttonId: 'level1-approver-button', dropdownId: 'level1-approver-dropdown' },
+        { buttonId: 'level2-approver-button', dropdownId: 'level2-approver-dropdown' }
+    ];
+
+    dropdownButtons.forEach(({ buttonId, dropdownId }) => {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            button.addEventListener('click', () => toggleDropdown(dropdownId));
+        }
+    });
+
+    // Attach search input event listeners
+    const searchInputs = [
+        { id: 'assigned-users-search', dropdownId: 'assigned-users-dropdown' },
+        { id: 'level1-approver-search', dropdownId: 'level1-approver-dropdown' },
+        { id: 'level2-approver-search', dropdownId: 'level2-approver-dropdown' }
+    ];
+
+    searchInputs.forEach(({ id, dropdownId }) => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', () => filterOptions(dropdownId, input.value));
+        }
+    });
+
+    // Attach checkbox event listeners for assigned users
+    document.querySelectorAll('.assigned-user-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', () => updateMultiSelectText('assigned-users-dropdown'));
+    });
+
+    // Attach radio button event listeners for level 1 approver
+    document.querySelectorAll('.level1-approver-radio').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const option = radio.parentElement;
+            const text = option.querySelector('span').textContent;
+            const value = radio.value;
+            updateSingleSelectText('level1-approver-dropdown', text, value);
+        });
+    });
+
+    // Attach radio button event listeners for level 2 approver
+    document.querySelectorAll('.level2-approver-radio').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const option = radio.parentElement;
+            const text = option.querySelector('span').textContent;
+            const value = radio.value;
+            updateSingleSelectText('level2-approver-dropdown', text, value);
+        });
+    });
+
+    // Add parameter button
+    document.getElementById("add-parameter-btn").addEventListener("click", addNewParameter);
+
+    // Submit button
+    document.getElementById("submit-btn").addEventListener("click", function (event) {
+        event.preventDefault();
+        document.getElementById("confirmModal").style.display = "flex";
+    });
+
+    // Modal buttons
+    document.getElementById("confirmBtn").addEventListener("click", function () {
+        const form = document.getElementById("startersheet-form");
+        const disabledElements = form.querySelectorAll('button:disabled, input:disabled');
+        disabledElements.forEach(element => {
+            element.disabled = false;
+        });
+        form.submit();
+    });
+
+    document.getElementById("cancelBtn").addEventListener("click", function () {
+        document.getElementById("confirmModal").style.display = "none";
+    });
+
+    // Delete confirmation modal buttons
+    const deleteModal = document.getElementById('delete-confirmation-popup');
+    const confirmDeleteBtn = document.getElementById('confirm-delete');
+    const cancelDeleteBtn = document.getElementById('cancel-delete');
+
+    confirmDeleteBtn.addEventListener('click', function () {
+        if (!this.disabled) {
+            document.getElementById("startersheet-form").submit();
+        }
+    });
+
+    cancelDeleteBtn.addEventListener('click', function () {
+        document.getElementById('delete_zone').value = '';
+        deleteModal.style.display = 'none';
+        document.getElementById('countdown').style.display = 'block';
+        document.getElementById('timer').textContent = '10';
+        clearInterval(deleteModal.dataset.countdownId);
+    });
+
+    deleteModal.addEventListener('click', function (e) {
+        if (e.target === deleteModal) {
+            document.getElementById('delete_zone').value = '';
+            deleteModal.style.display = 'none';
+            document.getElementById('countdown').style.display = 'block';
+            document.getElementById('timer').textContent = '10';
+            clearInterval(deleteModal.dataset.countdownId);
+        }
+    });
+
+    // Initialize existing delete buttons
+    document.querySelectorAll('.delete-zone-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const zoneId = this.dataset.zoneId;
+            if (zoneId.startsWith('new_')) {
+                this.closest('tr').remove();
+                updateParameterNumbers();
+            } else {
+                document.getElementById('delete_zone').value = zoneId;
+                const modal = document.getElementById('delete-confirmation-popup');
+                const confirmDeleteBtn = document.getElementById('confirm-delete');
+                const timerElement = document.getElementById('timer');
+                const countdownElement = document.getElementById('countdown');
+                confirmDeleteBtn.disabled = true;
+                modal.style.display = 'flex';
+                countdownElement.style.display = 'block';
+                timerElement.textContent = '10';
+                let seconds = 10;
+                const countdown = setInterval(() => {
+                    seconds--;
+                    timerElement.textContent = seconds;
+                    if (seconds <= 0) {
+                        clearInterval(countdown);
+                        confirmDeleteBtn.disabled = false;
+                        countdownElement.style.display = 'none';
+                    }
+                }, 1000);
+                modal.dataset.countdownId = countdown;
+            }
+        });
+    });
+
+    // File input change listeners
+    document.querySelectorAll('.file-input').forEach(input => {
+        input.addEventListener('change', function () {
+            const row = this.closest('tr');
+            const nameInput = row.querySelector('input[type="text"][name^="zone_"], input[type="text"][name^="zone_new_"]');
+            const fileName = this.files[0]?.name || (nameInput.value || nameInput.placeholder);
+            this.parentElement.querySelector('span').textContent = fileName;
+        });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function (event) {
+        if (!event.target.closest('.custom-dropdown')) {
+            document.querySelectorAll('.custom-dropdown').forEach(dropdown => {
+                dropdown.querySelector('.dropdown-content').classList.remove('show');
+                dropdown.querySelector('.dropdown-button').classList.remove('active');
+                dropdown.querySelector('.dropdown-arrow').classList.remove('rotated');
+            });
+        }
+    });
+});
 </script>
 {% endblock %}

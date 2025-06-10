@@ -107,9 +107,9 @@
                 <h3><i class="fas fa-exclamation-circle"></i> <span data-translate="select_rejection_details">Select Rejection Details</span></h3>
                 <select id="reject-reason-select">
                     <option value="" data-translate="select_reason">Select Reason</option>
-                    <option value="damaged" data-translate="damaged">Damaged</option>
-                    <option value="paint_error" data-translate="paint_error">Paint Error</option>
-                    <option value="not_good" data-translate="not_good">Not Good</option>
+                    {% for reason in reasons %}
+                    <option value="{{ reason.reason }}" >{{ reason.reason }}</option>
+                    {% endfor %}
                 </select>
                 <select id="reject-zone-select">
                     <option value="" data-translate="select_zone">Select Zone</option>
@@ -361,24 +361,27 @@ window.offlineUtils = {
     };
    
     document.addEventListener('DOMContentLoaded', function() {
+        // Apply saved language immediately
+        applyTranslations();
+    
         syncWithServer().then(() => {
             initializeScheduledEvents();
         });
-   
+    
         const currentShiftElement = document.getElementById('current-shift-data');
         let currentShift = "{{ current_shift|default:'None' }}";
-   
+    
         if (currentShiftElement) {
             currentShift = currentShiftElement.dataset.value;
         }
-   
+    
         console.log("Current shift:", currentShift);
-   
+    
         const navbar = document.querySelector('.navbar');
         if (navbar) {
             const navbarLeft = navbar.querySelector('.navbar-left');
             const logoutBtn = navbar.querySelector('.logout-btn');
-   
+    
             const navbarCenter = document.createElement('div');
             navbarCenter.className = 'navbar-center';
             navbarCenter.innerHTML = `
@@ -386,7 +389,7 @@ window.offlineUtils = {
                 <span class="shift-label"><i class="fas fa-clock"></i> ${translations[currentLanguage].current_shift} ${currentShift}</span>
                 <span class="shift-countdown-alert hidden" id="shift-countdown"><i class="fas fa-hourglass-half"></i> ${translations[currentLanguage].shift_ending_in} <span id="countdown-timer">02:00</span></span>
             `;
-   
+    
             if (logoutBtn) {
                 navbar.insertBefore(navbarCenter, logoutBtn);
             } else {
@@ -394,7 +397,7 @@ window.offlineUtils = {
             }
             updateDateTime();
         }
-   
+    
         if (currentShift === "None") {
             document.getElementById('shift-alert-popup').style.display = 'block';
         }
@@ -1024,7 +1027,7 @@ if (backButton) {
             edit: "संपादित करें",
             reject: "अस्वीकार करें",
             finish: "समाप्त करें",
-            translate_to_hindi: "हिंदी ",
+            translate_to_hindi: "हिंदी",
             translate_to_english: "अंग्रेजी",
             close: "बंद करें",
             no_images: "कोई चित्र उपलब्ध नहीं",
@@ -1065,31 +1068,29 @@ if (backButton) {
             no: "नहीं"
         }
     };
-   
+    
     // Current language state
-    let currentLanguage = 'en';
-   
-    // Function to toggle language
-    function toggleLanguage() {
-        currentLanguage = currentLanguage === 'en' ? 'hi' : 'en';
-   
+    let currentLanguage = localStorage.getItem('language') || 'en';
+    
+    // Function to apply translations
+    function applyTranslations() {
         document.querySelectorAll('[data-translate]').forEach(element => {
             const key = element.getAttribute('data-translate');
             element.textContent = translations[currentLanguage][key];
         });
-   
+    
         document.querySelectorAll('[data-translate-title]').forEach(element => {
             const key = element.getAttribute('data-translate-title');
             element.setAttribute('title', translations[currentLanguage][key]);
         });
-   
+    
         document.querySelectorAll('#reject-reason-select option').forEach(option => {
             const key = option.getAttribute('data-translate');
             if (key) {
                 option.textContent = translations[currentLanguage][key];
             }
         });
-   
+    
         const chart = Chart.getChart('barChart');
         if (chart) {
             chart.options.plugins.title.text = translations[currentLanguage].zone_performance;
@@ -1098,21 +1099,28 @@ if (backButton) {
             chart.options.scales.x.title.text = translations[currentLanguage].zones;
             chart.update();
         }
-   
+    
         const translateBtn = document.querySelector('.translate-btn span');
         translateBtn.textContent = translations[currentLanguage][currentLanguage === 'en' ? 'translate_to_hindi' : 'translate_to_english'];
-   
+    
         const shiftLabel = document.querySelector('.shift-label');
         if (shiftLabel) {
             const currentShift = document.getElementById('current-shift-data')?.dataset.value || "{{ current_shift|default:'None' }}";
             shiftLabel.innerHTML = `<i class="fas fa-clock"></i> ${translations[currentLanguage].current_shift} ${currentShift}`;
         }
-   
+    
         const countdownElement = document.getElementById('shift-countdown');
         if (countdownElement && !countdownElement.classList.contains('hidden')) {
             const timerText = document.getElementById('countdown-timer').textContent;
             countdownElement.innerHTML = `<i class="fas fa-hourglass-half"></i> ${translations[currentLanguage].shift_ending_in} <span id="countdown-timer">${timerText}</span>`;
         }
+    }
+    
+    // Function to toggle language
+    function toggleLanguage() {
+        currentLanguage = currentLanguage === 'en' ? 'hi' : 'en';
+        localStorage.setItem('language', currentLanguage); // Save to local storage
+        applyTranslations();
     }
    
     // Popup and form handling functions

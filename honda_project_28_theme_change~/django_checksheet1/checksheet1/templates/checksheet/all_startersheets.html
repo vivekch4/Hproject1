@@ -2,6 +2,53 @@
 {% load static %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/all_startersheet.css' %}">
+<style>
+/* Hide default checkboxes */
+.startersheet-checkbox,
+#selectAll {
+    display: none;
+}
+
+/* Style the label as a custom checkbox */
+.startersheet-checkbox + label,
+#selectAll + label {
+    position: relative;
+    padding-left: 25px;
+    cursor: pointer;
+}
+
+/* Custom checkbox square */
+.startersheet-checkbox + label:before,
+#selectAll + label:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    border: 2px solid #ccc; /* Border color when unchecked */
+    background: #fff; /* Background color when unchecked */
+    border-radius: 4px;
+}
+
+/* Checked state */
+.startersheet-checkbox:checked + label:before,
+#selectAll:checked + label:before {
+    background: var(--accent-color); /* Your custom color */
+    border-color: var(--accent-color-solid);
+}
+
+/* Checkmark */
+.startersheet-checkbox:checked + label:after,
+#selectAll:checked + label:after {
+    content: '\2713'; /* Unicode checkmark */
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    color: #fff; /* Checkmark color */
+    font-size: 8px;
+}
+</style>
 {% endblock %}
 {% block title %}All StarterSheets{% endblock %}
 {% block content %}
@@ -9,19 +56,24 @@
 <div class="page-container">
     <div class="header">
         <h2 class="page-title">All StarterSheets</h2>
-        <div class="header-actions">
+       <div class="header-actions">
             <a href="{% url 'create_startersheet' %}" class="create-btn">
                 <i class="fas fa-plus"></i> Create
             </a>
             <a href="{% url 'assign_poc_bulk' %}" class="create-btn">
                 <i class="fas fa-file"></i> Assign Q-Gallery
             </a>
+            <button id="exportSelectedBtn" class="export-btn create-btn" title="Export Selected">
+                <i class="fas fa-download"></i> Export
+            </button>
             <button id="viewToggleBtn" class="toggle-btn" title="Toggle View">
                 <i class="fas fa-table"></i>
             </button>
         </div>
     </div>
-
+  <form id="csrfForm" style="display: none;">
+        {% csrf_token %}
+    </form>
     {% if Starter %}
     <div class="search-container">
         <div class="search-input-container">
@@ -33,12 +85,11 @@
         <table class="startersheets-container">
             <thead>
                 <tr>
+                    <th><input type="checkbox" id="selectAll"><label for="selectAll"></label></th>
                     <th class="sortable" data-sort="name">Name <i class="fas fa-sort"></i></th>
                     <th class="sortable" data-sort="parameters">Parameters <i class="fas fa-sort"></i></th>
                     <th class="sortable" data-sort="line">Line <i class="fas fa-sort"></i></th>
-                    <th class="sortable" data-sort="users">Assigned Users <i class="fas fa-sort"></i></th>
-                    <th>Created By</th>
-                    <th>Created On</th>
+                    <th class="sortable" data-sort="users">Assignee <i class="fas fa-sort"></i></th>
                     <th>Assigned OPS</th>
                     <th>Level 1</th>
                     <th>Level 2</th>
@@ -49,6 +100,7 @@
             <tbody id="startersheetTableBody">
                 {% for startersheet in Starter %}
                 <tr data-id="{{ startersheet.id }}">
+                   <td><input type="checkbox" class="startersheet-checkbox" id="checkbox-{{ startersheet.id }}" value="{{ startersheet.id }}"><label for="checkbox-{{ startersheet.id }}"></label></td>
                     <td>
                         <a href="javascript:void(0);" class="startersheet-name" onclick="showDetailModal({{ startersheet.id }})">
                             {{ startersheet.name }}
@@ -58,7 +110,7 @@
                         <div class="zone-chips">
                             {% with zones=startersheet.zones.all %}
                                 {% if zones|length > 0 %}
-                                    {% for zone in zones|slice:":2" %}
+                                    {% for zone in zones|slice:":1" %}
                                         <span class="zone-chip">{{ zone.name }}</span>
                                     {% endfor %}
                                     
@@ -80,7 +132,7 @@
                         <div class="user-chips">
                             {% with users=startersheet.assigned_users.all %}
                                 {% if users|length > 0 %}
-                                    {% for user in users|slice:":2" %}
+                                    {% for user in users|slice:":1" %}
                                         <span class="user-chip">{{ user.username }}</span>
                                     {% endfor %}
                                     {% if users|length > 2 %}
@@ -88,10 +140,7 @@
                                     {% endif %}
                                 {% endif %}
                             {% endwith %}
-                            <button class="edit-users-btn" onclick="toggleUserDropdown('{{ startersheet.id }}')">
-                                <i class="fas fa-{% if startersheet.assigned_users.all %}pencil-alt{% else %}user-plus{% endif %}"></i>
-                                {% if not startersheet.assigned_users.all %}Assign Users{% endif %}
-                            </button>
+                            
                         </div>
                         <div class="hidden-data users-data">
                             {% for user in startersheet.assigned_users.all %}
@@ -99,12 +148,7 @@
                             {% endfor %}
                         </div>
                     </td>
-                    <td class="content-cell">
-                        {{ startersheet.created_by.username }}
-                    </td>
-                    <td class="content-cell">
-                        {{ startersheet.created_on|date:"Y-m-d" }}
-                    </td>
+                    
                     <td class="content-cell">
                         <div class="poc-links">
                             {% with pocs=startersheet.assigned_pocs.all %}
@@ -132,16 +176,13 @@
                         </div>
                     </td>
                     <td class="content-cell">
-                        <div class="approver-chips">
+                        <div4534 class="approver-chips">
                             {% if startersheet.level_1_approver %}
                                 <span class="approval-chip">{{ startersheet.level_1_approver.username }}</span>
                             {% else %}
                                 <span class="empty-text">Not assigned</span>
                             {% endif %}
-                            <button class="edit-users-btn" onclick="toggleApproverDropdown('level1-{{ startersheet.id }}')">
-                                <i class="fas fa-{% if startersheet.level_1_approver %}pencil-alt{% else %}user-plus{% endif %}"></i>
-                                {% if not startersheet.level_1_approver %}Assign{% endif %}
-                            </button>
+                            
                         </div>
                     </td>
                     <td class="content-cell">
@@ -151,37 +192,24 @@
                             {% else %}
                                 <span class="empty-text">Not assigned</span>
                             {% endif %}
-                            <button class="edit-users-btn" onclick="toggleApproverDropdown('level2-{{ startersheet.id }}')">
-                                <i class="fas fa-{% if startersheet.level_2_approver %}pencil-alt{% else %}user-plus{% endif %}"></i>
-                                {% if not startersheet.level_2_approver %}Assign{% endif %}
-                            </button>
+                            
                         </div>
                     </td>
                     <td class="content-cell">
-                        <form method="post" action="{% url 'toggle_level3_approval' 'startersheet' startersheet.id %}" class="approval-radio">
-                            {% csrf_token %}
-                            <div class="radio-option">
-                                <input type="radio" name="require_level_3" id="require_level_3_yes_{{ startersheet.id }}" value="True"
-                                    {% if startersheet.require_level_3_approval %}checked{% endif %}
-                                    onchange="this.form.submit()">
-                                <label for="require_level_3_yes_{{ startersheet.id }}">Yes</label>
-                            </div>
-                            <div class="radio-option">
-                                <input type="radio" name="require_level_3" id="require_level_3_no_{{ startersheet.id }}" value="False"
-                                    {% if not startersheet.require_level_3_approval %}checked{% endif %}
-                                    onchange="this.form.submit()">
-                                <label for="require_level_3_no_{{ startersheet.id }}">No</label>
-                            </div>
-                        </form>
+                        {% if startersheet.require_level_3_approval %}
+                                Yes
+                            {% else %}
+                                No
+                            {% endif %}
                     </td>
                     <td>
                         <div class="action-buttons">
                             <a href="{% url 'update_startersheet' startersheet.id %}" class="action-button update-btn" title="Update">
-                                <i class="fas fa-edit"></i>
+                                <i class="fas fa-edit"></i> Edit
                             </a>
-                            <a href="{% url 'Add_start_zone' startersheet.id %}" class="action-button add-zone-btn" title="Add Zone">
-                                <i class="fas fa-plus"></i>
-                            </a>
+                            <button class="action-button assi copy-btn" data-checksheet-id="{{ startersheet.id }}" title="Copy">
+                                    <i class="fas fa-copy"></i>
+                                </button>
                         </div>
                     </td>
                 </tr>
@@ -191,100 +219,16 @@
         <div id="noResults" class="no-results" style="display: none;">
             No startersheets found matching your search.
         </div>
-        <div class="pagination">
+        <div class="pagination" id="startersheetPagination">
             <div class="pagination-info">
                 <span>Total StarterSheets: <span id="startersheetCount">{{ Starter|length }}</span></span>
             </div>
-        </div>
-    </div>
-
-    <!-- User Assignment Dropdown (Global) -->
-    <div class="user-dropdown" id="user-dropdown" style="display: none;">
-        <div class="user-dropdown-header">
-            <span class="user-dropdown-title">Assign Users</span>
-            <button type="button" class="user-dropdown-close" onclick="toggleUserDropdown('')">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="user-dropdown-search-container">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterUsers('', this.value)">
-        </div>
-        <form method="post" id="user-dropdown-form" class="user-dropdown-form">
-            {% csrf_token %}
-            <div class="user-list" id="user-list">
-                {% for user in all_users %}
-                    {% if user.role != 'admin' %}
-                        <div class="user-checkbox-item" data-username="{{ user.username|lower }}">
-                            <label class="user-checkbox-label">
-                                <input type="checkbox" name="user_ids" value="{{ user.id }}">
-                                {{ user.username }}
-                                <span class="user-role">{{ user.role }}</span>
-                            </label>
-                        </div>
-                    {% endif %}
-                {% endfor %}
+            <div class="pagination-controls">
+                <button class="pagination-button" id="startersheetPrev" disabled>Previous</button>
+                <div class="pagination-numbers" id="startersheetPageNumbers"></div>
+                <button class="pagination-button" id="startersheetNext">Next</button>
             </div>
-            <button type="submit" class="assign-users-submit">Save Changes</button>
-        </form>
-    </div>
-
-    <!-- Level 1 Approver Dropdown (Global) -->
-    <div class="user-dropdown" id="approver-dropdown-level1" style="display: none;">
-        <div class="user-dropdown-header">
-            <span class="user-dropdown-title">Assign Level 1 Approver</span>
-            <button type="button" class="user-dropdown-close" onclick="toggleApproverDropdown('')">
-                <i class="fas fa-times"></i>
-            </button>
         </div>
-        <div class="user-dropdown-search-container">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterApprovers('level1', this.value)">
-        </div>
-        <form method="post" id="approver-dropdown-form-level1" class="user-dropdown-form">
-            {% csrf_token %}
-            <div class="user-list" id="approver-list-level1">
-                {% for user in all_users %}
-                    <div class="user-radio-item">
-                        <label class="user-radio-label">
-                            <input type="radio" name="approver_id" value="{{ user.id }}">
-                            {{ user.username }}
-                            <span class="user-role">{{ user.role }}</span>
-                        </label>
-                    </div>
-                {% endfor %}
-            </div>
-            <button type="submit" class="assign-users-submit">Save Changes</button>
-        </form>
-    </div>
-
-    <!-- Level 2 Approver Dropdown (Global) -->
-    <div class="user-dropdown" id="approver-dropdown-level2" style="display: none;">
-        <div class="user-dropdown-header">
-            <span class="user-dropdown-title">Assign Level 2 Approver</span>
-            <button type="button" class="user-dropdown-close" onclick="toggleApproverDropdown('')">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="user-dropdown-search-container">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" class="user-dropdown-search" placeholder="Search users..." onkeyup="filterApprovers('level2', this.value)">
-        </div>
-        <form method="post" id="approver-dropdown-form-level2" class="user-dropdown-form">
-            {% csrf_token %}
-            <div class="user-list" id="approver-list-level2">
-                {% for user in all_users %}
-                    <div class="user-radio-item">
-                        <label class="user-radio-label">
-                            <input type="radio" name="approver_id" value="{{ user.id }}">
-                            {{ user.username }}
-                            <span class="user-role">{{ user.role }}</span>
-                        </label>
-                    </div>
-                {% endfor %}
-            </div>
-            <button type="submit" class="assign-users-submit">Save Changes</button>
-        </form>
     </div>
     {% else %}
     <div class="empty-state">
@@ -292,6 +236,22 @@
         <p>No StarterSheets available</p>
     </div>
     {% endif %}
+</div>
+
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <i class="fas fa-question-circle modal-icon"></i>
+            <h3 class="modal-title">Confirm StarterSheet Copy</h3>
+        </div>
+        <div class="modal-content">
+            Are you sure you want to create a copy?
+        </div>
+        <div class="modal-buttons">
+            <button id="cancelBtn" class="modal-button modal-cancel">Cancel</button>
+            <button id="confirmBtn" class="modal-button modal-confirm">Copy StarterSheet</button>
+        </div>
+    </div>
 </div>
 
 {% if messages %}
@@ -328,7 +288,7 @@
 <div class="detail-modal-backdrop" id="detailModalBackdrop"></div>
 <div class="detail-modal" id="detailModal">
     <div class="detail-modal-header">
-        <hassert2 class="detail-modal-title" id="detailModalTitle">StarterSheet Details</h2>
+        <h2 class="detail-modal-title" id="detailModalTitle">StarterSheet Details</h2>
         <button class="detail-modal-close" onclick="closeDetailModal()">
             <i class="fas fa-times"></i>
         </button>
@@ -344,7 +304,133 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 let currentStartersheetId = null;
 let currentApproverType = null;
 
+// Pagination settings
+const rowsPerPage = 5;
+
+// Function to setup pagination for the startersheet table
+function setupPagination() {
+    const tableBody = document.getElementById('startersheetTableBody');
+    const pagination = document.getElementById('startersheetPagination');
+    const prevButton = document.getElementById('startersheetPrev');
+    const nextButton = document.getElementById('startersheetNext');
+    const pageNumbers = document.getElementById('startersheetPageNumbers');
+    const startersheetCount = document.getElementById('startersheetCount');
+    const noResults = document.getElementById('noResults');
+    let currentPage = 1;
+    let allRows = Array.from(tableBody.querySelectorAll('tr'));
+
+    // Function to update displayed rows
+    function updateTable() {
+        // Filter rows based on search term
+        const searchInput = document.getElementById('startersheetSearch');
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+        const filteredRows = allRows.filter(row => {
+            const nameElement = row.querySelector('.startersheet-name');
+            const userChips = row.querySelectorAll('.user-chip');
+            const startersheetName = nameElement ? nameElement.textContent.toLowerCase() : '';
+            const assignedUsers = Array.from(userChips).map(chip => chip.textContent.toLowerCase()).join(' ');
+            return startersheetName.includes(searchTerm) || assignedUsers.includes(searchTerm);
+        });
+
+        // Calculate pagination
+        const totalRows = filteredRows.length;
+        const totalPages = Math.ceil(totalRows / rowsPerPage);
+        currentPage = Math.min(currentPage, totalPages || 1);
+
+        // Hide all rows
+        allRows.forEach(row => row.style.display = 'none');
+
+        // Show rows for current page
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        filteredRows.slice(start, end).forEach(row => row.style.display = '');
+
+        // Update no results message
+        noResults.style.display = totalRows === 0 && allRows.length > 0 ? 'block' : 'none';
+
+        // Update total count
+        startersheetCount.textContent = totalRows;
+
+        // Update pagination controls
+        updatePaginationControls(totalPages, totalRows);
+    }
+
+    // Function to update pagination controls
+    function updatePaginationControls(totalPages, totalFilteredRows) {
+        // Update buttons
+        prevButton.disabled = currentPage === 1;
+        nextButton.disabled = currentPage === totalPages || totalPages === 0;
+
+        // Update page numbers
+        pageNumbers.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+            const pageNum = document.createElement('span');
+            pageNum.className = 'page-number';
+            if (i === currentPage) pageNum.classList.add('active');
+            pageNum.textContent = i;
+            pageNum.addEventListener('click', () => {
+                currentPage = i;
+                updateTable();
+            });
+            pageNumbers.appendChild(pageNum);
+        }
+
+        // Update total count in pagination info
+        const paginationInfo = pagination.querySelector('.pagination-info span');
+        if (paginationInfo) {
+            paginationInfo.textContent = `Total StarterSheets: ${totalFilteredRows}`;
+        }
+    }
+
+    // Event listeners for navigation
+    prevButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            updateTable();
+        }
+    });
+
+    nextButton.addEventListener('click', () => {
+        const searchInput = document.getElementById('startersheetSearch');
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const filteredRows = allRows.filter(row => {
+            const nameElement = row.querySelector('.startersheet-name');
+            const userChips = row.querySelectorAll('.user-chip');
+            const startersheetName = nameElement ? nameElement.textContent.toLowerCase() : '';
+            const assignedUsers = Array.from(userChips).map(chip => chip.textContent.toLowerCase()).join(' ');
+            return startersheetName.includes(searchTerm) || assignedUsers.includes(searchTerm);
+        });
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            updateTable();
+        }
+    });
+
+    // Update table on search change
+    const searchInput = document.getElementById('startersheetSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            currentPage = 1;
+            updateTable();
+        });
+    }
+
+    // Initial update
+    updateTable();
+
+    // Return the updateTable function for external use (e.g., after sorting or view toggle)
+    return updateTable;
+}
+
+// Store the updateTable function for use with sorting and view toggle
+let updateStartersheetTable;
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize pagination
+    updateStartersheetTable = setupPagination();
+
     const toasts = document.querySelectorAll('.toast-message');
     toasts.forEach(toast => {
         setTimeout(() => {
@@ -355,43 +441,103 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     });
 
-    // Table search functionality
-    const searchInput = document.getElementById('startersheetSearch');
-    const tableBody = document.getElementById('startersheetTableBody');
-    const noResults = document.getElementById('noResults');
-    const startersheetCount = document.getElementById('startersheetCount');
-    
-    if (searchInput) {
-        searchInput.addEventListener('keyup', function() {
-            const searchTerm = this.value.toLowerCase().trim();
-            const rows = tableBody.querySelectorAll('tr');
-            let visibleCount = 0;
-            
-            rows.forEach(row => {
-                const nameElement = row.querySelector('.startersheet-name');
-                const userChips = row.querySelectorAll('.user-chip');
-                const startersheetName = nameElement ? nameElement.textContent.toLowerCase() : '';
-                const assignedUsers = Array.from(userChips).map(chip => chip.textContent.toLowerCase()).join(' ');
-                
-                if (startersheetName.includes(searchTerm) || assignedUsers.includes(searchTerm)) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-            
-            if (visibleCount === 0 && rows.length > 0) {
-                noResults.style.display = 'block';
-            } else {
-                noResults.style.display = 'none';
-            }
-            
-            if (startersheetCount) {
-                startersheetCount.textContent = visibleCount;
-            }
+    const copyButtons = document.querySelectorAll('.copy-btn');
+    const confirmModal = document.getElementById('confirmModal');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const confirmBtn = document.getElementById('confirmBtn');
+    let currentCopyChecksheetId = null;
+
+    copyButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            currentCopyChecksheetId = this.getAttribute('data-checksheet-id');
+            confirmModal.style.display = 'flex';
         });
-    }
+    });
+
+    cancelBtn.addEventListener('click', function() {
+        confirmModal.style.display = 'none';
+        currentCopyChecksheetId = null;
+    });
+
+    confirmBtn.addEventListener('click', function() {
+        if (currentCopyChecksheetId) {
+            window.location.href = `/startersheet/${currentCopyChecksheetId}/copy/`;
+        }
+        confirmModal.style.display = 'none';
+        currentCopyChecksheetId = null;
+    });
+
+    confirmModal.addEventListener('click', function(e) {
+        if (e.target === confirmModal) {
+            confirmModal.style.display = 'none';
+            currentCopyChecksheetId = null;
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && confirmModal.style.display === 'flex') {
+            confirmModal.style.display = 'none';
+            currentCopyChecksheetId = null;
+        }
+    });
+
+    // Select All Checkbox functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const startersheetCheckboxes = document.querySelectorAll('.startersheet-checkbox');
+    
+    selectAllCheckbox.addEventListener('change', function() {
+        startersheetCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateStartersheetTable(); // Update table to ensure pagination reflects checkbox state
+    });
+
+    // Update Select All checkbox state based on individual checkboxes
+    startersheetCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const allChecked = Array.from(startersheetCheckboxes).every(cb => cb.checked);
+            const someChecked = Array.from(startersheetCheckboxes).some(cb => cb.checked);
+            selectAllCheckbox.checked = allChecked;
+            selectAllCheckbox.indeterminate = someChecked && !allChecked;
+            updateStartersheetTable(); // Update table to ensure pagination reflects checkbox state
+        });
+    });
+
+    // Export Selected Startersheets
+    const exportBtn = document.getElementById('exportSelectedBtn');
+    exportBtn.addEventListener('click', function() {
+        const selectedIds = Array.from(startersheetCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+        
+        if (selectedIds.length === 0) {
+            alert('Please select at least one startersheet to export.');
+            return;
+        }
+
+        // Send selected IDs to the server
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/export-startersheets/';
+        form.style.display = 'none';
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'startersheet_ids';
+        input.value = JSON.stringify(selectedIds);
+        form.appendChild(input);
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
+                         document.querySelector('[name="csrfmiddlewaretoken"]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    });
 
     // Sorting functionality
     const sortableHeaders = document.querySelectorAll('.sortable');
@@ -413,6 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const icon = this.querySelector('i');
             icon.className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'}`;
             
+            const tableBody = document.getElementById('startersheetTableBody');
             const rows = Array.from(tableBody.querySelectorAll('tr'));
             rows.sort((a, b) => {
                 let aValue, bValue;
@@ -442,6 +589,7 @@ document.addEventListener('DOMContentLoaded', function() {
             rows.forEach(row => tableBody.appendChild(row));
             
             currentSort = { column, direction };
+            updateStartersheetTable(); // Update pagination after sorting
         });
     });
 
@@ -469,6 +617,7 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleBtn.title = isGridView ? 'Switch to Table View' : 'Switch to Grid View';
             
             localStorage.setItem('startersheetView', isGridView ? 'grid-view' : 'table-view');
+            updateStartersheetTable(); // Update pagination after view toggle
         });
     }
 
@@ -571,109 +720,6 @@ document.addEventListener('DOMContentLoaded', function() {
         pdfViewerContainer.innerHTML = '';
     }
 });
-function toggleUserDropdown(startersheetId) {
-    const allDropdowns = document.querySelectorAll('.user-dropdown');
-    allDropdowns.forEach(dropdown => {
-        if (dropdown.id !== 'user-dropdown') {
-            dropdown.style.display = 'none';
-        }
-    });
-
-    const dropdown = document.getElementById('user-dropdown');
-    const form = document.getElementById('user-dropdown-form');
-    const userList = document.getElementById('user-list');
-
-    if (!dropdown || !form || !userList) {
-        console.error('Required elements not found:', { dropdown, form, userList });
-        return;
-    }
-
-    // If startersheetId is empty, hide the dropdown and reset currentStartersheetId
-    if (!startersheetId) {
-        dropdown.style.display = 'none';
-        currentStartersheetId = null;
-        return;
-    }
-
-    // Toggle dropdown visibility
-    if (currentStartersheetId === startersheetId && dropdown.style.display === 'block') {
-        dropdown.style.display = 'none';
-        currentStartersheetId = null;
-        return;
-    }
-
-    currentStartersheetId = startersheetId;
-
-    // Update form action dynamically
-    form.action = `/assign-users/startersheet/${startersheetId}/`;
-
-    // Find the table row
-    const row = document.querySelector(`tr[data-id="${startersheetId}"]`);
-    if (!row) {
-        console.error(`No table row found for startersheet ID: ${startersheetId}`);
-        dropdown.style.display = 'none';
-        return;
-    }
-
-    const assignedUsers = row.querySelector('.users-data');
-    const assignedUsernames = assignedUsers ? Array.from(assignedUsers.querySelectorAll('.user-data')).map(user => user.textContent.trim()) : [];
-
-    const checkboxes = userList.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(checkbox => {
-        const username = checkbox.parentElement.textContent.split('\n')[0].trim();
-        checkbox.checked = assignedUsernames.includes(username);
-    });
-
-    dropdown.style.display = 'block';
-}
-function filterUsers(startersheetId, searchTerm) {
-    searchTerm = searchTerm.toLowerCase();
-    const userItems = document.querySelectorAll('#user-list .user-checkbox-item');
-    let visibleCount = 0;
-
-    userItems.forEach(item => {
-        const username = item.getAttribute('data-username');
-        if (username.includes(searchTerm)) {
-            item.style.display = '';
-            visibleCount++;
-        } else {
-            item.style.display = 'none';
-        }
-    });
-
-    let noResultsMsg = document.getElementById('no-user-results');
-    if (visibleCount === 0) {
-        if (!noResultsMsg) {
-            noResultsMsg = document.createElement('div');
-            noResultsMsg.id = 'no-user-results';
-            noResultsMsg.className = 'no-results';
-            noResultsMsg.textContent = 'No users found matching your search.';
-            document.getElementById('user-list').appendChild(noResultsMsg);
-        }
-        noResultsMsg.style.display = 'block';
-    } else if (noResultsMsg) {
-        noResultsMsg.style.display = 'none';
-    }
-}
-
-document.addEventListener('click', function(event) {
-    const dropdowns = document.querySelectorAll('.user-dropdown');
-    let isClickInsideDropdown = false;
-
-    dropdowns.forEach(dropdown => {
-        if (dropdown.contains(event.target)) {
-            isClickInsideDropdown = true;
-        }
-    });
-
-    if (!isClickInsideDropdown && !event.target.closest('.edit-users-btn')) {
-        dropdowns.forEach(dropdown => {
-            dropdown.style.display = 'none';
-        });
-        currentStartersheetId = null;
-        currentApproverType = null;
-    }
-});
 
 function showDetailModal(startersheetId) {
     const row = document.querySelector(`tr[data-id="${startersheetId}"]`);
@@ -739,67 +785,5 @@ document.getElementById('detailModalBackdrop').addEventListener('click', closeDe
 document.getElementById('detailModal').addEventListener('click', function(event) {
     event.stopPropagation();
 });
-
-function toggleApproverDropdown(approverType) {
-    const allDropdowns = document.querySelectorAll('.user-dropdown');
-    allDropdowns.forEach(dropdown => {
-        if (dropdown.id !== `approver-dropdown-${approverType.split('-')[0]}`) {
-            dropdown.style.display = 'none';
-        }
-    });
-
-    const level = approverType.split('-')[0];
-    const dropdown = document.getElementById(`approver-dropdown-${level}`);
-    const form = document.getElementById(`approver-dropdown-form-${level}`);
-    const userList = document.getElementById(`approver-list-${level}`);
-
-    if (!dropdown || !form || !userList) {
-        console.error('Required elements not found:', { dropdown, form, userList });
-        return;
-    }
-
-    const startersheetId = approverType.split('-')[1];
-
-    if (currentApproverType === approverType && dropdown.style.display === 'block') {
-        dropdown.style.display = 'none';
-        currentApproverType = null;
-        return;
-    }
-
-    currentApproverType = approverType;
-
-    form.action = `/assign-approver/startersheet/${startersheetId}/${level}/`;
-
-    const row = document.querySelector(`tr[data-id="${startersheetId}"]`);
-    const approverField = level === 'level1' ? 'level_1_approver' : 'level_2_approver';
-    const approverUsername = row.querySelector(`td:nth-child(${level === 'level1' ? 8 : 9}) .approval-chip`)?.textContent.trim();
-
-    const radios = userList.querySelectorAll('input[type="radio"]');
-    radios.forEach(radio => {
-        const username = radio.parentElement.textContent.split('\n')[0].trim();
-        radio.checked = username === approverUsername;
-    });
-
-    dropdown.style.display = 'block';
-}
-
-function filterApprovers(level, query) {
-    const dropdown = document.getElementById(`approver-dropdown-${level}`);
-    if (!dropdown) {
-        console.error(`Dropdown not found for level: ${level}`);
-        return;
-    }
-    const items = dropdown.querySelectorAll('.user-radio-item');
-    
-    query = query.toLowerCase();
-    items.forEach(item => {
-        const username = item.querySelector('label').textContent.toLowerCase();
-        if (username.includes(query)) {
-            item.style.display = 'block';
-        } else {
-            item.style.display = 'none';
-        }
-    });
-}
 </script>
 {% endblock %}

@@ -1,14 +1,50 @@
 {% extends 'checksheet/base.html' %}
 {% load static %}
 {% block extra_css %}
-
 <link rel="stylesheet" href="{% static 'css/fill_startersheet.css' %}">
+<style>
+    .input-out-of-range {
+        border: 2px solid red !important;
+    }
+    .reason-popup {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        max-width: 400px;
+        width: 90%;
+    }
+    .reason-popup textarea {
+        width: 100%;
+        height: 100px;
+        margin-bottom: 10px;
+        resize: none;
+    }
+    .reason-popup button {
+        padding: 8px 16px;
+        margin-right: 10px;
+    }
+    .overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
+</style>
 {% endblock %}
 {% block title %}Fill Checksheet{% endblock %}
-
 <script src="{% static 'js/offline.js' %}"></script>
 {% block content %}
-
 {% if selected_startersheet %}
 <div class="page-container">
     <div class="header">
@@ -31,12 +67,10 @@
                 Please fill in all required fields and check all boxes before submitting.
             </div>
             <div class="form-layout">
-                <!-- Right column for zone inputs as table -->
                 <div class="zone-inputs-container">
                     <div class="zone-inputs-title">
                         <i class="fas fa-sliders-h"></i> <span data-translate="parameter_inputs">Parameter Inputs</span>
                     </div>
-                    
                     <table class="zones-table">
                         <thead>
                             <tr>
@@ -85,10 +119,14 @@
                                         </div>
                                     {% elif zone.type == "int" %}
                                         <input type="number" name="zone_{{ zone.id }}" class="zone-input"
-                                               min="0" placeholder="Enter value" required>
+                                               min="0" placeholder="Enter value" required
+                                               data-min="{{ zone.min_value }}" data-max="{{ zone.max_value }}"
+                                               oninput="validateInput(this)">
                                     {% elif zone.type == "float" %}
                                         <input type="number" name="zone_{{ zone.id }}" class="zone-input"
-                                               step="0.01" placeholder="Enter value" required>
+                                               step="0.01" placeholder="Enter value" required
+                                               data-min="{{ zone.min_value }}" data-max="{{ zone.max_value }}"
+                                               oninput="validateInput(this)">
                                     {% endif %}
                                 </td>
                             </tr>
@@ -110,9 +148,32 @@
         <h3 data-translate="form_saved_successfully">Form Saved Successfully!</h3>
         <button id="success-ok-btn" data-translate="ok">OK</button>
     </div>
+
+    <!-- Reason popup for out-of-range values -->
+    <div class="overlay" id="reason-overlay"></div>
+    <div id="reason-popup" class="reason-popup">
+        <h3 data-translate="out_of_range_title">Out of Range Values Detected</h3>
+        <p data-translate="out_of_range_message">Some values are outside the specified range. Please provide a reason:</p>
+        <textarea id="reason-text" placeholder="Enter reason for out-of-range values" required></textarea>
+        <button id="reason-submit-btn" data-translate="submit">Submit</button>
+        <button id="reason-cancel-btn" data-translate="cancel">Cancel</button>
+    </div>
 </div>
 
 <script>
+    // Define validateInput globally to ensure it's accessible
+    function validateInput(input) {
+        if (input.type !== 'number') return;
+        const value = parseFloat(input.value);
+        const min = parseFloat(input.getAttribute('data-min'));
+        const max = parseFloat(input.getAttribute('data-max'));
+        if (isNaN(value) || (min && value < min) || (max && value > max)) {
+            input.classList.add('input-out-of-range');
+        } else {
+            input.classList.remove('input-out-of-range');
+        }
+    }
+
     document.body.classList.add('operator-dashboard');
     document.addEventListener('DOMContentLoaded', function () {
         // Translation object
@@ -132,7 +193,11 @@
                 form_saved_offline: "Form Saved Offline - Will Sync When Online",
                 error_saving_data: "Error Saving Data!",
                 current_shift: "Current Shift",
-                form_error_message: "Please fill in all required fields and check all boxes before submitting."
+                form_error_message: "Please fill in all required fields and check all boxes before submitting.",
+                out_of_range_title: "Out of Range Values Detected",
+                out_of_range_message: "Some values are outside the specified range. Please provide a reason:",
+                submit: "Submit",
+                cancel: "Cancel"
             },
             hi: {
                 page_title: "{{ selected_startersheet.name }}",
@@ -149,11 +214,15 @@
                 form_saved_offline: "फॉर्म ऑफलाइन सहेजा गया - ऑनलाइन होने पर सिंक होगा",
                 error_saving_data: "डेटा सहेजने में त्रुटि!",
                 current_shift: "वर्तमान पाली",
-                form_error_message: "कृपया सभी आवश्यक फ़ील्ड भरें और सभी बॉक्स चेक करें।"
+                form_error_message: "कृपया सभी आवश्यक फ़ील्ड भरें और सभी बॉक्स चेक करें।",
+                out_of_range_title: "रेंज से बाहर मान पाए गए",
+                out_of_range_message: "कुछ मान निर्दिष्ट रेंज से बाहर हैं। कृपया कारण प्रदान करें:",
+                submit: "जमा करें",
+                cancel: "रद्द करें"
             }
         };
 
-        let currentLanguage = 'en'; // Default language
+        let currentLanguage = 'en';
 
         // Add shift display to navbar
         const currentShift = "{{ current_shift }}";
@@ -171,39 +240,45 @@
             updateDateTime();
         }
 
-        // Function to update text based on language
         function updateLanguage(lang) {
             currentLanguage = lang;
             document.querySelectorAll('[data-translate]').forEach(element => {
                 const key = element.getAttribute('data-translate');
-                element.textContent = translations[lang][key];
+                if (translations[lang] && translations[lang][key]) {
+                    element.textContent = translations[lang][key];
+                }
             });
             const toggleBtn = document.getElementById('language-toggle');
-            toggleBtn.textContent = lang === 'en' ? 'हिन्दी' : 'English';
+            if (toggleBtn) {
+                toggleBtn.textContent = lang === 'en' ? 'हिन्दी' : 'English';
+            }
             document.documentElement.setAttribute('lang', lang);
         }
 
-        // Initial language setup
         updateLanguage(currentLanguage);
 
-        // Language toggle button event
-        document.getElementById('language-toggle').addEventListener('click', () => {
-            const newLang = currentLanguage === 'en' ? 'hi' : 'en';
-            updateLanguage(newLang);
-        });
+        const languageToggle = document.getElementById('language-toggle');
+        if (languageToggle) {
+            languageToggle.addEventListener('click', () => {
+                const newLang = currentLanguage === 'en' ? 'hi' : 'en';
+                updateLanguage(newLang);
+            });
+        }
 
-        // Update date and time
         function updateDateTime() {
-            const now = new Date();
-            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-            const dateStr = now.toLocaleDateString(undefined, dateOptions);
-            const timeStr = now.toLocaleTimeString(undefined, timeOptions);
-            document.getElementById('current-datetime').textContent = `${dateStr} ${timeStr}`;
+            const dateTimeElement = document.getElementById('current-datetime');
+            if (dateTimeElement) {
+                const now = new Date();
+                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+                const dateStr = now.toLocaleDateString(undefined, dateOptions);
+                const timeStr = now.toLocaleTimeString(undefined, timeOptions);
+                dateTimeElement.textContent = `${dateStr} ${timeStr}`;
+            }
             setTimeout(updateDateTime, 1000);
         }
 
-        // Form handling
+        // Get DOM elements
         const form = document.getElementById("starter-sheet-form");
         const modal = document.getElementById("imageModal");
         const modalImg = document.getElementById("modalImage");
@@ -211,6 +286,11 @@
         const successPopup = document.getElementById('success-popup');
         const successOkBtn = document.getElementById('success-ok-btn');
         const formErrorMessage = document.getElementById('form-error-message');
+        const reasonPopup = document.getElementById('reason-popup');
+        const reasonOverlay = document.getElementById('reason-overlay');
+        const reasonSubmitBtn = document.getElementById('reason-submit-btn');
+        const reasonCancelBtn = document.getElementById('reason-cancel-btn');
+        const reasonText = document.getElementById('reason-text');
 
         // Add animation to zone items
         const zoneItems = document.querySelectorAll('.zone-item');
@@ -224,52 +304,65 @@
             }, 100 + (index * 50));
         });
 
-        // Setup image modal
+        // Image zoom functionality
         images.forEach(img => {
             img.addEventListener("click", function() {
-                modal.style.display = "flex";
-                modalImg.src = this.src;
-                modalImg.style.opacity = 0;
-                setTimeout(() => {
-                    modalImg.style.opacity = 1;
-                    modalImg.style.transition = 'opacity 0.3s ease';
-                }, 10);
+                if (modal && modalImg) {
+                    modal.style.display = "flex";
+                    modalImg.src = this.src;
+                    modalImg.style.opacity = 0;
+                    setTimeout(() => {
+                        modalImg.style.opacity = 1;
+                        modalImg.style.transition = 'opacity 0.3s ease';
+                    }, 10);
+                }
             });
         });
 
-        modal.addEventListener("click", function(e) {
-            if (e.target === modal) {
-                modal.style.display = "none";
-            }
-        });
-
-        // Success popup OK button handler
-        successOkBtn.addEventListener('click', function() {
-            window.location.href = "{% url 'operator_dashboard' %}";
-        });
-
-        // Load saved form data if any
-        if (localStorage.getItem("offlineFormData")) {
-            let savedData = JSON.parse(localStorage.getItem("offlineFormData"));
-            savedData.zones?.forEach(zone => {
-                let field = document.querySelector(`[name='zone_${zone.id}']`);
-                if (field) {
-                    if (field.type === "radio") {
-                        const radioYes = document.getElementById(`zone_${zone.id}_yes`);
-                        const radioNo = document.getElementById(`zone_${zone.id}_no`);
-                        if (zone.value === "Yes" && radioYes) {
-                            radioYes.checked = true;
-                        } else if (zone.value === "No" && radioNo) {
-                            radioNo.checked = true;
-                        }
-                    } else {
-                        field.value = zone.value;
-                    }
+        if (modal) {
+            modal.addEventListener("click", function(e) {
+                if (e.target === modal) {
+                    modal.style.display = "none";
                 }
             });
         }
 
-        // Add subtle highlight effect to form fields when focused
+        if (successOkBtn) {
+            successOkBtn.addEventListener('click', function() {
+                // Use Django's url template tag if available, otherwise fallback
+                const dashboardUrl = "{% url 'operator_dashboard' %}";
+                window.location.href = dashboardUrl;
+            });
+        }
+
+        // Load saved offline data
+        if (localStorage.getItem("offlineFormData")) {
+            try {
+                let savedData = JSON.parse(localStorage.getItem("offlineFormData"));
+                savedData.zones?.forEach(zone => {
+                    let field = document.querySelector(`[name='zone_${zone.id}']`);
+                    if (field) {
+                        if (field.type === "radio") {
+                            const radioYes = document.getElementById(`zone_${zone.id}_yes`);
+                            const radioNo = document.getElementById(`zone_${zone.id}_no`);
+                            if (zone.value === "Yes" && radioYes) {
+                                radioYes.checked = true;
+                            } else if (zone.value === "No" && radioNo) {
+                                radioNo.checked = true;
+                            }
+                        } else {
+                            field.value = zone.value;
+                            validateInput(field); // Validate loaded data
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading offline data:', error);
+                localStorage.removeItem("offlineFormData");
+            }
+        }
+
+        // Add focus/blur effects to form inputs
         const formInputs = document.querySelectorAll('input, select');
         formInputs.forEach(input => {
             input.addEventListener('focus', () => {
@@ -284,6 +377,7 @@
         function validateForm() {
             let isValid = true;
             const inputs = document.querySelectorAll(".zone-input");
+            
             inputs.forEach(input => {
                 if (!input.value.trim()) {
                     input.classList.add('input-error');
@@ -291,9 +385,9 @@
                 } else {
                     input.classList.remove('input-error');
                 }
+                validateInput(input);
             });
-            
-            // Check radio buttons
+
             const checkboxZones = document.querySelectorAll(".yes-no-container");
             checkboxZones.forEach(container => {
                 const name = container.querySelector('input').name;
@@ -305,8 +399,8 @@
                     container.classList.remove('input-error');
                 }
             });
-            
-            if (!isValid) {
+
+            if (!isValid && formErrorMessage) {
                 formErrorMessage.style.display = 'block';
                 setTimeout(() => {
                     formErrorMessage.style.display = 'none';
@@ -315,96 +409,232 @@
             return isValid;
         }
 
-        // Form submission handling
-        form.addEventListener("submit", function (event) {
-            event.preventDefault();
-            if (!validateForm()) {
-                return;
-            }
-            let zonesData = [];
-            const currentShift = "{{ current_shift }}";
-            
-            // Get all number inputs
-            const numberInputs = document.querySelectorAll(".zone-input");
-            numberInputs.forEach(input => {
-                zonesData.push({ id: input.name.split("_")[1], value: input.value });
-            });
-            
-            // Get all radio button selections
-            const radioGroups = document.querySelectorAll(".yes-no-container");
-            radioGroups.forEach(container => {
-                const name = container.querySelector('input').name;
-                const checkedRadio = document.querySelector(`input[name="${name}"]:checked`);
-                if (checkedRadio) {
-                    zonesData.push({ 
-                        id: name.split("_")[1], 
-                        value: checkedRadio.value 
-                    });
+        // Check if any inputs are out of range
+        function checkOutOfRange() {
+            const inputs = document.querySelectorAll(".zone-input.input-out-of-range");
+            return inputs.length > 0;
+        }
+
+        let formDataToSubmit = null;
+
+        // Form submission handler
+        if (form) {
+            form.addEventListener("submit", function (event) {
+                event.preventDefault();
+                
+                if (!validateForm()) {
+                    return;
+                }
+
+                let zonesData = [];
+                const currentShift = "{{ current_shift }}";
+
+                // Collect number inputs
+                const numberInputs = document.querySelectorAll(".zone-input");
+                numberInputs.forEach(input => {
+                    const zoneId = input.name.split("_")[1];
+                    if (zoneId && input.value.trim()) {
+                        zonesData.push({ id: zoneId, value: input.value.trim() });
+                    }
+                });
+
+                // Collect radio button inputs
+                const radioGroups = document.querySelectorAll(".yes-no-container");
+                radioGroups.forEach(container => {
+                    const name = container.querySelector('input').name;
+                    const checkedRadio = document.querySelector(`input[name="${name}"]:checked`);
+                    if (checkedRadio) {
+                        const zoneId = name.split("_")[1];
+                        if (zoneId) {
+                            zonesData.push({ id: zoneId, value: checkedRadio.value });
+                        }
+                    }
+                });
+
+                formDataToSubmit = { 
+                    shift: currentShift, 
+                    zones: zonesData 
+                };
+
+                // Check if there are out-of-range values
+                if (checkOutOfRange()) {
+                    if (reasonPopup && reasonOverlay && reasonText) {
+                        reasonPopup.style.display = 'block';
+                        reasonOverlay.style.display = 'block';
+                        reasonText.value = '';
+                        reasonText.focus();
+                    }
+                } else {
+                    sendFormDataToServer(formDataToSubmit);
                 }
             });
-            
-            let formData = { shift: currentShift, zones: zonesData };
-            if (!navigator.onLine) {
-                localStorage.setItem("offlineFormData", JSON.stringify(formData));
-                showSuccessPopup("Form Saved Offline - Will Sync When Online", "#f59e0b");
-            } else {
-                sendFormDataToServer(formData);
-            }
-        });
+        }
 
-        // Listen for internet connection
+        // Reason popup submit button
+        if (reasonSubmitBtn) {
+            reasonSubmitBtn.addEventListener('click', function() {
+                if (!reasonText) return;
+                
+                const reason = reasonText.value.trim();
+                if (!reason) {
+                    reasonText.classList.add('input-error');
+                    return;
+                }
+                
+                reasonText.classList.remove('input-error');
+                formDataToSubmit.out_of_range_reason = reason;
+                
+                if (reasonPopup && reasonOverlay) {
+                    reasonPopup.style.display = 'none';
+                    reasonOverlay.style.display = 'none';
+                }
+                
+                if (!navigator.onLine) {
+                    localStorage.setItem("offlineFormData", JSON.stringify(formDataToSubmit));
+                    showSuccessPopup("Form Saved Offline - Will Sync When Online", "#f59e0b");
+                } else {
+                    sendFormDataToServer(formDataToSubmit);
+                }
+            });
+        }
+
+        // Reason popup cancel button
+        if (reasonCancelBtn) {
+            reasonCancelBtn.addEventListener('click', function() {
+                if (reasonPopup && reasonOverlay) {
+                    reasonPopup.style.display = 'none';
+                    reasonOverlay.style.display = 'none';
+                }
+            });
+        }
+
+        // Handle online event for offline form submission
         window.addEventListener("online", function () {
             if (localStorage.getItem("offlineFormData")) {
-                let savedData = JSON.parse(localStorage.getItem("offlineFormData"));
-                sendFormDataToServer(savedData);
+                try {
+                    let savedData = JSON.parse(localStorage.getItem("offlineFormData"));
+                    sendFormDataToServer(savedData);
+                } catch (error) {
+                    console.error('Error processing offline data:', error);
+                    localStorage.removeItem("offlineFormData");
+                }
             }
         });
 
-        // Helper function to send form data to server
+        // Function to get CSRF token
+        function getCSRFToken() {
+            // Try to get from form first
+            const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (csrfInput) {
+                return csrfInput.value;
+            }
+            
+            // Fallback to cookie method
+            const cookieValue = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('csrftoken='))
+                ?.split('=')[1];
+            
+            return cookieValue || "{{ csrf_token }}";
+        }
+
+        // Main function to send form data to server
         function sendFormDataToServer(data) {
-            fetch(window.location.href, {
+            console.log('Sending form data:', data);
+            
+            const currentUrl = window.location.href;
+            const csrfToken = getCSRFToken();
+            
+            console.log('Submitting to URL:', currentUrl);
+            console.log('CSRF Token:', csrfToken);
+            
+            fetch(currentUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": "{{ csrf_token }}"
+                    "X-CSRFToken": csrfToken,
+                    "X-Requested-With": "XMLHttpRequest"
                 },
                 body: JSON.stringify(data)
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    return response.json();
+                } else {
+                    throw new Error("Server returned non-JSON response");
+                }
+            })
             .then(data => {
+                console.log('Response data:', data);
+                
                 if (data.message === "Data saved successfully") {
                     localStorage.removeItem("offlineFormData");
                     showSuccessPopup("Form Saved Successfully!", "#10b981");
                 } else if (data.error === "Data already filled for this user, shift, line, and sheet today") {
                     showSuccessPopup("Form already submitted for today!", "#10b981");
+                } else if (data.error) {
+                    showSuccessPopup(`Error: ${data.error}`, "#ef4444");
                 } else {
                     showSuccessPopup("Error Saving Data!", "#ef4444");
                 }
             })
             .catch(error => {
                 console.error("Error saving data:", error);
-                showSuccessPopup("Error Saving Data!", "#ef4444");
+                
+                // If offline, save data locally
+                if (!navigator.onLine) {
+                    localStorage.setItem("offlineFormData", JSON.stringify(data));
+                    showSuccessPopup("Form Saved Offline - Will Sync When Online", "#f59e0b");
+                } else {
+                    showSuccessPopup(`Error: ${error.message}`, "#ef4444");
+                }
             });
         }
-    
-        // Helper function to show success popup with OK button
+
+        // Function to show success/error popup
         function showSuccessPopup(message, color) {
-            const popup = document.getElementById('success-popup');
+            if (!successPopup) return;
+            
+            const popup = successPopup;
             const currentLang = document.documentElement.getAttribute('lang') || 'en';
-            popup.querySelector('h3').textContent =
-                message === "Form already submitted for today!" ? 
-                (currentLang === 'hi' ? "आज के लिए फॉर्म पहले ही जमा किया जा चुका है!" : message) :
-                translations[currentLang][
-                    message.includes("Offline") ? 'form_saved_offline' :
-                    message.includes("Error") ? 'error_saving_data' :
-                    'form_saved_successfully'
-                ];
+            const messageElement = popup.querySelector('h3');
+            
+            if (messageElement) {
+                if (message === "Form already submitted for today!") {
+                    messageElement.textContent = currentLang === 'hi' ? 
+                        "आज के लिए फॉर्म पहले ही जमा किया जा चुका है!" : message;
+                } else if (translations[currentLang]) {
+                    const translationKey = 
+                        message.includes("Offline") ? 'form_saved_offline' :
+                        message.includes("Error") ? 'error_saving_data' :
+                        'form_saved_successfully';
+                    
+                    messageElement.textContent = translations[currentLang][translationKey] || message;
+                } else {
+                    messageElement.textContent = message;
+                }
+            }
+            
             popup.style.backgroundColor = color;
             popup.style.display = 'block';
         }
+
+        // Add input validation listeners to all number inputs
+        document.querySelectorAll('.zone-input[type="number"]').forEach(input => {
+            input.addEventListener('input', function() {
+                validateInput(this);
+            });
+        });
     });
 </script>
-
 
 {% endif %}
 {% endblock %}

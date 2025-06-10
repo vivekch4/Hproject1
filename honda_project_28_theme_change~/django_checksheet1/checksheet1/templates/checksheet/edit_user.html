@@ -1,11 +1,11 @@
 {% extends 'checksheet/base.html' %}
 {% load static %}
 {% block extra_css %}
-
 <link rel="stylesheet" href="{% static 'css/edit_user.css' %}">
 {% endblock %}
 {% block title %}Edit User{% endblock %}
 {% block content %}
+
 
 
 <div class="page-container">
@@ -43,8 +43,6 @@
                     Please enter a username
                 </div>
             </div>
-            
-            
 
             <div class="form-group">
                 <label class="form-label" for="email">Email</label>
@@ -61,7 +59,7 @@
                     Please enter an email address
                 </div>
             </div>
-            
+
             <div class="form-group">
                 <label class="form-label" for="phone_number">Phone Number</label>
                 <input
@@ -77,6 +75,7 @@
                     Please enter a valid phone number
                 </div>
             </div>
+
             <div class="form-group">
                 <label class="form-label" for="password">New Password</label>
                 <input
@@ -87,7 +86,7 @@
                     placeholder="Enter new password (leave blank to keep current)"
                 >
             </div>
-            
+
             <div class="form-group">
                 <label class="form-label" for="confirm_password">Confirm Password</label>
                 <input
@@ -101,6 +100,7 @@
                     Passwords do not match
                 </div>
             </div>
+
             <div class="form-group">
                 <label class="form-label" for="role">Role</label>
                 <select id="role" name="role" required class="form-select">
@@ -113,38 +113,55 @@
                     Please select a role
                 </div>
             </div>
+
+            <div class="form-group">
+                <label class="form-label" for="is_active">Active Status</label>
+                <div class="toggle-container">
+                    <label for="is_active" class="toggle-label">Account is {% if user.is_active %}Active{% else %}Inactive{% endif %}</label>
+                    <label class="toggle-switch">
+                        <input
+                            type="checkbox"
+                            id="is_active"
+                            name="is_active"
+                            {% if user.is_active %}checked{% endif %}
+                        >
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
         </form>
     </div>
 </div>
 
+<script>
+    document.getElementById("editUserForm").addEventListener("submit", function(event) {
+        // Get password values
+        const password = document.getElementById("password").value;
+        const confirmPassword = document.getElementById("confirm_password").value;
+        const passwordValidation = document.getElementById("password-validation");
 
-
-    <script>
-
-        document.getElementById("editUserForm").addEventListener("submit", function(event) {
-            // Get password values
-            const password = document.getElementById("password").value;
-            const confirmPassword = document.getElementById("confirm_password").value;
-            const passwordValidation = document.getElementById("password-validation");
-            
-            // If password is provided, check if it matches confirmation
-            if (password) {
-                if (password !== confirmPassword) {
-                    passwordValidation.style.display = "block";
-                    event.preventDefault(); // Prevent form submission
-                    return false;
-                } else {
-                    passwordValidation.style.display = "none";
-                }
+        // If password is provided, check if it matches confirmation
+        if (password) {
+            if (password !== confirmPassword) {
+                passwordValidation.style.display = "block";
+                event.preventDefault(); // Prevent form submission
+                return false;
+            } else {
+                passwordValidation.style.display = "none";
             }
-            
-            return true;
-        });
+        }
 
-        document.getElementById("submit-btn").addEventListener("click", function () {
-            document.getElementById("editUserForm").submit();
-        });
-  
-    
+        return true;
+    });
+
+    document.getElementById("submit-btn").addEventListener("click", function () {
+        document.getElementById("editUserForm").submit();
+    });
+
+    // Update toggle label text dynamically
+    document.getElementById("is_active").addEventListener("change", function() {
+        const toggleLabel = document.querySelector(".toggle-label");
+        toggleLabel.textContent = this.checked ? "Account is Active" : "Account is Inactive";
+    });
 </script>
 {% endblock %}

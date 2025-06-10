@@ -154,8 +154,7 @@ body.white-mode .startersheets-container tbody tr:hover {
 }
 
 /* Enhanced Grid View Styles for Startersheets */
-
-/* Enhanced Grid View Styles for Startersheets */
+/* Enhanced Grid View Styles for StarterSheets */
 .startersheets-container.grid-view {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -205,32 +204,42 @@ body.white-mode .startersheets-container.grid-view tr:hover {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
-/* Card Header - Name Field */
+/* Top Section: Checkbox and StarterSheet Name */
 .startersheets-container.grid-view td:nth-child(1) {
+    order: 0; /* Checkbox at the top */
+    padding: 0;
+    border-bottom: none;
+    position: absolute;
+    top: 16px;
+    left: 16px;
+}
+
+.startersheets-container.grid-view td:nth-child(2) {
+    order: 1; /* StarterSheet name right below the checkbox */
     padding: 0 0 12px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 12px;
-    order: -1;
 }
 
-body.white-mode .startersheets-container.grid-view td:nth-child(1) {
+body.white-mode .startersheets-container.grid-view td:nth-child(2) {
     border-bottom: 1px solid #e2e8f0;
 }
 
-.startersheets-container.grid-view td:nth-child(1)::before {
+.startersheets-container.grid-view td:nth-child(2)::before {
     display: none;
 }
 
-.startersheets-container.grid-view td:nth-child(1) .startersheet-name {
+.startersheets-container.grid-view td:nth-child(2) .startersheet-name {
     font-size: 1.1rem;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.95);
     text-decoration: none;
     display: block;
     line-height: 1.4;
+    padding-left: 30px; /* Adjust for checkbox width */
 }
 
-body.white-mode .startersheets-container.grid-view td:nth-child(1) .startersheet-name {
+body.white-mode .startersheets-container.grid-view td:nth-child(2) .startersheet-name {
     color: #1e293b;
 }
 
@@ -265,91 +274,75 @@ body.white-mode .startersheets-container.grid-view td::before {
 }
 
 /* Field Specific Styles */
-.startersheets-container.grid-view td:nth-child(2) {
-    order: 1;
-}
-
-.startersheets-container.grid-view td:nth-child(2)::before {
-    content: "Parameter:";
-}
-
 .startersheets-container.grid-view td:nth-child(3) {
-    order: 2;
+    order: 2; /* Parameters */
 }
 
 .startersheets-container.grid-view td:nth-child(3)::before {
-    content: "Line:";
+    content: "Parameters:";
 }
 
 .startersheets-container.grid-view td:nth-child(4) {
-    order: 3;
+    order: 3; /* Line */
 }
 
 .startersheets-container.grid-view td:nth-child(4)::before {
-    content: "Assigned User:";
+    content: "Line:";
 }
 
 .startersheets-container.grid-view td:nth-child(5) {
-    order: 4;
+    order: 4; /* Assignee */
 }
 
 .startersheets-container.grid-view td:nth-child(5)::before {
-    content: "Created By:";
+    content: "Assignee:";
 }
 
 .startersheets-container.grid-view td:nth-child(6) {
-    order: 5;
+    order: 5; /* Assigned OPS */
 }
 
 .startersheets-container.grid-view td:nth-child(6)::before {
-    content: "Created On:";
-}
-
-.startersheets-container.grid-view td:nth-child(7) {
-    order: 6;
-}
-
-.startersheets-container.grid-view td:nth-child(7)::before {
     content: "Assigned OPS:";
 }
 
-.startersheets-container.grid-view td:nth-child(8) {
-    order: 7;
+.startersheets-container.grid-view td:nth-child(7) {
+    order: 6; /* Level 1 */
 }
 
-.startersheets-container.grid-view td:nth-child(8)::before {
+.startersheets-container.grid-view td:nth-child(7)::before {
     content: "Level 1:";
 }
 
-.startersheets-container.grid-view td:nth-child(9) {
-    order: 8;
+.startersheets-container.grid-view td:nth-child(8) {
+    order: 7; /* Level 2 */
 }
 
-.startersheets-container.grid-view td:nth-child(9)::before {
+.startersheets-container.grid-view td:nth-child(8)::before {
     content: "Level 2:";
 }
 
-.startersheets-container.grid-view td:nth-child(10) {
-    order: 9;
+.startersheets-container.grid-view td:nth-child(9) {
+    order: 8; /* Level 3 */
 }
 
-.startersheets-container.grid-view td:nth-child(10)::before {
+.startersheets-container.grid-view td:nth-child(9)::before {
     content: "Level 3:";
 }
 
 /* Actions Row */
-.startersheets-container.grid-view td:nth-child(11) {
-    order: 11;
+.startersheets-container.grid-view td:nth-child(10) {
+    order: 10; /* Ensure actions are at the bottom */
     margin-top: auto; /* Pushes actions to the bottom */
     padding-top: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-body.white-mode .startersheets-container.grid-view td:nth-child(11) {
+body.white-mode .startersheets-container.grid-view td:nth-child(10) {
     border-top: 1px solid #e2e8f0;
 }
 
-.startersheets-container.grid-view td:nth-child(11)::before {
+.startersheets-container.grid-view td:nth-child(10)::before {
     content: "Actions:";
 }
 
@@ -473,7 +466,6 @@ body.white-mode .startersheets-container.grid-view .action-button {
 
 body.white-mode .startersheets-container.grid-view .action-button.update-btn {
     background-color: rgba(16, 185, 129, 0.1);
-    color: #10b981;
 }
 
 .startersheets-container.grid-view .action-button.update-btn:hover {
@@ -484,21 +476,21 @@ body.white-mode .startersheets-container.grid-view .action-button.update-btn:hov
     background-color: rgba(16, 185, 129, 0.2);
 }
 
-.startersheets-container.grid-view .action-button.add-zone-btn {
+.startersheets-container.grid-view .action-button.copy-btn {
     background-color: rgba(59, 130, 246, 0.2);
     color: rgba(224, 231, 255, 0.9);
 }
 
-body.white-mode .startersheets-container.grid-view .action-button.add-zone-btn {
+body.white-mode .startersheets-container.grid-view .action-button.copy-btn {
     background-color: rgba(59, 130, 246, 0.1);
     color: #3b82f6;
 }
 
-.startersheets-container.grid-view .action-button.add-zone-btn:hover {
+.startersheets-container.grid-view .action-button.copy-btn:hover {
     background-color: rgba(59, 130, 246, 0.3);
 }
 
-body.white-mode .startersheets-container.grid-view .action-button.add-zone-btn:hover {
+body.white-mode .startersheets-container.grid-view .action-button.copy-btn:hover {
     background-color: rgba(59, 130, 246, 0.2);
 }
 
@@ -548,7 +540,7 @@ body.white-mode .startersheets-container.grid-view .action-button.add-zone-btn:h
     }
 }
 
-/* For better spacing on mobile (existing rule, retained for consistency) */
+/* For better spacing on mobile */
 @media (max-width: 640px) {
     .startersheets-container.grid-view .poc-links {
         flex-direction: column;
@@ -559,7 +551,6 @@ body.white-mode .startersheets-container.grid-view .action-button.add-zone-btn:h
         max-width: 100%;
     }
 }
-
 /* Content cells */
 .content-cell {
     max-width: 180px;
@@ -688,22 +679,19 @@ body.white-mode .startersheet-name:hover {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
+    padding: 0 10px;
     height: 32px;
     border-radius: 6px;
+    gap: 6px;
     font-size: 0.875rem;
     text-decoration: none;
     transition: all 0.2s;
-    color: rgba(255, 255, 255, 0.7);
-    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    background-color: var(--accent-color);
 }
-
-.update-btn {
-    color: #10b981;
-}
-
-.update-btn:hover {
-    background-color: rgba(16, 185, 129, 0.2);
+.action-button:hover {
+    background-color: var(--accent-color-solid);
+    transform: translateY(-2px);
 }
 
 .add-zone-btn {
@@ -1428,3 +1416,199 @@ body.white-mode .toast-error {
     scrollbar-color: #1a1f2694 rgba(255, 255, 255, 0.1);
     scrollbar-width: thin;
 }
+button#exportSelectedBtn {
+    border: none;
+}
+
+
+
+/* Modal styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal {
+    padding: 2rem;
+    background-color: #1e293b;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+    animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.modal-icon {
+    color: #3b82f6;
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+}
+
+.modal-title {
+    color: #ffffff;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-content {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.modal-button {
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+}
+
+.modal-cancel {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+body.white-mode .modal-cancel {
+    background-color: #f1f3f5;
+    color: var(--text-light);
+}
+
+.modal-cancel:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.modal-confirm {
+    background: linear-gradient(45deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.modal-confirm:hover {
+    background: linear-gradient(45deg, #2563eb, #1d4ed8);
+}
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-button {
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+body.white-mode .pagination-button {
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    color: var(--text-light);
+}
+
+.pagination-button:hover:not(:disabled) {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color-solid);
+}
+
+.pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-numbers {
+    display: flex;
+    gap: 4px;
+}
+
+.page-number {
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+button.action-button.assi.copy-btn {
+    border: none;
+}
+
+body.white-mode .page-number {
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    color: var(--text-light);
+}
+
+.page-number.active {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color-solid);
+    color: var(--text-light);
+}
+body.white-mode .page-number.active {
+    background-color: var(--accent-color-solid);
+   
+    color: white;
+}
+
+.page-number:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+
+

@@ -361,7 +361,7 @@ class FilledStarterSheet(models.Model):
         max_length=1, choices=[("A", "Shift A"), ("B", "Shift B"), ("C", "Shift C")]
     )
     line = models.CharField(max_length=100, blank=True, null=True)
-
+    out_of_range_reason = models.TextField(blank=True, null=True)
     # Approval status
     approval_status = models.CharField(
         max_length=20,
@@ -547,60 +547,90 @@ class Shifttime(models.Model):
     
     
 class RejectionAlertConfig(models.Model):
-    # Store how many rejections should trigger an alert
     rejection_threshold = models.IntegerField(default=2)
-
-    # Store the phone numbers as JSON
-    phone_numbers = models.JSONField(encoder=DjangoJSONEncoder, default=dict)
-    last_sms_sent = models.DateField(null=True, blank=True)
-    # Timestamp fields for record keeping
+    # Store user IDs, phone numbers, percentages, and last_sms_sent as JSON
+    alert_recipients = models.JSONField(encoder=DjangoJSONEncoder, default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     @staticmethod
     def format_phone_number(phone):
-        """
-        Ensures phone number is correctly formatted
-        - Must start with +
-        - Must include country code
-        - No spaces or special characters
-        """
         if not phone:
             return ""
-
-        # Strip all non-digit characters except the + sign
         clean_number = re.sub(r"[^\d+]", "", phone)
-
-        # Ensure it starts with +
         if not clean_number.startswith("+"):
-            # For Indian numbers, add +91
             if len(clean_number) == 10:
                 clean_number = "+91" + clean_number
             else:
                 clean_number = "+" + clean_number
-
         return clean_number
 
-    def get_phone_numbers(self):
-        """Return phone numbers as a list"""
-        if isinstance(self.phone_numbers, str):
-            numbers = json.loads(self.phone_numbers)
+    def get_alert_recipients(self):
+        """Return alert recipients as a list of dictionaries"""
+        if isinstance(self.alert_recipients, str):
+            recipients = json.loads(self.alert_recipients)
         else:
-            numbers = self.phone_numbers.get("numbers", [])
+            recipients = self.alert_recipients.get("recipients", [])
+        return recipients
 
-        # Return properly formatted numbers
-        return numbers
+    def set_alert_recipients(self, recipients_list):
+        """Set alert recipients from a list of dictionaries, ensuring proper formatting"""
+        formatted_recipients = []
+        for recipient in recipients_list:
+            formatted_recipient = {
+                "user_id": recipient.get("user_id"),
+                "phone_number": self.format_phone_number(recipient.get("phone_number")),
+                "percentage": float(recipient.get("percentage", 0)),
+                "last_sms_sent": recipient.get("last_sms_sent")  # Preserve or initialize
+            }
+            formatted_recipients.append(formatted_recipient)
+        self.alert_recipients = {"recipients": formatted_recipients}
 
-    def set_phone_numbers(self, numbers_list):
-        """Set phone numbers from a list, ensuring proper formatting"""
-        formatted_numbers = [
-            self.format_phone_number(number)
-            for number in numbers_list
-            if number.strip()
-        ]
-        self.phone_numbers = {"numbers": formatted_numbers}
+    def update_recipient_sms_sent(self, user_id, sent_date):
+        """Update last_sms_sent for a specific recipient"""
+        recipients = self.get_alert_recipients()
+        for recipient in recipients:
+            if recipient.get("user_id") == user_id:
+                recipient["last_sms_sent"] = sent_date.strftime("%Y-%m-%d")
+        self.set_alert_recipients(recipients)
+        self.save()
 
     def __str__(self):
-        return f"Alert Config: {self.rejection_threshold} rejections, {len(self.get_phone_numbers())} numbers"
+        return f"Alert Config: {self.rejection_threshold} rejections, {len(self.get_alert_recipients())} recipients"
+
 
     
+
+class ProductionTarget(models.Model):
+    target_value = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Production Target: {self.target_value}"
+    
+    
+    
+class RejectReason(models.Model):
+    reason = models.CharField(max_length=255, unique=True)
+    
+
+    def __str__(self):
+        return self.reason    
+from django.utils import timezone
+    
+class OTP(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    otp_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)  # Add this field
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    def __str__(self):
+        return f"OTP {self.otp_code} for {self.user.username}"
+
+    class Meta:
+        ordering = ['-created_at']

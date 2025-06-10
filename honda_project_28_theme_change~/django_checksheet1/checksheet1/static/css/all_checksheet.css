@@ -184,8 +184,8 @@ body.white-mode .checksheets-container tbody tr:hover {
 .zone-chip,
 .user-chip {
     display: inline-flex;
-    padding: 4px 10px;
-    border-radius: 9999px;
+    
+ 
     font-size: 0.75rem;
     font-weight: 500;
     color: #ffffff;
@@ -249,23 +249,28 @@ body.white-mode .checksheet-name {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
+    padding: 0 10px; /* instead of fixed width */
     height: 32px;
     border-radius: 6px;
     font-size: 0.875rem;
     text-decoration: none;
     transition: all 0.2s;
     color: rgba(255, 255, 255, 0.7);
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--accent-color);
+    gap: 6px; /* spacing between icon and text */
+}
+body.white-mode .action-button{
+    background-color:var(--accent-color-solid);
+    color: white;
 }
 
 .action-button:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: var(--accent-color-solid);
     transform: translateY(-2px);
 }
 
 .assi {
-    color: #10b981;
+    color: var(--text-light);
 }
 
 .assi:hover {
@@ -273,7 +278,7 @@ body.white-mode .checksheet-name {
 }
 
 .acti {
-    color: #3b82f6;
+    color:var(--text-light);
 }
 
 .acti:hover {
@@ -907,8 +912,6 @@ body.white-mode .toggle-btn {
 body.white-mode .toggle-btn:hover {
     background-color: #e2e8f0;
 }
-
-/* Enhanced Grid View Styles for CheckSheets */
 /* Enhanced Grid View Styles for CheckSheets */
 .checksheets-container.grid-view {
     display: grid;
@@ -959,32 +962,42 @@ body.white-mode .checksheets-container.grid-view tr:hover {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
-/* Card Header - Name Field */
+/* Top Section: Checkbox and Checksheet Name */
 .checksheets-container.grid-view td:nth-child(1) {
+    order: 0; /* Checkbox at the top */
+    padding: 0;
+    border-bottom: none;
+    position: absolute;
+    top: 16px;
+    left: 16px;
+}
+
+.checksheets-container.grid-view td:nth-child(2) {
+    order: 1; /* Checksheet name right below the checkbox */
     padding: 0 0 12px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 12px;
-    order: -1;
 }
 
-body.white-mode .checksheets-container.grid-view td:nth-child(1) {
+body.white-mode .checksheets-container.grid-view td:nth-child(2) {
     border-bottom: 1px solid #e2e8f0;
 }
 
-.checksheets-container.grid-view td:nth-child(1)::before {
+.checksheets-container.grid-view td:nth-child(2)::before {
     display: none;
 }
 
-.checksheets-container.grid-view td:nth-child(1) .checksheet-name {
+.checksheets-container.grid-view td:nth-child(2) .checksheet-name {
     font-size: 1.1rem;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.95);
     text-decoration: none;
     display: block;
     line-height: 1.4;
+    padding-left: 30px; /* Adjust for checkbox width */
 }
 
-body.white-mode .checksheets-container.grid-view td:nth-child(1) .checksheet-name {
+body.white-mode .checksheets-container.grid-view td:nth-child(2) .checksheet-name {
     color: #1e293b;
 }
 
@@ -1019,87 +1032,71 @@ body.white-mode .checksheets-container.grid-view td::before {
 }
 
 /* Field Specific Styles */
-.checksheets-container.grid-view td:nth-child(2) {
-    order: 1;
-}
-
-.checksheets-container.grid-view td:nth-child(2)::before {
-    content: "Zones:";
-}
-
 .checksheets-container.grid-view td:nth-child(3) {
-    order: 2;
+    order: 2; /* Zones */
 }
 
 .checksheets-container.grid-view td:nth-child(3)::before {
-    content: "Line:";
+    content: "Zones:";
 }
 
 .checksheets-container.grid-view td:nth-child(4) {
-    order: 3;
+    order: 3; /* Line */
 }
 
 .checksheets-container.grid-view td:nth-child(4)::before {
-    content: "Assigned Users:";
+    content: "Line:";
 }
 
 .checksheets-container.grid-view td:nth-child(5) {
-    order: 4;
+    order: 4; /* Assigned Users */
 }
 
 .checksheets-container.grid-view td:nth-child(5)::before {
-    content: "Created By:";
+    content: "Assignee:";
 }
 
 .checksheets-container.grid-view td:nth-child(6) {
-    order: 5;
+    order: 5; /* Level 1 */
 }
 
 .checksheets-container.grid-view td:nth-child(6)::before {
-    content: "Created On:";
-}
-
-.checksheets-container.grid-view td:nth-child(7) {
-    order: 6;
-}
-
-.checksheets-container.grid-view td:nth-child(7)::before {
     content: "Level 1:";
 }
 
-.checksheets-container.grid-view td:nth-child(8) {
-    order: 7;
+.checksheets-container.grid-view td:nth-child(7) {
+    order: 6; /* Level 2 */
 }
 
-.checksheets-container.grid-view td:nth-child(8)::before {
+.checksheets-container.grid-view td:nth-child(7)::before {
     content: "Level 2:";
 }
 
-.checksheets-container.grid-view td:nth-child(9) {
-    order: 8;
+.checksheets-container.grid-view td:nth-child(8) {
+    order: 7; /* Level 3 */
 }
 
-.checksheets-container.grid-view td:nth-child(9)::before {
+.checksheets-container.grid-view td:nth-child(8)::before {
     content: "Level 3:";
 }
 
-/* Actions Row */
-.checksheets-container.grid-view td:nth-child(11) {
-    order: 10;
+/* Actions Row (Edit and Copy) */
+.checksheets-container.grid-view td:nth-child(10) {
+    order: 10; /* Ensure actions are at the bottom */
     margin-top: auto; /* Pushes actions to the bottom */
     padding-top: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-body.white-mode .checksheets-container.grid-view td:nth-child(11) {
+body.white-mode .checksheets-container.grid-view td:nth-child(10) {
     border-top: 1px solid #e2e8f0;
 }
 
-.checksheets-container.grid-view td:nth-child(11)::before {
+.checksheets-container.grid-view td:nth-child(10)::before {
     content: "Actions:";
 }
 
-/* Hide Image Column in Grid View (Optional) */
+/* Hide Image Column in Grid View */
 .checksheets-container.grid-view td.image-column {
     display: none;
 }
@@ -1175,9 +1172,9 @@ body.white-mode .checksheets-container.grid-view .edit-users-btn:hover {
 }
 
 .checksheets-container.grid-view .action-button {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--accent-color);
     color: rgba(255, 255, 255, 0.8);
-    width: 32px;
+    width: 66px;
     height: 32px;
     border-radius: 6px;
     display: flex;
@@ -1196,7 +1193,7 @@ body.white-mode .checksheets-container.grid-view .action-button {
 }
 
 .checksheets-container.grid-view .action-button.assi {
-    background-color: rgba(99, 102, 241, 0.2);
+    background-color: var(--accent-color);
     color: rgba(224, 231, 255, 0.9);
 }
 
@@ -1211,24 +1208,6 @@ body.white-mode .checksheets-container.grid-view .action-button.assi {
 
 body.white-mode .checksheets-container.grid-view .action-button.assi:hover {
     background-color: rgba(99, 102, 241, 0.2);
-}
-
-.checksheets-container.grid-view .action-button.acti {
-    background-color: rgba(16, 185, 129, 0.2);
-    color: rgba(209, 250, 229, 0.9);
-}
-
-body.white-mode .checksheets-container.grid-view .action-button.acti {
-    background-color: rgba(16, 185, 129, 0.1);
-    color: #10b981;
-}
-
-.checksheets-container.grid-view .action-button.acti:hover {
-    background-color: rgba(16, 185, 129, 0.3);
-}
-
-body.white-mode .checksheets-container.grid-view .action-button.acti:hover {
-    background-color: rgba(16, 185, 129, 0.2);
 }
 
 /* Level 3 Radio Buttons */
@@ -1269,4 +1248,270 @@ body.white-mode .checksheets-container.grid-view .action-button.acti:hover {
     .checksheets-container.grid-view tr {
         min-height: 340px;
     }
+}
+/* all_checksheet.css */
+.export-btn {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.export-btn:hover {
+    border:1.5px solid var(--accent-color-solid);
+}
+
+.checksheets-container th:first-child,
+.checksheets-container td:first-child {
+    width: 50px;
+    text-align: center;
+}
+
+.header-actions {
+    display: flex;
+    gap: 5px;
+}
+
+/* Modal styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal {
+    padding: 2rem;
+    background-color: #1e293b;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+    animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.modal-icon {
+    color: #3b82f6;
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+}
+
+.modal-title {
+    color: #ffffff;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-content {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.modal-button {
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+}
+
+.modal-cancel {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+body.white-mode .modal-cancel {
+    background-color: #f1f3f5;
+    color: var(--text-light);
+}
+
+.modal-cancel:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.modal-confirm {
+    background: linear-gradient(45deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.modal-confirm:hover {
+    background: linear-gradient(45deg, #2563eb, #1d4ed8);
+}
+
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-button {
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+body.white-mode .pagination-button {
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    color: var(--text-light);
+}
+
+.pagination-button:hover:not(:disabled) {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color-solid);
+}
+
+.pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-numbers {
+    display: flex;
+    gap: 4px;
+}
+
+.page-number {
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+body.white-mode .page-number {
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    color: var(--text-light);
+}
+
+.page-number.active {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color-solid);
+    color: var(--text-light);
+}
+body.white-mode .page-number.active {
+    background-color: var(--accent-color-solid);
+   
+    color: white;
+}
+
+.page-number:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+button.action-button.assi.copy-btn {
+    border: none;
+}
+
+/* Hide default checkboxes */
+.checksheet-checkbox,
+#selectAll {
+    display: none;
+}
+
+/* Style the label as a custom checkbox */
+.checksheet-checkbox + label,
+#selectAll + label {
+    position: relative;
+    padding-left: 25px;
+    cursor: pointer;
+    
+}
+
+/* Custom checkbox square */
+.checksheet-checkbox + label:before,
+#selectAll + label:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    border: 2px solid #ccc; /* Border color when unchecked */
+    background: #fff; /* Background color when unchecked */
+    border-radius: 4px;
+}
+
+/* Checked state */
+.checksheet-checkbox:checked + label:before,
+#selectAll:checked + label:before {
+    background: var(--accent-color); /* Your custom color */
+    border-color: var(--accent-color-solid);
+}
+
+/* Checkmark */
+.checksheet-checkbox:checked + label:after,
+#selectAll:checked + label:after {
+    content: '\2713'; /* Unicode checkmark */
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    color: #fff; /* Checkmark color */
+    font-size: 8px;
 }

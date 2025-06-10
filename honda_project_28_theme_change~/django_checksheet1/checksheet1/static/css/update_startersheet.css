@@ -488,114 +488,7 @@ body.white-mode .check-method-textarea {
     border-color: var(--accent-color-solid);
     box-shadow: 0 0 0 1px  var(--accent-color-solid);
 }
-/* Confirmation modal */
-.modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    z-index: 1000;
-    backdrop-filter: blur(4px);
-    align-items: center;
-    justify-content: center;
-}
-.modal {
-    padding: 2rem;
-    background-color: #1e293b;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transform: translateY(20px);
-    animation: fadeIn 0.3s ease forwards;
-}
-body.white-mode .modal {
-    background-color: white;
-    border: 1px solid rgb(161 161 161 / 82%);
-    box-shadow: 0 10px 25px rgb(0 0 0 / 25%);
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.modal-header {
-    display: flex;
-    align-items: center;
-    padding: 15px 20px;
-    background-color: rgba(255, 255, 255, 0.05);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-body.white-mode .modal-header {
-    background-color: white;
-    border-bottom: 1px solid rgb(161 161 161 / 82%);
-}
-.modal-icon {
-    font-size: 24px;
-    color: #3b82f6;
-    margin-right: 10px;
-}
-.modal-title {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #ffffff;
-}
-body.white-mode .modal-title {
-    color: var(--text-light);
-}
-.modal-content {
-    padding: 20px;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: rgba(255, 255, 255, 0.7);
-}
-body.white-mode .modal-content {
-    color: var(--text-light);
-}
-.modal-buttons {
-    display: flex;
-    justify-content: flex-end;
-    padding: 15px 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-body.white-mode .modal-buttons {
-    border-top: 1px solid rgb(161 161 161 / 82%);
-}
-.modal-button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 500;
-    transition: all 0.3s;
-}
-.modal-cancel {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.7);
-    margin-right: 10px;
-}
-body.white-mode .modal-cancel {
-    background-color: #f1f5f9;
-    color: #64748b;
-}
-.modal-cancel:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-}
-body.white-mode .modal-cancel:hover {
-    background-color: #e2e8f0;
-}
-.modal-confirm {
-    background: linear-gradient(45deg, #3b82f6, #2563eb);
-    color: white;
-}
-.modal-confirm:hover {
-    background: linear-gradient(45deg, #2563eb, #1d4ed8);
-}
+
 /* Min-max row */
 .min-max-row {
     display: grid;
@@ -633,4 +526,97 @@ body.white-mode input:disabled {
     .current-image img {
         max-width: 100%;
     }
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.header-actions {
+    display: flex
+;
+    gap: 10px;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    position: relative;
+    transform: translateY(0);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.modal-content p {
+    margin: 10px 0 20px;
+    color: #555;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.modal-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.confirm-btn {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.confirm-btn:hover {
+    background-color: #c0392b;
+}
+
+.cancel-btn {
+    background-color: #ccc;
+    color: #333;
+}
+
+.cancel-btn:hover {
+    background-color: #bbb;
+}
+
+/* Ensure delete button styles are consistent */
+.delete-zone-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+/* update_checksheet.css */
+.confirm-btn:disabled {
+    background-color: #a1a1a1;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.delete-zone-btn:hover {
+    background: #c0392b;
 }

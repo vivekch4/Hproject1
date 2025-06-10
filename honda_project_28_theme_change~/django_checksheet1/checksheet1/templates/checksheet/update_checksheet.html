@@ -1,24 +1,690 @@
 {% extends 'checksheet/base.html' %}
 {% load static %}
+
 {% block extra_css %}
-
 <link rel="stylesheet" href="{% static 'css/update_checksheet.css' %}">
+<style>
+    /* Reset and base styles */
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 16px;
+    }
+    
+    option {
+        background: #1e293b;
+    }
+    
+    body.white-mode option {
+        background: white;
+        color: var(--text-light);
+    }
+    
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.3rem 0;
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .page-title {
+        color: var(--text-light);
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .back-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .back-button:hover {
+        background-color: #e2e8f0;
+        color: #334155;
+    }
+    
+    .form-container {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        max-height: calc(100vh - 120px);
+        overflow: auto;
+    }
+    
+    body.white-mode .form-container {
+        box-shadow: 0 4px 10px rgb(0 0 0 / 25%);
+        background-color: unset;
+    }
+    
+    /* Section styling */
+    .form-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.02);
+    }
+    
+    .section-title {
+        color: var(--text-light);
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Basic Details Section - 4 columns */
+    .basic-details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 20px;
+        align-items: end;
+    }
+    
+    /* Zone Inputs Section - 4 columns */
+    .zone-inputs-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+    }
+    
+    .zone-input-pair {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .zone-input-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    
+    .zone-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background-color: rgb(161 161 161 / 82%);
+        border-radius: 50%;
+        color: var(--text-light);
+        font-weight: 500;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+    
+    .zone-name-input {
+        flex: 2;
+    }
+    
+    .zone-type-select {
+        flex: 1;
+    }
+    
+    .delete-zone-btn {
+        background: #e74c3c;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        border-radius: 3px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .delete-zone-btn:hover {
+        background: #c0392b;
+    }
+    
+    /* Images Section - 4 columns */
+    .images-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+    
+    .image-box {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        background-color: rgba(255, 255, 255, 0.05);
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .image-box:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .checksheet-image {
+        width: 100%;
+        height: 70px;
+        object-fit: contain;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Approval Section - 4 columns */
+    .approval-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+    
+    /* Form elements */
+    .form-group {
+        margin-bottom: 0;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.875rem;
+    }
+    
+    body.white-mode .form-label {
+        color: #1f2937;
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.1);
+        transition: all 0.2s;
+        height: 36px;
+        box-sizing: border-box;
+    }
+    
+    body.white-mode .form-input {
+        color: #1f2937;
+        background-color: #ffffff;
+        border: 1px solid #d1d5db;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+    
+    /* File input styling */
+    .file-input-container {
+        margin-top: 6px;
+    }
+    
+    .file-input {
+        display: none;
+    }
+    
+    
+    
+    .file-input-label:hover {
+        border-color: #3b82f6;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Add Zone Section */
+    .add-zone-section {
+        margin-top: 20px;
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.02);
+    }
+    
+    .add-zone-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    /* Submit button */
+    .submit-btn {
+        background-color: var(--accent-color);
+        border: 1.5px solid var(--accent-color-solid);
+        color: var(--text-light);
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+    }
+    
+    .submit-btn:hover {
+        border: 1.5px solid var(--accent-color-solid);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Success popup */
+    .success-popup {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #059669;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        display: none;
+        animation: slideIn 0.5s ease forwards;
+        z-index: 1000;
+        font-size: 0.875rem;
+        border-left: 5px solid #047857;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(50px);
+        }
+    }
+    
+    /* Modal styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal {
+        padding: 2rem;
+        background-color: #1e293b;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+        animation: fadeIn 0.3s ease forwards;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .modal-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .modal-icon {
+        color: #3b82f6;
+        font-size: 1.5rem;
+        margin-right: 0.75rem;
+    }
+    
+    .modal-title {
+        color: #ffffff;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .modal-content {
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .modal-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+    
+    .modal-button {
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        border: none;
+    }
+    
+    .modal-cancel {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    body.white-mode .modal-cancel {
+        background-color: #f1f3f5;
+        color: var(--text-light);
+    }
+    
+    .modal-cancel:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .modal-confirm {
+        background: linear-gradient(45deg, #3b82f6, #2563eb);
+        color: white;
+    }
+    
+    .modal-confirm:hover {
+        background: linear-gradient(45deg, #2563eb, #1d4ed8);
+    }
+    
+    .modal-confirm:disabled {
+        background: #a1a1a1;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    
+    #countdown {
+        color: rgba(255, 255, 255, 0.7);
+        margin: 10px 0;
+    }
+    
+    /* Custom Dropdown Styling */
+    .custom-dropdown {
+        position: relative;
+        width: 100%;
+    }
+    
+    .dropdown-button {
+        background-color: #2c3e50;
+        border: 1px solid #34495e;
+        border-radius: 6px;
+        color: #ecf0f1;
+        padding: 8px 12px;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        font-size: 0.875rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 36px;
+        box-sizing: border-box;
+    }
+    
+    .dropdown-button:hover {
+        background-color: #34495e;
+        border-color: #3498db;
+    }
+    
+    .dropdown-button.active {
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+    
+    .dropdown-arrow {
+        transition: transform 0.3s ease;
+        color: #bdc3c7;
+    }
+    
+    .dropdown-arrow.rotated {
+        transform: rotate(180deg);
+    }
+    
+    .dropdown-content {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: #34495e;
+        border: 1px solid #2c3e50;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        max-height: 250px;
+        overflow-y: auto;
+        display: none;
+        margin-top: 2px;
+    }
+    
+    .dropdown-content.show {
+        display: block;
+    }
+    
+    .dropdown-search {
+        padding: 12px;
+        border-bottom: 1px solid #2c3e50;
+        position: sticky;
+        top: 0;
+        background-color: #34495e;
+        z-index: 1001;
+    }
+    
+    .dropdown-search input {
+        width: 100%;
+        padding: 8px 12px;
+        background-color: #2c3e50;
+        border: 1px solid #34495e;
+        border-radius: 4px;
+        color: #ecf0f1;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+    
+    .dropdown-search input::placeholder {
+        color: #95a5a6;
+    }
+    
+    .dropdown-search input:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+    
+    .dropdown-options {
+        padding: 8px 0;
+    }
+    
+    .dropdown-option {
+        padding: 10px 16px;
+        cursor: pointer;
+        color: #ecf0f1;
+        display: flex;
+        align-items: center;
+        transition: background-color 0.2s ease;
+    }
+    
+    .dropdown-option:hover {
+        background-color: #3498db;
+        color: white;
+    }
+    
+    .dropdown-option input[type="checkbox"],
+    .dropdown-option input[type="radio"] {
+        margin-right: 10px;
+        cursor: pointer;
+        transform: scale(1.2);
+    }
+    
+    .dropdown-option input[type="checkbox"] {
+        accent-color: #3498db;
+    }
+    
+    .dropdown-option input[type="radio"] {
+        accent-color: #3498db;
+    }
+    
+    .dropdown-option.no-results {
+        color: #95a5a6;
+        font-style: italic;
+        cursor: default;
+    }
+    
+    .dropdown-option.no-results:hover {
+        background-color: transparent;
+        color: #95a5a6;
+    }
+    
+    .dropdown-text {
+        color: #95a5a6;
+        font-size: 14px;
+    }
+    
+    .dropdown-text.has-selection {
+        color: #ecf0f1;
+    }
+    
+    .selection-badge {
+        background-color: #3498db;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        margin-left: 8px;
+        min-width: 20px;
+        text-align: center;
+    }
+    
+    /* Radio buttons for Level 3 approval */
+    .approval-radio {
+        display: flex;
+        gap: 20px;
+        margin-top: 6px;
+    }
+    
+    .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .radio-option input {
+        margin: 0;
+        cursor: pointer;
+    }
+    
+    .radio-option label {
+        color: var(--text-light);
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+    
+    /* Scrollbar styling for dropdown */
+    .dropdown-content::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .dropdown-content::-webkit-scrollbar-track {
+        background: #2c3e50;
+        border-radius: 3px;
+    }
+    
+    .dropdown-content::-webkit-scrollbar-thumb {
+        background: #95a5a6;
+        border-radius: 3px;
+    }
+    
+    .dropdown-content::-webkit-scrollbar-thumb:hover {
+        background: #bdc3c7;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 1200px) {
+        .basic-details-grid,
+        .images-grid,
+        .approval-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .zone-inputs-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .basic-details-grid,
+        .images-grid,
+        .approval-grid,
+        .zone-inputs-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 {% endblock %}
+
 {% block title %}Update Checksheet{% endblock %}
+
 {% block content %}
-
-
 <div class="page-container">
     <!-- Header with back and save buttons -->
     <div class="header">
-        <h1 class="page-title">Update Checksheet</h1>
+        <h2 class="page-title">Update Checksheet</h2>
         <div class="header-actions">
-           
             <button type="submit" form="checksheet-form" class="submit-btn">
                 <i class="fas fa-save"></i> Save Changes
             </button>
             <a href="{% url 'all_checksheets' %}" class="back-button">
-                <i class="fas fa-times"></i> 
+                <i class="fas fa-times"></i>
             </a>
         </div>
     </div>
@@ -26,9 +692,11 @@
     <div class="form-container">
         <form id="checksheet-form" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
-            <div class="form-layout">
-                <!-- Left column for basic inputs -->
-                <div class="basic-inputs">
+            
+            <!-- Section 1: Basic Details -->
+            <div class="form-section">
+                <h3 class="section-title">Basic Details</h3>
+                <div class="basic-details-grid">
                     <div class="form-group">
                         <label class="form-label" for="checksheet_name">Checksheet Name</label>
                         <input type="text" id="checksheet_name" name="checksheet_name" required
@@ -41,58 +709,219 @@
                             <option value="line_2" {% if checksheet.line == "line_2" %}selected{% endif %}>Line 2</option>
                         </select>
                     </div>
-
-                    <!-- Existing Images in a 2x2 grid -->
                     <div class="form-group">
-                        <label class="form-label">Update Existing Images</label>
-                        <div class="existing-images">
-                            {% for image in images %}
-                                <div class="image-box">
-                                    {% if image %}
-                                        <img src="{{ image.image.url }}" alt="Checksheet Image" class="checksheet-image">
-                                    {% else %}
-                                        <div class="empty-image-box">Empty Slot</div>
-                                    {% endif %}
-                                    
-                                    <!-- File input for image replacement -->
-                                    <label for="checksheet_image_{{ forloop.counter }}" class="file-input-label">
-                                        <i class="fas fa-upload"></i>
-                                        {% if image %}
-                                            Replace
-                                        {% else %}
-                                            Upload
-                                        {% endif %}
-                                    </label>
-                                    <input type="file" id="checksheet_image_{{ forloop.counter }}" 
-                                           name="checksheet_image_{{ forloop.counter }}" 
-                                           accept="image/*" class="file-input">
-                                </div>
-                            {% endfor %}
+                        <!-- Blank column for symmetry -->
+                    </div>
+                    <div class="form-group">
+                        <!-- Blank column for symmetry -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Checksheet Images -->
+            <div class="form-section">
+                <h3 class="section-title">Checksheet Images</h3>
+                <div class="images-grid">
+                    {% for image in images %}
+                    <div class="form-group">
+                        <label class="form-label" for="checksheet_image_{{ forloop.counter }}">Checksheet Image {{ forloop.counter }}</label>
+                        <div class="file-input-container">
+                            <label class="file-input-label" for="checksheet_image_{{ forloop.counter }}">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span id="file-name-{{ forloop.counter }}">{% if image %}Replace{% else %}Click to upload{% endif %}</span>
+                                <input type="file" id="checksheet_image_{{ forloop.counter }}"
+                                       name="checksheet_image_{{ forloop.counter }}"
+                                       accept="image/*" class="file-input">
+                            </label>
+                            {% if image %}
+                            <div class="image-box">
+                                <img src="{{ image.image.url }}" alt="Checksheet Image" class="checksheet-image">
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
-                    
+                    {% endfor %}
                 </div>
-                
-                <!-- Right column for zone inputs -->
-                <div class="zone-inputs-container">
-                    <div class="zone-inputs-title">Zone Inputs</div>
-                    <div id="zone_inputs" class="zone-inputs">
-                        {% for zone in zones %}
-                        <div class="zone-input-container">
+            </div>
+
+            <!-- Section 3: Zone Configuration -->
+            <div class="form-section">
+                <h3 class="section-title">Zone Configuration</h3>
+                <div id="zone_inputs" class="zone-inputs-grid">
+                    {% for zone in zones %}
+                    <div class="zone-input-pair">
+                        <div class="zone-input-row">
                             <div class="zone-number">{{ forloop.counter }}</div>
-                            <input type="text" name="zone_{{ zone.id }}" value="{{ zone.name }}" 
-                                   class="form-input" placeholder="Zone name" required>
-                            <select name="zone_type_{{ zone.id }}" class="zone-type-select" required>
+                            <input type="text" name="zone_{{ zone.id }}" value="{{ zone.name }}"
+                                   class="form-input zone-name-input" placeholder="Zone name" required>
+                            <select name="zone_type_{{ zone.id }}" class="form-input zone-type-select" required>
                                 <option value="text" {% if zone.input_type == "text" %}selected{% endif %}>Text</option>
                                 <option value="int" {% if zone.input_type == "int" %}selected{% endif %}>Int</option>
                                 <option value="float" {% if zone.input_type == "float" %}selected{% endif %}>Float</option>
                                 <option value="checkbox" {% if zone.input_type == "checkbox" %}selected{% endif %}>Checkbox</option>
                             </select>
+                            <button type="button" class="delete-zone-btn"
+                                    data-zone-id="{{ zone.id }}"
+                                    title="Delete Zone">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
-                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <!-- Add New Zone Section -->
+                <div class="add-zone-section">
+                    <h3 class="section-title">Add New Zone</h3>
+                    <div class="add-zone-form">
+                        <div class="basic-details-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="new_zone_name">Zone Name</label>
+                                <input type="text" id="new_zone_name" name="new_zone_name"
+                                       class="form-input" placeholder="Enter a descriptive name for the zone">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="new_zone_type">Zone Type</label>
+                                <select id="new_zone_type" name="new_zone_type" class="form-input zone-type-select">
+                                    <option value="checkbox">Checkbox</option>
+                                    <option value="text">Text</option>
+                                    <option value="int">Integer</option>
+                                    <option value="float">Float</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <button type="button" id="add-zone-btn" class="submit-btn">
+                                    <i class="fas fa-plus-circle"></i> Add Zone
+                                </button>
+                            </div>
+                            <div class="form-group">
+                                <!-- Blank column for symmetry -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Section 4: Approval Configuration -->
+            <div class="form-section">
+                <h3 class="section-title">Approval Configuration</h3>
+                <div class="approval-grid">
+                    <div class="form-group">
+                        <label class="form-label">Assigned Users</label>
+                        <div class="custom-dropdown" id="assigned-users-dropdown">
+                            <div class="dropdown-button" onclick="toggleDropdown('assigned-users-dropdown')">
+                                <span class="dropdown-text" id="assigned-users-text">Select users to assign</span>
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            </div>
+                            <div class="dropdown-content">
+                                <div class="dropdown-search">
+                                    <input type="text" placeholder="Search users..." oninput="filterOptions('assigned-users-dropdown', this.value)">
+                                </div>
+                                <div class="dropdown-options">
+                                    {% for user in all_users %}
+                                        {% if user.role != 'admin' %}
+                                            <div class="dropdown-option" data-value="{{ user.id }}">
+                                                <input type="checkbox" name="user_ids" value="{{ user.id }}" 
+                                                       {% if user in checksheet.assigned_users.all %}checked{% endif %}
+                                                       onchange="updateMultiSelectText('assigned-users-dropdown')">
+                                                <span>{{ user.username }} ({{ user.role }})</span>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Level 1 Approver</label>
+                        <div class="custom-dropdown" id="level1-approver-dropdown">
+                            <div class="dropdown-button" onclick="toggleDropdown('level1-approver-dropdown')">
+                                <span class="dropdown-text" id="level1-approver-text">
+                                    {% if checksheet.level_1_approver %}
+                                        {{ checksheet.level_1_approver.username }} ({{ checksheet.level_1_approver.role }})
+                                    {% else %}
+                                        Select Level 1 Approver
+                                    {% endif %}
+                                </span>
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            </div>
+                            <div class="dropdown-content">
+                                <div class="dropdown-search">
+                                    <input type="text" placeholder="Search users..." oninput="filterOptions('level1-approver-dropdown', this.value)">
+                                </div>
+                                <div class="dropdown-options">
+                                    <div class="dropdown-option" data-value="">
+                                        <input type="radio" name="level_1_approver" value="" 
+                                               {% if not checksheet.level_1_approver %}checked{% endif %}
+                                               onchange="updateSingleSelectText('level1-approver-dropdown', 'Not assigned', '')">
+                                        <span>Not assigned</span>
+                                    </div>
+                                    {% for user in all_users %}
+                                        <div class="dropdown-option" data-value="{{ user.id }}">
+                                            <input type="radio" name="level_1_approver" value="{{ user.id }}" 
+                                                   {% if checksheet.level_1_approver == user %}checked{% endif %}
+                                                   onchange="updateSingleSelectText('level1-approver-dropdown', '{{ user.username }} ({{ user.role }})', '{{ user.id }}')">
+                                            <span>{{ user.username }} ({{ user.role }})</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Level 2 Approver</label>
+                        <div class="custom-dropdown" id="level2-approver-dropdown">
+                            <div class="dropdown-button" onclick="toggleDropdown('level2-approver-dropdown')">
+                                <span class="dropdown-text" id="level2-approver-text">
+                                    {% if checksheet.level_2_approver %}
+                                        {{ checksheet.level_2_approver.username }} ({{ checksheet.level_2_approver.role }})
+                                    {% else %}
+                                        Select Level 2 Approver
+                                    {% endif %}
+                                </span>
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            </div>
+                            <div class="dropdown-content">
+                                <div class="dropdown-search">
+                                    <input type="text" placeholder="Search users..." oninput="filterOptions('level2-approver-dropdown', this.value)">
+                                </div>
+                                <div class="dropdown-options">
+                                    <div class="dropdown-option" data-value="">
+                                        <input type="radio" name="level_2_approver" value="" 
+                                               {% if not checksheet.level_2_approver %}checked{% endif %}
+                                               onchange="updateSingleSelectText('level2-approver-dropdown', 'Not assigned', '')">
+                                        <span>Not assigned</span>
+                                    </div>
+                                    {% for user in all_users %}
+                                        <div class="dropdown-option" data-value="{{ user.id }}">
+                                            <input type="radio" name="level_2_approver" value="{{ user.id }}" 
+                                                   {% if checksheet.level_2_approver == user %}checked{% endif %}
+                                                   onchange="updateSingleSelectText('level2-approver-dropdown', '{{ user.username }} ({{ user.role }})', '{{ user.id }}')">
+                                            <span>{{ user.username }} ({{ user.role }})</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Require Level 3 Approval</label>
+                        <div class="approval-radio">
+                            <div class="radio-option">
+                                <input type="radio" name="require_level_3" id="require_level_3_yes" value="True"
+                                       {% if checksheet.require_level_3_approval %}checked{% endif %}>
+                                <label for="require_level_3_yes">Yes</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="require_level_3" id="require_level_3_no" value="False"
+                                       {% if not checksheet.require_level_3_approval %}checked{% endif %}>
+                                <label for="require_level_3_no">No</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Hidden input for delete action -->
+            <input type="hidden" name="delete_zone" id="delete_zone" value="">
         </form>
     </div>
 </div>
@@ -102,21 +931,213 @@
     <h3>Checksheet Updated Successfully!</h3>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div id="delete-confirmation-popup" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <i class="fas fa-question-circle modal-icon"></i>
+            <h3 class="modal-title">Confirm Deletion</h3>
+        </div>
+        <div class="modal-content">
+            Are you sure you want to delete this zone? This action cannot be undone.
+            <p id="countdown">Please wait <span id="timer">10</span> seconds...</p>
+        </div>
+        <div class="modal-buttons">
+            <button id="cancel-delete" class="modal-button modal-cancel">Cancel</button>
+            <button id="confirm-delete" class="modal-button modal-confirm" disabled>Confirm</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // Show file name when images are selected
-    document.querySelectorAll('.file-input').forEach(function(input) {
-        input.addEventListener('change', function(e) {
-            const fileName = e.target.files[0]?.name || 'Replace';
-            const label = this.previousElementSibling;
-            label.innerHTML = '<i class="fas fa-upload"></i> ' + (fileName.length > 8 ? fileName.substring(0, 8) + '...' : fileName);
+    // Custom dropdown functionality
+    function toggleDropdown(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        const content = dropdown.querySelector('.dropdown-content');
+        const button = dropdown.querySelector('.dropdown-button');
+        const arrow = dropdown.querySelector('.dropdown-arrow');
+        
+        document.querySelectorAll('.custom-dropdown').forEach(dd => {
+            if (dd.id !== dropdownId) {
+                dd.querySelector('.dropdown-content').classList.remove('show');
+                dd.querySelector('.dropdown-button').classList.remove('active');
+                dd.querySelector('.dropdown-arrow').classList.remove('rotated');
+            }
         });
+        
+        content.classList.toggle('show');
+        button.classList.toggle('active');
+        arrow.classList.toggle('rotated');
+        
+        if (content.classList.contains('show')) {
+            const searchInput = content.querySelector('input[type="text"]');
+            setTimeout(() => searchInput.focus(), 100);
+        }
+    }
+    
+    function filterOptions(dropdownId, searchTerm) {
+        const dropdown = document.getElementById(dropdownId);
+        const options = dropdown.querySelectorAll('.dropdown-option');
+        let hasVisibleOptions = false;
+        
+        options.forEach(option => {
+            const text = option.querySelector('span').textContent.toLowerCase();
+            const matches = text.includes(searchTerm.toLowerCase());
+            option.style.display = matches ? 'flex' : 'none';
+            if (matches) hasVisibleOptions = true;
+        });
+        
+        let noResultsMsg = dropdown.querySelector('.no-results');
+        if (!hasVisibleOptions && searchTerm.length > 0) {
+            if (!noResultsMsg) {
+                noResultsMsg = document.createElement('div');
+                noResultsMsg.className = 'dropdown-option no-results';
+                noResultsMsg.innerHTML = '<span>No users found</span>';
+                dropdown.querySelector('.dropdown-options').appendChild(noResultsMsg);
+            }
+            noResultsMsg.style.display = 'flex';
+        } else if (noResultsMsg) {
+            noResultsMsg.style.display = 'none';
+        }
+    }
+    
+    function updateMultiSelectText(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]:checked');
+        const textElement = dropdown.querySelector('.dropdown-text');
+        
+        if (checkboxes.length === 0) {
+            textElement.textContent = 'Select users to assign';
+            textElement.classList.remove('has-selection');
+        } else {
+            const selectedNames = Array.from(checkboxes).map(cb => {
+                return cb.parentElement.querySelector('span').textContent;
+            });
+            
+            if (checkboxes.length === 1) {
+                textElement.innerHTML = selectedNames[0];
+            } else {
+                textElement.innerHTML = `${checkboxes.length} users selected <span class="selection-badge">${checkboxes.length}</span>`;
+            }
+            textElement.classList.add('has-selection');
+        }
+    }
+    
+    function updateSingleSelectText(dropdownId, text, value) {
+        const dropdown = document.getElementById(dropdownId);
+        const textElement = dropdown.querySelector('.dropdown-text');
+        
+        textElement.textContent = text;
+        if (value) {
+            textElement.classList.add('has-selection');
+        } else {
+            textElement.classList.remove('has-selection');
+        }
+        
+        setTimeout(() => {
+            dropdown.querySelector('.dropdown-content').classList.remove('show');
+            dropdown.querySelector('.dropdown-button').classList.remove('active');
+            dropdown.querySelector('.dropdown-arrow').classList.remove('rotated');
+        }, 200);
+    }
+    
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.custom-dropdown')) {
+            document.querySelectorAll('.custom-dropdown').forEach(dropdown => {
+                dropdown.querySelector('.dropdown-content').classList.remove('show');
+                dropdown.querySelector('.dropdown-button').classList.remove('active');
+                dropdown.querySelector('.dropdown-arrow').classList.remove('rotated');
+            });
+        }
+    });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        updateMultiSelectText('assigned-users-dropdown');
+    });
+
+    // Show file name when images are selected
+    document.querySelectorAll('.file-input').forEach(function(input, index) {
+        input.addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || 'Click to upload';
+            document.getElementById(`file-name-${index + 1}`).textContent = fileName.length > 15 ? fileName.substring(0, 12) + '...' : fileName;
+        });
+    });
+
+    // Add new zone dynamically
+    document.getElementById('add-zone-btn').addEventListener('click', function() {
+        const zoneNameInput = document.getElementById('new_zone_name');
+        const zoneTypeSelect = document.getElementById('new_zone_type');
+        const zoneInputsContainer = document.getElementById('zone_inputs');
+        
+        if (!zoneNameInput.value || !zoneTypeSelect.value) {
+            alert('Please provide both a zone name and type.');
+            return;
+        }
+
+        const zoneCount = zoneInputsContainer.querySelectorAll('.zone-input-pair').length + 1;
+        const newZoneDiv = document.createElement('div');
+        newZoneDiv.className = 'zone-input-pair';
+        newZoneDiv.innerHTML = `
+            <div class="zone-input-row" data-zone-id="new_${Date.now()}">
+                <div class="zone-number">${zoneCount}</div>
+                <input type="text" name="new_zone_names[]" value="${zoneNameInput.value}" 
+                       class="form-input zone-name-input" placeholder="Zone name" required>
+                <select name="new_zone_types[]" class="form-input zone-type-select" required>
+                    <option value="text" ${zoneTypeSelect.value === 'text' ? 'selected' : ''}>Text</option>
+                    <option value="int" ${zoneTypeSelect.value === 'int' ? 'selected' : ''}>Int</option>
+                    <option value="float" ${zoneTypeSelect.value === 'float' ? 'selected' : ''}>Float</option>
+                    <option value="checkbox" ${zoneTypeSelect.value === 'checkbox' ? 'selected' : ''}>Checkbox</option>
+                </select>
+                <button type="button" class="delete-zone-btn" 
+                        data-zone-id="new_${Date.now()}" 
+                        title="Delete Zone">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+
+        zoneInputsContainer.appendChild(newZoneDiv);
+        zoneNameInput.value = '';
+        zoneTypeSelect.value = 'checkbox';
+
+        newZoneDiv.querySelector('.delete-zone-btn').addEventListener('click', function() {
+            const zoneId = this.getAttribute('data-zone-id');
+            if (zoneId.startsWith('new_')) {
+                newZoneDiv.remove();
+                updateZoneNumbers();
+            } else {
+                deleteZoneInput.value = zoneId;
+                confirmDeleteBtn.disabled = true;
+                modal.style.display = 'flex';
+                countdownElement.style.display = 'block';
+                timerElement.textContent = '10';
+                let seconds = 10;
+                const countdown = setInterval(() => {
+                    seconds--;
+                    timerElement.textContent = seconds;
+                    if (seconds <= 0) {
+                        clearInterval(countdown);
+                        confirmDeleteBtn.disabled = false;
+                        countdownElement.style.display = 'none';
+                    }
+                }, 1000);
+                modal.dataset.countdownId = countdown;
+            }
+        });
+
+        function updateZoneNumbers() {
+            const zoneContainers = zoneInputsContainer.querySelectorAll('.zone-input-pair');
+            zoneContainers.forEach((container, index) => {
+                container.querySelector('.zone-number').textContent = index + 1;
+            });
+        }
     });
 
     // Show success popup if the form is submitted successfully
     {% if success %}
         window.onload = function() {
             var successPopup = document.getElementById('success-popup');
-            successPopup.style.display = 'block'; // Show the popup
+            successPopup.style.display = 'block';
             setTimeout(() => {
                 successPopup.style.animation = 'slideOut 0.3s ease forwards';
                 setTimeout(() => {
@@ -126,5 +1147,75 @@
             }, 3000);
         };
     {% endif %}
+
+    // Delete confirmation popup logic
+    const deleteButtons = document.querySelectorAll('.delete-zone-btn');
+    const modal = document.getElementById('delete-confirmation-popup');
+    const confirmDeleteBtn = document.getElementById('confirm-delete');
+    const cancelDeleteBtn = document.getElementById('cancel-delete');
+    const deleteZoneInput = document.getElementById('delete_zone');
+    const checksheetForm = document.getElementById('checksheet-form');
+    const timerElement = document.getElementById('timer');
+    const countdownElement = document.getElementById('countdown');
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const zoneId = this.getAttribute('data-zone-id');
+            if (zoneId.startsWith('new_')) {
+                this.closest('.zone-input-pair').remove();
+                updateZoneNumbers();
+            } else {
+                deleteZoneInput.value = zoneId;
+                confirmDeleteBtn.disabled = true;
+                modal.style.display = 'flex';
+                countdownElement.style.display = 'block';
+                timerElement.textContent = '10';
+                let seconds = 10;
+                const countdown = setInterval(() => {
+                    seconds--;
+                    timerElement.textContent = seconds;
+                    if (seconds <= 0) {
+                        clearInterval(countdown);
+                        confirmDeleteBtn.disabled = false;
+                        countdownElement.style.display = 'none';
+                    }
+                }, 1000);
+                modal.dataset.countdownId = countdown;
+            }
+        });
+    });
+
+    confirmDeleteBtn.addEventListener('click', function() {
+        if (!this.disabled) {
+            checksheetForm.submit();
+        }
+    });
+
+    cancelDeleteBtn.addEventListener('click', function() {
+        deleteZoneInput.value = '';
+        modal.style.display = 'none';
+        countdownElement.style.display = 'block';
+        timerElement.textContent = '10';
+        clearInterval(modal.dataset.countdownId);
+    });
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            deleteZoneInput.value = '';
+            modal.style.display = 'none';
+            countdownElement.style.display = 'block';
+            timerElement.textContent = '10';
+            clearInterval(modal.dataset.countdownId);
+        }
+    });
+
+    function updateZoneNumbers() {
+        const zoneInputsContainer = document.getElementById('zone_inputs');
+        const zoneContainers = zoneInputsContainer.querySelectorAll('.zone-input-pair');
+        zoneContainers.forEach((container, index) => {
+            container.querySelector('.zone-number').textContent = index + 1;
+        });
+    }
+    updateZoneNumbers();
 </script>
 {% endblock %}

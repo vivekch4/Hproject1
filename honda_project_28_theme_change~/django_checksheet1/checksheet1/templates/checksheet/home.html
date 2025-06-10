@@ -27,17 +27,16 @@
     padding: 8px;
     font-size: 14px;
     border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #fff;
-    color: #333;
+    background-color: var(--accent-color);
+    border: 1.5px solid var(--accent-color-solid);
+    color: var(--text-light);
     cursor: pointer;
     width: 150px;
 }
 
 .line-filter-dropdown:focus {
     outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+    
 }
 .date-filter-input {
     padding: 8px;
@@ -55,6 +54,10 @@
     background-repeat: no-repeat;
     background-position: center;
 }
+body.white-mode .date-filter-input{
+    background-color: var(--accent-color-solid);
+    color: white;
+}
 
 .date-filter-input::-webkit-calendar-picker-indicator {
     position: absolute;
@@ -67,8 +70,8 @@
 }
 
 body:not(.white-mode) .date-filter-input {
-    background-color: #2c3e50;
-    border-color: #34495e;
+    background-color: var(--accent-color);
+    border: 1.5px solid var(--accent-color-solid);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23ecf0f1' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3E%3C/svg%3E");
 }
 
@@ -79,11 +82,7 @@ body:not(.white-mode) .date-filter-input {
     }
 }
 
-body:not(.white-mode) .line-filter-dropdown {
-    background-color: #2c3e50;
-    color: #ecf0f1;
-    border-color: #34495e;
-}
+
 
 
 /* Responsive adjustments */
@@ -237,6 +236,7 @@ body:not(.white-mode) .line-filter-dropdown {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <script>
+window.targetValue = {{ target_value|safe }};
 window.onload = function () {
     setupWebSocketUpdates();
 };
@@ -486,31 +486,57 @@ function initializePieChart() {
 function initializeLineChart() {
     const lineCtx = document.getElementById('lineChart');
     if (!lineCtx) return null;
+
+    // Prepare target value dataset
+    const targetValue = window.targetValue || 0; // Fallback to 0 if not defined
+    const targetData = Array(5).fill(targetValue); // Match the number of labels (e.g., 5 time points)
+
     return new Chart(lineCtx.getContext('2d'), {
         type: 'line',
         data: {
             labels: ['12:30', '12:35', '12:40', '12:45', '12:50'],
-            datasets: [{
-                label: 'Production live',
-                data: [10, 15, 5, 85, 15],
-                fill: true,
-                backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                borderColor: 'rgba(52, 152, 219, 1)',
-                tension: 0.4,
-                pointBackgroundColor: 'rgba(52, 152, 219, 1)',
-                pointBorderColor: '#fff',
-                pointRadius: 4,
-                pointHoverRadius: 6
-            }]
+            datasets: [
+                {
+                    label: 'Production live',
+                    data: [10, 15, 5, 85, 15],
+                    fill: true,
+                    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                    borderColor: 'rgba(52, 152, 219, 1)',
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgba(52, 152, 219, 1)',
+                    pointBorderColor: '#fff',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                },
+                {
+                    label: 'Target',
+                    data: targetData,
+                    fill: false,
+                    borderColor: 'rgba(231, 76, 60, 1)', // Red color for target line
+                    borderWidth: 2,
+                    borderDash: [5, 5], // Dashed line for visual distinction
+                    pointRadius: 0, // No points on the target line
+                    tension: 0
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             layout: { padding: { top: window.innerWidth <= 480 ? 15 : 25 } },
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: true, // Show legend to include "Target"
+                    labels: {
+                        color: getChartTextColor(),
+                        font: { size: window.innerWidth <= 480 ? 8 : 10 }
+                    }
+                },
                 datalabels: {
-                    display: true,
+                    display: function(context) {
+                        // Only show datalabels for the production dataset (index 0)
+                        return context.datasetIndex === 0;
+                    },
                     align: 'top',
                     anchor: 'center',
                     offset: 7,
@@ -526,7 +552,15 @@ function initializeLineChart() {
                 y: {
                     beginAtZero: true,
                     grid: { color: document.body.classList.contains('white-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)' },
-                    ticks: { color: getChartTextColor(), font: { size: window.innerWidth <= 480 ? 8 : 10 } }
+                    ticks: { 
+                        color: getChartTextColor(), 
+                        font: { size: window.innerWidth <= 480 ? 8 : 10 },
+                        callback: function(value) { return Number.isInteger(value) ? value : null; }
+                    },
+                    suggestedMax: function(context) {
+                        const productionMax = Math.max(...context.chart.data.datasets[0].data, targetValue);
+                        return Math.ceil(productionMax * 1.1); // Ensure target is visible
+                    }
                 },
                 x: {
                     grid: { display: false },

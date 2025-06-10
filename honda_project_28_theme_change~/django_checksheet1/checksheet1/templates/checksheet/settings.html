@@ -1,8 +1,11 @@
-{% extends 'checksheet/base.html' %}
 
+{% extends 'checksheet/base.html' %}
+{% load static %}
 {% block title %}Management Dashboard{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="{% static 'css/settings.css' %}">
+
 <div class="tabs-container">
   <!-- Tab Navigation -->
   <ul class="nav-tabs">
@@ -14,6 +17,12 @@
     </li>
     <li class="nav-item">
       <a class="nav-link" data-tab="rejection-alert">Rejection Alert</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-tab="target">Target</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-tab="reject-reason">Reject Reason</a>
     </li>
     <a href="javascript:history.back()" class="back-button">
       <i class="fas fa-times"></i>
@@ -132,48 +141,85 @@
     </div>
 
     <!-- Rejection Alert Tab -->
-    <div id="rejection-alert" class="tab-pane">
+
+    <!-- Rejection Alert Tab -->
+<div id="rejection-alert" class="tab-pane">
+  <div class="page-container">
+    <div class="header">
+      <h2 class="page-title">
+        <i class="fas fa-bell"></i>
+        Rejection Alert Configuration
+      </h2>
+    </div>
+
+    <div class="form-container">
+      <form method="post" id="configForm" novalidate action="{% url 'rejection_alert_config' %}">
+        {% csrf_token %}
+        
+        <div class="form-group">
+          <label for="rejectionThreshold" class="form-label"><strong>Rejection Threshold:</strong></label>
+          <input type="number" class="form-input" id="rejectionThreshold" name="rejection_threshold" 
+                 value="{{ config.rejection_threshold }}" min="1" required placeholder="Enter threshold">
+          <div class="validation-message" id="threshold-validation">
+            Please enter a valid threshold number
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="recipientCount" class="form-label"><strong>How many recipients?</strong></label>
+          <input type="number" class="form-input" id="recipientCount" name="recipient_count" 
+                 value="{{ recipient_count }}" min="1" max="10" required placeholder="Enter number of recipients">
+          <div class="validation-message" id="count-validation">
+            Please enter a number between 1 and 10
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label"><strong>Alert Recipients:</strong></label>
+          <table class="recipients-table-display">
+            <thead>
+              <tr>
+                <th>Level</th>
+                <th>User</th>
+                <th>Phone No.</th>
+                <th>Alert Percent</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="recipientsContainer">
+              <!-- Recipient rows will be dynamically generated here -->
+            </tbody>
+          </table>
+        </div>
+        <button type="button" class="submit-btn" id="submit-btn">
+          <i class="fas fa-save"></i>
+          Save
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+    <!-- Target Tab -->
+    <div id="target" class="tab-pane">
       <div class="page-container">
         <div class="header">
           <h2 class="page-title">
-            <i class="fas fa-bell"></i>
-            Rejection Alert Configuration
+            <i class="fas fa-bullseye"></i>
+            Production Target Configuration
           </h2>
-          <div class="header-actions">
-            
-           
-          </div>
         </div>
-
         <div class="form-container">
-          <form method="post" id="configForm" novalidate action="{% url 'rejection_alert_config' %}">
+          <form method="post" id="targetForm" action="{% url 'production_target' %}">
             {% csrf_token %}
-            
             <div class="form-group">
-              <label for="rejectionThreshold" class="form-label"><strong>Rejection Threshold:</strong></label>
-              <input type="number" class="form-input" id="rejectionThreshold" name="rejection_threshold" 
-                     value="{{ config.rejection_threshold }}" min="1" required placeholder="Enter threshold">
-              <div class="validation-message" id="threshold-validation">
-                Please enter a valid threshold number
+              <label for="productionTarget" class="form-label"><strong>Production Target:</strong></label>
+              <input type="number" class="form-input" id="productionTarget" name="production_target" 
+                     value="{{ production_target.target_value }}" min="0" required placeholder="Enter production target">
+              <div class="validation-message" id="target-validation">
+                Please enter a valid positive number
               </div>
             </div>
-            
-            <div class="form-group">
-              <label for="phoneNumberCount" class="form-label"><strong>How many phone numbers?</strong></label>
-              <input type="number" class="form-input" id="phoneNumberCount" min="1" max="10" 
-                     value="{{ phone_numbers|length|default:1 }}" required placeholder="Enter number count">
-              <div class="validation-message" id="count-validation">
-                Please enter a number between 1 and 10
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label"><strong>Phone Numbers for Alerts:</strong></label>
-              <div id="phoneNumbersContainer" class="phone-numbers-table">
-                <!-- Phone number fields will be dynamically generated here -->
-              </div>
-            </div>
-            <button type="button" class="submit-btn" id="submit-btn">
+            <button type="submit" class="submit-btn" id="target-submit-btn">
               <i class="fas fa-save"></i>
               Save
             </button>
@@ -181,6 +227,95 @@
         </div>
       </div>
     </div>
+
+    <!-- Reject Reason Tab -->
+<div id="reject-reason" class="tab-pane">
+  <div class="page-container">
+    <div class="header">
+      <h2 class="page-title">
+        <i class="fas fa-exclamation-triangle"></i>
+        Reject Reason Configuration
+      </h2>
+    </div>
+    <div class="form-container">
+      <form method="post" id="rejectReasonForm" action="{% url 'reject_reason_config' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="reasonCount" class="form-label"><strong>How many new reasons?</strong></label>
+          <input type="number" class="form-input" id="reasonCount" name="reason_count" 
+                 value="{{ reason_count|default:0 }}" min="0" max="20" required placeholder="Enter number of new reasons">
+          <div class="validation-message" id="reason-count-validation">
+            Please enter a number between 0 and 20
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><strong>New Reject Reasons:</strong></label>
+          <div id="reasonsContainer" class="reasons-table"></div>
+        </div>
+        
+        <!-- Existing Reasons Section - Now inside the same form -->
+          <div class="form-group existing-reasons-container">
+            <h3>Existing Reject Reasons</h3>
+            <div class="table-wrapper">
+              <table class="reasons-table-display">
+                <thead>
+                  <tr>
+                    <th>Reason</th>
+                    <th>Action</th>
+                    <th>Reason</th>
+                    <th>Action</th>
+                    <th>Reason</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="existingReasons">
+                  {% for reason in reject_reasons %}
+                    {% if forloop.counter0|divisibleby:3 %}
+                      <tr>
+                    {% endif %}
+                    <td>
+                      <div class="input-group">
+                        <input
+                          type="text"
+                          class="form-input edit-reason-input"
+                          name="edit_reason_{{ reason.id }}"
+                          value="{{ reason.reason }}"
+                          data-reason-id="{{ reason.id }}"
+                          required
+                          placeholder="Enter reason"
+                        />
+                        <div class="validation-message">Please enter a valid reason</div>
+                      </div>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        class="delete-reason-btn"
+                        data-reason-id="{{ reason.id }}"
+                      >
+                        <i class="fas fa-trash"></i> 
+                      </button>
+                    </td>
+                    {% if forloop.counter|divisibleby:3 or forloop.last %}
+                      </tr>
+                    {% endif %}
+                  {% empty %}
+                    <tr>
+                      <td colspan="6" class="no-data">No existing reject reasons found.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        
+        <button type="submit" class="submit-btn" id="reason-submit-btn">
+          <i class="fas fa-save"></i>
+          Save
+        </button>
+      </form>
+    </div>
+  </div>
   </div>
 </div>
 
@@ -188,10 +323,10 @@
 <div class="toast-container">
     {% for message in messages %}
     {% with message.tags.split as tags_list %}
-        {% if 'shift' in tags_list or 'data' in tags_list %}
-        <div class="toast-message toast-success">
+        {% if 'shift' in tags_list or 'data' in tags_list or 'success' in tags_list or 'error' in tags_list %}
+        <div class="toast-message {% if 'success' in tags_list %}toast-success{% else %}toast-error{% endif %}">
             <div class="toast-icon">
-                <i class="fas fa-check-circle"></i>
+                <i class="fas {% if 'success' in tags_list %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
             </div>
             <div class="toast-content">
                 {{ message }}
@@ -203,998 +338,890 @@
 </div>
 {% endif %}
 
-<style>
-  /* Existing styles from settings.html remain unchanged */
-  .sidebar-toggle {
-    padding: 0px !important;
-  }
-  .back-button {
-    display: flex;
-    align-items: center;
-    margin-left:auto;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background-color: #f1f5f9;
-    color: #64748b;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
-
-  .back-button:hover {
-    background-color: #e2e8f0;
-    color: #334155;
-    transform: scale(1.05);
-  }
-
-  .tabs-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  }
-
-  .nav-tabs {
-    display: flex;
-    list-style: none;
-    padding: 0;
-    margin: 0 0 20px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    gap: 5px;
-  }
-
-  .nav-item {
-    margin-bottom: -1px;
-  }
-
-  .nav-link {
-    display: block;
-    padding: 10px 15px;
-    text-decoration: none;
-    color: var(--text-light);
-    border: 1px solid var(--accent-color-solid);
-    border-bottom: none;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-  }
-
-  .nav-link.active {
-    color: var(--text-light);
-    background: var(--accent-color);
-    border: 1.5px solid var(--accent-color-solid);
-    font-weight: 600;
-  }
-  body.white-mode .nav-link.active {
-    color: white;
-    background: var(--accent-color-solid);
-    border: 1.5px solid var(--accent-color-solid);
-    font-weight: 600;
-  }
-
-  .tab-content {
-    padding: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    background-color: rgba(0, 0, 0, 0.2);
-  }
-
-  body.white-mode .tab-content {
-    background-color: #f1f5f9;
-  }
-
-  .tab-pane {
-    display: none;
-  }
-
-  .tab-pane.active {
-    display: block;
-  }
-
-  h2, h3, h4 {
-    color: var(--text-light);
-    font-weight: 600;
-  }
-
-  .shift-container, .error-editor-container, .page-container {
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
-  }
-
-  .shift-form, .form-container {
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .shift-row, .search-form-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 15px;
-  }
-
-  .shift-group, .search-form-group, .form-group {
-    display: flex;
-    flex-direction: column;
-    min-width: 150px;
-    flex: 1;
-  }
-
-  .shift-group label, .search-form-group label, .form-label {
-    font-weight: 500;
-    margin-bottom: 8px;
-    color: var(--text-light);
-  }
-
-  .shift-group input, .search-form-group select, .search-form-group input, .form-input {
-    padding: 12px;
-    background-color: rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    font-size: 16px;
-    color: var(--text-light);
-    transition: all 0.3s ease;
-  }
-
-  .shift-group input:focus, .search-form-group select:focus, .search-form-group input:focus, .form-input:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--accent-color);
-  }
-
-  .shift-button, .search-button-container, .save-button-container {
-    display: flex;
-    align-items: flex-end;
-    margin-left: 15px;
-  }
-
-  button, .submit-btn {
-    background: var(--accent-color);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 24px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-
-  body.white-mode button, body.white-mode .submit-btn {
-    background: var(--accent-color-solid);
-    color: white;
-  }
-
-  button:hover, .submit-btn:hover {
-    border: 1.5px solid var(--accent-color-solid);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
-  }
-
-  button:disabled, .submit-btn:disabled {
-    background: linear-gradient(to right, #6b7280, #4b5563);
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  .search-form-container {
-    padding: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-  }
-
-  .form-control option {
-    background: #1e293b;
-  }
-
-  body.white-mode .form-control option {
-    background: white;
-    color: var(--text-light);
-  }
-
-  .search-button, .save-button {
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    height: 44px;
-  }
-
-  .search-button:hover, .save-button:hover {
-    border: 1.5px solid var(--accent-color-solid);
-  }
-
-  .message {
-    padding: 12px 20px;
-    border-radius: 4px;
-    margin: 15px 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .error-message {
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
-  }
-
-  .success-message {
-    background-color: #d4edda;
-    border: 1px solid #c3e6cb;
-    color: #155724;
-  }
-
-  .error-fields-container {
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    margin-top: 20px;
-    border: 1px solid rgba(255,255,255,0.1);
-    overflow: hidden;
-  }
-
-  .error-fields-header {
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 15px 20px;
-  }
-
-  .error-fields-header h3 {
-    margin: 0;
-    font-size: 18px;
-    color: var(--text-light);
-  }
-
-  .error-fields-content {
-    padding: 20px;
-  }
-
-  .error-fields-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 20px;
-  }
-
-  .error-field-card {
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 6px;
-    overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-
-  body.white-mode .error-field-card {
-    border: 1px solid var(--text-light);
-  }
-
-  .error-field-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  }
-
-  .error-field-header {
-    padding: 10px 15px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-  }
-
-  body.white-mode .error-field-header {
-    border-bottom: 1px solid var(--text-light);
-  }
-
-  .error-field-header h4 {
-    margin: 0;
-    font-size: 16px;
-    color: var(--text-light);
-  }
-
-  .error-field-body {
-    padding: 15px;
-  }
-
-  .error-field-input {
-    width: 100%;
-    padding: 10px;
-    background: #80808057;
-    color: var(--text-light);
-    font-size: 18px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    text-align: center;
-    font-weight: bold;
-  }
-
-  .error-field-input:focus {
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem var(--accent-color);
-  }
-
-  .toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    max-width: 350px;
-  }
-
-  .toast-message {
-    padding: 15px 20px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    display: flex;
-    align-items: center;
-    animation: slideIn 0.5s ease forwards;
-    opacity: 0;
-    transform: translateX(50px);
-  }
-
-  .toast-success {
-    background: #059669;
-    color: white;
-    border-left: 5px solid #047857;
-  }
-
-  .toast-error {
-    background: #7f1d1d;
-    color: white;
-    border-left: 5px solid #600;
-  }
-
-  .toast-icon {
-    margin-right: 12px;
-    font-size: 1.2rem;
-  }
-
-  .toast-content {
-    flex: 1;
-  }
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateX(50px);
+<script>
+// Utility function to get CSRF token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
     }
-    to {
-      opacity: 1;
-      transform: translateX(0);
+  }
+  return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+// Toast notification handling
+document.addEventListener('DOMContentLoaded', function() {
+  const toastMessages = document.querySelectorAll('.toast-message');
+  
+  toastMessages.forEach(toast => {
+    setTimeout(() => {
+      toast.style.animation = 'fadeOut 0.5s ease forwards';
+      setTimeout(() => {
+        toast.remove();
+      }, 500);
+    }, 5000);
+  });
+});
+
+// Tab switching logic
+document.addEventListener('DOMContentLoaded', function() {
+  const tabLinks = document.querySelectorAll('.nav-link');
+  
+  tabLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const tabId = this.getAttribute('data-tab');
+      
+      document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      
+      this.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    });
+  });
+});
+
+
+// Shift validation script
+function validateShifts() {
+  const shiftAEnd = document.getElementById("shift_A_end").value;
+  const shiftBStart = document.getElementById("shift_B_start").value;
+
+  if (shiftAEnd && shiftBStart) {
+    if (shiftBStart < shiftAEnd) {
+      document.getElementById("error-message").innerText = "Shift B start time must be equal to or after Shift A end time.";
+      return false;
     }
   }
 
-  @keyframes fadeOut {
-    from {
-      opacity: 1;
-    }
-    to {
-      opacity: 0;
-    }
-  }
-
-  /* Styles from rejection_alert.html adapted for tab integration */
-  .page-container {
-    background: transparent;
-    min-height: auto;
-  }
-  button#submit-btn {
-    display: flex
-;
-    /* align-items: flex-end; */
-    margin-left: auto;
-    gap: 6px;
+  document.getElementById("error-message").innerText = "";
+  return true;
 }
 
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 20px;
-    margin-bottom: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    position: relative;
-    overflow: hidden;
-    {% comment %} background: #334155; {% endcomment %}
-  }
+// Error editor scripts
+let currentRecord = null;
+let allChecksheets = [];
 
-  .header:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: var(--accent-color-solid);
-  }
-
-  .page-title {
-    color: var(--text-light);
-    font-size: 1.5rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-   body.white-mode .form-input::placeholder{
-    color:var(--text-light);
-   }
-
-  .page-title i {
-    color: var(--accent-color-solid);
-    font-size: 1.25rem;
-  }
-
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-
-  .form-container:hover {
-    transform: translateY(-4px);
-  }
-
-  .form-input::placeholder {
-    color: #ffffffe0;
-  }
-
-  .phone-numbers-table {
-    display: grid;
-    gap: 12px;
-    margin-top: 8px;
-  }
-
-  .phone-input-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .phone-numbers-table.two-columns {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .input-group-text {
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid #e2e8f0;
-    border-right: none;
-    border-radius: 10px 0 0 10px;
-    padding: 8px 12px;
-    font-size: 0.875rem;
-    color: #ffffffe0;
-    height: 38px;
-    display: flex;
-    align-items: center;
-  }
-
-  .phone-number {
-    border-radius: 0 10px 10px 0;
-  }
-
-  .form-input.error {
-    border-color: #ef4444;
-    background-color: #fef2f2;
-  }
-
-  .form-input.error:focus {
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
-  }
-
-  .validation-message {
-    font-size: 0.75rem;
-    margin-top: 4px;
-    display: none;
-    color: #ef4444;
-  }
-
-  .validation-message.error {
-    display: block;
-  }
-
-  @media (max-width: 768px) {
-    .shift-row, .search-form-row {
-      flex-direction: column;
+document.addEventListener('DOMContentLoaded', function() {
+  fetch('/api/get-all-checksheets/', {
+    method: 'GET',
+    headers: {
+      'X-CSRFToken': csrftoken,
+      'Content-Type': 'application/json',
     }
-
-    .shift-button, .search-button-container {
-      margin-left: 0;
-      margin-top: 15px;
-    }
-
-    .error-fields-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .header {
-      padding: 12px;
-      flex-direction: column;
-      gap: 12px;
-      align-items: stretch;
-    }
-
-    .header-actions {
-      justify-content: space-between;
-    }
-
-    .phone-numbers-table.two-columns {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 576px) {
-    .page-title {
-      font-size: 1.25rem;
-    }
-
-    .form-label {
-      font-size: 0.75rem;
-    }
-
-    .submit-btn {
-      width: 100%;
-    }
-  }
-</style>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const toastMessages = document.querySelectorAll('.toast-message');
-    
-    toastMessages.forEach(toast => {
-      setTimeout(() => {
-        toast.style.animation = 'fadeOut 0.5s ease forwards';
-        setTimeout(() => {
-          toast.remove();
-        }, 500);
-      }, 5000);
-    });
+  })
+  .then(response => response.json())
+  .then(data => {
+    allChecksheets = data.checksheets;
+  })
+  .catch(error => {
+    console.error('Error loading checksheets:', error);
   });
 
-  // Tab switching logic
-  document.addEventListener('DOMContentLoaded', function() {
-    const tabLinks = document.querySelectorAll('.nav-link');
-    
-    tabLinks.forEach(link => {
-      link.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        const tabId = this.getAttribute('data-tab');
-        
-        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
-        
-        this.classList.add('active');
-        document.getElementById(tabId).classList.add('active');
-      });
-    });
-  });
-
-  // Shift validation script
-  function validateShifts() {
-    const shiftAEnd = document.getElementById("shift_A_end").value;
-    const shiftBStart = document.getElementById("shift_B_start").value;
-
-    if (shiftAEnd && shiftBStart) {
-      if (shiftBStart < shiftAEnd) {
-        document.getElementById("error-message").innerText = "Shift B start time must be equal to or after Shift A end time.";
-        return false;
-      }
-    }
-
-    document.getElementById("error-message").innerText = "";
-    return true;
-  }
-
-  // Error editor scripts
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-  const csrftoken = getCookie('csrftoken');
+  const lineDropdown = document.getElementById('line');
+  const checksheetDropdown = document.getElementById('checksheetName');
   
-  let currentRecord = null;
-  let allChecksheets = [];
-
-  document.addEventListener('DOMContentLoaded', function() {
-    fetch('/api/get-all-checksheets/', {
-      method: 'GET',
-      headers: {
-        'X-CSRFToken': csrftoken,
-        'Content-Type': 'application/json',
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      allChecksheets = data.checksheets;
-    })
-    .catch(error => {
-      console.error('Error loading checksheets:', error);
-    });
-
-    const lineDropdown = document.getElementById('line');
-    const checksheetDropdown = document.getElementById('checksheetName');
-    
-    if (lineDropdown && checksheetDropdown) {
-      lineDropdown.addEventListener('change', function() {
-        const selectedLine = this.value;
+  if (lineDropdown && checksheetDropdown) {
+    lineDropdown.addEventListener('change', function() {
+      const selectedLine = this.value;
+      
+      if (selectedLine) {
+        checksheetDropdown.disabled = false;
         
-        if (selectedLine) {
-          checksheetDropdown.disabled = false;
-          
-          checksheetDropdown.innerHTML = '<option value="">Select Checksheet</option>';
-          
-          fetch(`/api/get-checksheets-by-line/?line=${encodeURIComponent(selectedLine)}`, {
-            method: 'GET',
-            headers: {
-              'X-CSRFToken': csrftoken,
-              'Content-Type': 'application/json',
-            }
-          })
-          .then(response => response.json())
-          .then(data => {
-            data.checksheets.forEach(checksheet => {
-              const option = document.createElement('option');
-              option.value = checksheet.name;
-              option.textContent = checksheet.name;
-              checksheetDropdown.appendChild(option);
-            });
-          })
-          .catch(error => {
-            console.error('Error fetching checksheets:', error);
-          });
-        } else {
-          checksheetDropdown.disabled = true;
-          checksheetDropdown.innerHTML = '<option value="">Select Line First</option>';
-        }
-      });
-    }
-
-    const searchButton = document.getElementById('searchButton');
-    if (searchButton) {
-      searchButton.addEventListener('click', function() {
-        const line = document.getElementById('line').value;
-        const checksheetName = document.getElementById('checksheetName').value;
-        const shift = document.getElementById('shift').value;
-        const date = document.getElementById('date').value;
+        checksheetDropdown.innerHTML = '<option value="">Select Checksheet</option>';
         
-        if (!line || !checksheetName || !shift || !date) {
-          alert('Please select all fields: line, checksheet name, shift, and date');
-          return;
-        }
-        
-        this.disabled = true;
-        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
-        
-        document.getElementById('notFoundMessage').style.display = 'none';
-        
-        fetch(`/api/get-checksheet-data/?checksheet_name=${encodeURIComponent(checksheetName)}&shift=${encodeURIComponent(shift)}&date=${encodeURIComponent(date)}&line=${encodeURIComponent(line)}`, {
+        fetch(`/api/get-checksheets-by-line/?line=${encodeURIComponent(selectedLine)}`, {
           method: 'GET',
           headers: {
             'X-CSRFToken': csrftoken,
             'Content-Type': 'application/json',
           }
         })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-          currentRecord = data;
-          
-          document.getElementById('errorFieldsContainer').style.display = 'block';
-          
-          const errorFields = document.getElementById('errorFields');
-          errorFields.innerHTML = '';
-          
-          Object.entries(data.status_data).forEach(([errorType, count]) => {
-            const cardDiv = document.createElement('div');
-            cardDiv.className = 'error-field-card';
-            
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'error-field-header';
-            
-            const headerTitle = document.createElement('h4');
-            headerTitle.textContent = errorType;
-            headerDiv.appendChild(headerTitle);
-            
-            const bodyDiv = document.createElement('div');
-            bodyDiv.className = 'error-field-body';
-            
-            const input = document.createElement('input');
-            input.type = 'number';
-            input.className = 'error-field-input';
-            input.id = 'error_' + errorType.replace(/\s+/g, '_');
-            input.name = errorType;
-            input.value = count;
-            input.min = 0;
-            
-            bodyDiv.appendChild(input);
-            
-            cardDiv.appendChild(headerDiv);
-            cardDiv.appendChild(bodyDiv);
-            
-            errorFields.appendChild(cardDiv);
+          data.checksheets.forEach(checksheet => {
+            const option = document.createElement('option');
+            option.value = checksheet.name;
+            option.textContent = checksheet.name;
+            checksheetDropdown.appendChild(option);
           });
-          
-          searchButton.disabled = false;
-          searchButton.innerHTML = '<i class="fas fa-search"></i> Search';
         })
         .catch(error => {
-          console.error('Error:', error);
-          document.getElementById('errorFieldsContainer').style.display = 'none';
-          document.getElementById('notFoundMessage').style.display = 'block';
-          
-          searchButton.disabled = false;
-          searchButton.innerHTML = '<i class="fas fa-search"></i> Search';
+          console.error('Error fetching checksheets:', error);
         });
-      });
-    }
+      } else {
+        checksheetDropdown.disabled = true;
+        checksheetDropdown.innerHTML = '<option value="">Select Line First</option>';
+      }
+    });
+  }
 
-    const saveButton = document.getElementById('saveButton');
-    if (saveButton) {
-      saveButton.addEventListener('click', function() {
-        if (!currentRecord) return;
+  const searchButton = document.getElementById('searchButton');
+  if (searchButton) {
+    searchButton.addEventListener('click', function() {
+      const line = document.getElementById('line').value;
+      const checksheetName = document.getElementById('checksheetName').value;
+      const shift = document.getElementById('shift').value;
+      const date = document.getElementById('date').value;
+      
+      if (!line || !checksheetName || !shift || !date) {
+        alert('Please select all fields: line, checksheet name, shift, and date');
+        return;
+      }
+      
+      this.disabled = true;
+      this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+      
+      document.getElementById('notFoundMessage').style.display = 'none';
+      
+      fetch(`/api/get-checksheet-data/?checksheet_name=${encodeURIComponent(checksheetName)}&shift=${encodeURIComponent(shift)}&date=${encodeURIComponent(date)}&line=${encodeURIComponent(line)}`, {
+        method: 'GET',
+        headers: {
+          'X-CSRFToken': csrftoken,
+          'Content-Type': 'application/json',
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        currentRecord = data;
         
-        this.disabled = true;
-        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        document.getElementById('errorFieldsContainer').style.display = 'block';
         
-        const errorInputs = document.querySelectorAll('.error-field-input');
-        const errorValues = {};
+        const errorFields = document.getElementById('errorFields');
+        errorFields.innerHTML = '';
         
-        errorInputs.forEach(input => {
-          const errorType = input.name;
-          const count = parseInt(input.value, 10);
-          errorValues[errorType] = count;
+        Object.entries(data.status_data).forEach(([errorType, count]) => {
+          const cardDiv = document.createElement('div');
+          cardDiv.className = 'error-field-card';
+          
+          const headerDiv = document.createElement('div');
+          headerDiv.className = 'error-field-header';
+          
+          const headerTitle = document.createElement('h4');
+          headerTitle.textContent = errorType;
+          headerDiv.appendChild(headerTitle);
+          
+          const bodyDiv = document.createElement('div');
+          bodyDiv.className = 'error-field-body';
+          
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.className = 'error-field-input';
+          input.id = 'error_' + errorType.replace(/\s+/g, '_');
+          input.name = errorType;
+          input.value = count;
+          input.min = 0;
+          
+          bodyDiv.appendChild(input);
+          
+          cardDiv.appendChild(headerDiv);
+          cardDiv.appendChild(bodyDiv);
+          
+          errorFields.appendChild(cardDiv);
         });
         
-        const data = {
-          line: document.getElementById('line').value,
-          checksheet_name: document.getElementById('checksheetName').value,
-          shift: document.getElementById('shift').value,
-          date: document.getElementById('date').value,
-          error_values: errorValues
-        };
+        searchButton.disabled = false;
+        searchButton.innerHTML = '<i class="fas fa-search"></i> Search';
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('errorFieldsContainer').style.display = 'none';
+        document.getElementById('notFoundMessage').style.display = 'block';
         
-        fetch('/api/update-checksheet-errors/', {
-          method: 'POST',
+        searchButton.disabled = false;
+        searchButton.innerHTML = '<i class="fas fa-search"></i> Search';
+      });
+    });
+  }
+
+  const saveButton = document.getElementById('saveButton');
+  if (saveButton) {
+    saveButton.addEventListener('click', function() {
+      if (!currentRecord) return;
+      
+      this.disabled = true;
+      this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      
+      const errorInputs = document.querySelectorAll('.error-field-input');
+      const errorValues = {};
+      
+      errorInputs.forEach(input => {
+        const errorType = input.name;
+        const count = parseInt(input.value, 10);
+        errorValues[errorType] = count;
+      });
+      
+      const data = {
+        line: document.getElementById('line').value,
+        checksheet_name: document.getElementById('checksheetName').value,
+        shift: document.getElementById('shift').value,
+        date: document.getElementById('date').value,
+        error_values: errorValues
+      };
+      
+      fetch('/api/update-checksheet-errors/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        showToast("Checksheet data updated successfully!", "success");
+        
+        resetForm();
+        
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('There was an error saving your changes. Please try again.');
+        
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+      });
+    });
+  }
+  
+  function resetForm() {
+    document.getElementById('line').value = '';
+    document.getElementById('checksheetName').innerHTML = '<option value="">Select Checksheet</option>';
+    document.getElementById('checksheetName').disabled = true;
+    document.getElementById('shift').value = '';
+    
+    const today = new Date();
+    const dateString = today.toISOString().split('T')[0];
+    document.getElementById('date').value = dateString;
+    
+    document.getElementById('errorFieldsContainer').style.display = 'none';
+    
+    currentRecord = null;
+    
+    const errorFields = document.getElementById('errorFields');
+    if (errorFields) {
+      errorFields.innerHTML = '';
+    }
+  }
+  
+  function showToast(message, type = 'success') {
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.className = 'toast-container';
+      document.body.appendChild(toastContainer);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast-message toast-${type}`;
+    
+    const iconContainer = document.createElement('div');
+    iconContainer.className = 'toast-icon';
+    
+    const icon = document.createElement('i');
+    icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+    iconContainer.appendChild(icon);
+    
+    const content = document.createElement('div');
+    content.className = 'toast-content';
+    content.textContent = message;
+    
+    toast.appendChild(iconContainer);
+    toast.appendChild(content);
+    
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.animation = 'slideIn 0.5s ease forwards';
+    }, 10);
+    
+    setTimeout(() => {
+      toast.style.animation = 'fadeOut 0.5s ease forwards';
+      setTimeout(() => {
+        toast.remove();
+      }, 500);
+    }, 5000);
+  }
+
+ const recipientCount = document.getElementById('recipientCount');
+const recipientsContainer = document.getElementById('recipientsContainer');
+const submitBtn = document.getElementById('submit-btn');
+const configForm = document.getElementById('configForm');
+const rejectionThreshold = document.getElementById('rejectionThreshold');
+const thresholdValidation = document.getElementById('threshold-validation');
+const countValidation = document.getElementById('count-validation');
+
+const existingRecipients = [
+  {% for recipient in recipients %}
+    {
+      user_id: "{{ recipient.user_id|default:'' }}",
+      phone_number: "{{ recipient.phone_number|default:'' }}",
+      percentage: "{{ recipient.percentage|default:'' }}"
+    }{% if not forloop.last %},{% endif %}
+  {% endfor %}
+];
+console.log(existingRecipients);
+
+function validateThreshold() {
+  const threshold = rejectionThreshold.value.trim();
+  if (threshold === '' || parseInt(threshold) < 1) {
+    rejectionThreshold.classList.add('error');
+    thresholdValidation.classList.add('error');
+    return false;
+  }
+  rejectionThreshold.classList.remove('error');
+  thresholdValidation.classList.remove('error');
+  return true;
+}
+const usersData = [
+  {% for user in users %}
+    {
+      id: '{{ user.id }}',
+      employee_id: '{{ user.employee_id }}',
+      role: '{{ user.role }}'
+    }{% if not forloop.last %},{% endif %}
+  {% endfor %}
+];
+
+function validateCount() {
+  const count = recipientCount.value.trim();
+  if (count === '' || parseInt(count) < 1 || parseInt(count) > 10) {
+    recipientCount.classList.add('error');
+    countValidation.classList.add('error');
+    return false;
+  }
+  recipientCount.classList.remove('error');
+  countValidation.classList.remove('error');
+  return true;
+}
+
+function validateRecipients() {
+  const userSelects = document.querySelectorAll('select[name^="user_id_"]');
+  const phoneInputs = document.querySelectorAll('input[name^="phone_number_"]');
+  const percentageInputs = document.querySelectorAll('input[name^="percentage_"]');
+  let allValid = true;
+  const selectedUsers = new Set();
+
+  // Validate user selections
+  userSelects.forEach((select, index) => {
+    const validationMessage = select.parentElement.querySelector('.validation-message.user-validation');
+    if (!select.value) {
+      select.classList.add('error');
+      if (validationMessage) validationMessage.classList.add('error');
+      allValid = false;
+    } else if (selectedUsers.has(select.value)) {
+      select.classList.add('error');
+      if (validationMessage) {
+        validationMessage.textContent = "Each user can only be selected once";
+        validationMessage.classList.add('error');
+      }
+      allValid = false;
+    } else {
+      select.classList.remove('error');
+      if (validationMessage) {
+        validationMessage.textContent = "Please select a user";
+        validationMessage.classList.remove('error');
+      }
+      selectedUsers.add(select.value);
+    }
+  });
+
+  // Validate phone numbers
+  const phoneRegex = /^\+[0-9]{1,3}[0-9]{5,14}$/;
+  phoneInputs.forEach((input, index) => {
+    const validationMessage = input.parentElement.querySelector('.validation-message.phone-validation');
+    if (!phoneRegex.test(input.value.trim())) {
+      input.classList.add('error');
+      if (validationMessage) validationMessage.classList.add('error');
+      allValid = false;
+    } else {
+      input.classList.remove('error');
+      if (validationMessage) validationMessage.classList.remove('error');
+    }
+  });
+
+  // Validate percentages
+  percentageInputs.forEach((input, index) => {
+    const percentage = parseFloat(input.value) || 0;
+    const validationMessage = input.parentElement.querySelector('.validation-message.percent-validation');
+    if (percentage <= 0 || percentage > 100) {
+      input.classList.add('error');
+      if (validationMessage) validationMessage.classList.add('error');
+      allValid = false;
+    } else {
+      input.classList.remove('error');
+      if (validationMessage) validationMessage.classList.remove('error');
+    }
+  });
+
+  return allValid;
+}
+function updateRecipientFields() {
+  const count = parseInt(recipientCount.value) || 1;
+  recipientsContainer.innerHTML = '';
+
+  console.log("Recipient Count:", count);
+  console.log("Existing Recipients:", JSON.stringify(existingRecipients, null, 2));
+
+  for (let i = 0; i < count; i++) {
+    // Safely access recipient data, default to empty strings
+    const recipient = i < existingRecipients.length ? existingRecipients[i] : {};
+    const userValue = recipient.user_id || '';
+    const phoneValue = recipient.phone_number || '';
+    const percentageValue = recipient.percentage !== undefined && recipient.percentage !== null ? String(recipient.percentage) : '';
+
+    console.log(`Rendering row ${i}:`, { userValue, phoneValue, percentageValue });
+
+    const row = document.createElement('tr');
+    row.setAttribute('data-recipient-index', i);
+
+    // Level column
+    const levelCell = document.createElement('td');
+    levelCell.textContent = `Level ${i + 1}`;
+    row.appendChild(levelCell);
+
+    // User column
+    const userCell = document.createElement('td');
+    const userSelect = document.createElement('select');
+    userSelect.className = 'form-input';
+    userSelect.name = `user_id_${i}`;
+    userSelect.required = true;
+    
+    // Add default option
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Select User';
+    userSelect.appendChild(defaultOption);
+    
+    // Add user options from usersData array
+    usersData.forEach(user => {
+      const option = document.createElement('option');
+      option.value = user.id;
+      option.textContent = `${user.employee_id} (${user.role})`;
+      if (userValue === user.id) {
+        option.selected = true;
+      }
+      userSelect.appendChild(option);
+    });
+    
+    userCell.appendChild(userSelect);
+    
+    const userValidation = document.createElement('div');
+    userValidation.className = 'validation-message user-validation';
+    userValidation.textContent = 'Please select a user';
+    userCell.appendChild(userValidation);
+    
+    row.appendChild(userCell);
+
+    // Phone number column
+    const phoneCell = document.createElement('td');
+    const phoneInput = document.createElement('input');
+    phoneInput.type = 'tel';
+    phoneInput.className = 'form-input phone-number';
+    phoneInput.name = `phone_number_${i}`;
+    phoneInput.value = phoneValue;
+    phoneInput.placeholder = '+918XXXXXXXXXX';
+    phoneInput.required = true;
+    phoneCell.appendChild(phoneInput);
+    
+    const phoneValidation = document.createElement('div');
+    phoneValidation.className = 'validation-message phone-validation';
+    phoneValidation.textContent = 'Please enter a valid phone number with country code';
+    phoneCell.appendChild(phoneValidation);
+    
+    row.appendChild(phoneCell);
+
+    // Percentage column
+    const percentCell = document.createElement('td');
+    const percentInput = document.createElement('input');
+    percentInput.type = 'number';
+    percentInput.className = 'form-input percentage';
+    percentInput.name = `percentage_${i}`;
+    percentInput.value = percentageValue;
+    percentInput.min = '0';
+    percentInput.max = '100';
+    percentInput.step = '0.01';
+    percentInput.placeholder = 'Percentage';
+    percentInput.required = true;
+    percentCell.appendChild(percentInput);
+    
+    const percentValidation = document.createElement('div');
+    percentValidation.className = 'validation-message percent-validation';
+    percentValidation.textContent = 'Please enter a percentage between 0 and 100';
+    percentCell.appendChild(percentValidation);
+    
+    row.appendChild(percentCell);
+
+    // Action column
+    const actionCell = document.createElement('td');
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'delete-recipient-btn';
+    deleteButton.setAttribute('data-recipient-index', i);
+    deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+    actionCell.appendChild(deleteButton);
+    row.appendChild(actionCell);
+
+    recipientsContainer.appendChild(row);
+  }
+
+  // Attach delete event listeners
+  const deleteButtons = document.querySelectorAll('.delete-recipient-btn');
+  deleteButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      const recipientIndex = this.getAttribute('data-recipient-index');
+      if (confirm('Are you sure you want to delete this recipient?')) {
+        fetch(`/api/delete-recipient/${recipientIndex}/`, {
+          method: 'DELETE',
           headers: {
-            'X-CSRFToken': csrftoken,
+            'X-CSRFToken': getCookie('csrftoken'),
             'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data)
+          }
         })
         .then(response => {
           if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error('Failed to delete recipient');
           }
           return response.json();
         })
         .then(data => {
-          showToast("Checksheet data updated successfully!", "success");
-          
-          resetForm();
-          
-          saveButton.disabled = false;
-          saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+          showToast("Recipient deleted successfully!", "success");
+          // Update existingRecipients and refresh the table
+          existingRecipients.splice(recipientIndex, 1);
+          recipientCount.value = existingRecipients.length || 1;
+          updateRecipientFields();
         })
         .catch(error => {
           console.error('Error:', error);
-          alert('There was an error saving your changes. Please try again.');
-          
-          saveButton.disabled = false;
-          saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+          showToast("Failed to delete recipient.", "error");
         });
-      });
+      }
+    });
+  });
+}
+
+// Validate threshold
+function validateThreshold() {
+  const threshold = rejectionThreshold.value.trim();
+  if (threshold === '' || parseInt(threshold) < 1) {
+    rejectionThreshold.classList.add('error');
+    thresholdValidation.classList.add('error');
+    return false;
+  }
+  rejectionThreshold.classList.remove('error');
+  thresholdValidation.classList.remove('error');
+  return true;
+}
+
+// Validate recipient count
+function validateCount() {
+  const count = recipientCount.value.trim();
+  if (count === '' || parseInt(count) < 1 || parseInt(count) > 10) {
+    recipientCount.classList.add('error');
+    countValidation.classList.add('error');
+    return false;
+  }
+  recipientCount.classList.remove('error');
+  countValidation.classList.remove('error');
+  return true;
+}
+
+// Validate recipients
+function validateRecipients() {
+  const userSelects = document.querySelectorAll('select[name^="user_id_"]');
+  const phoneInputs = document.querySelectorAll('input[name^="phone_number_"]');
+  const percentageInputs = document.querySelectorAll('input[name^="percentage_"]');
+  let allValid = true;
+  const selectedUsers = new Set();
+
+  // Validate user selections
+  userSelects.forEach((select, index) => {
+    const validationMessage = select.parentElement.querySelector('.validation-message.user-validation');
+    if (!select.value) {
+      select.classList.add('error');
+      if (validationMessage) validationMessage.classList.add('error');
+      allValid = false;
+    } else if (selectedUsers.has(select.value)) {
+      select.classList.add('error');
+      if (validationMessage) {
+        validationMessage.textContent = "Each user can only be selected once";
+        validationMessage.classList.add('error');
+      }
+      allValid = false;
+    } else {
+      select.classList.remove('error');
+      if (validationMessage) {
+        validationMessage.textContent = "Please select a user";
+        validationMessage.classList.remove('error');
+      }
+      selectedUsers.add(select.value);
     }
+  });
+
+  // Validate phone numbers
+  const phoneRegex = /^\+[0-9]{1,3}[0-9]{5,14}$/;
+  phoneInputs.forEach((input, index) => {
+    const validationMessage = input.parentElement.querySelector('.validation-message.phone-validation');
+    if (!phoneRegex.test(input.value.trim())) {
+      input.classList.add('error');
+      if (validationMessage) validationMessage.classList.add('error');
+      allValid = false;
+    } else {
+      input.classList.remove('error');
+      if (validationMessage) validationMessage.classList.remove('error');
+    }
+  });
+
+  // Validate percentages
+  percentageInputs.forEach((input, index) => {
+    const percentage = parseFloat(input.value) || 0;
+    const validationMessage = input.parentElement.querySelector('.validation-message.percent-validation');
+    if (percentage <= 0 || percentage > 100) {
+      input.classList.add('error');
+      if (validationMessage) validationMessage.classList.add('error');
+      allValid = false;
+    } else {
+      input.classList.remove('error');
+      if (validationMessage) validationMessage.classList.remove('error');
+    }
+  });
+
+  return allValid;
+}
+
+// Event listeners
+if (recipientCount) {
+  recipientCount.addEventListener('input', function() {
+    validateCount();
+    updateRecipientFields();
+  });
+}
+
+if (rejectionThreshold) {
+  rejectionThreshold.addEventListener('input', validateThreshold);
+}
+
+if (submitBtn) {
+  submitBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    const isThresholdValid = validateThreshold();
+    const isCountValid = validateCount();
+    const isRecipientsValid = validateRecipients();
     
-    function resetForm() {
-      document.getElementById('line').value = '';
-      document.getElementById('checksheetName').innerHTML = '<option value="">Select Checksheet</option>';
-      document.getElementById('checksheetName').disabled = true;
-      document.getElementById('shift').value = '';
-      
-      const today = new Date();
-      const dateString = today.toISOString().split('T')[0];
-      document.getElementById('date').value = dateString;
-      
-      document.getElementById('errorFieldsContainer').style.display = 'none';
-      
-      currentRecord = null;
-      
-      const errorFields = document.getElementById('errorFields');
-      if (errorFields) {
-        errorFields.innerHTML = '';
-      }
+    if (isThresholdValid && isCountValid && isRecipientsValid) {
+      configForm.submit();
+    } else {
+      alert("Please fix the validation errors before submitting.");
     }
-    
-    function showToast(message, type = 'success') {
-      let toastContainer = document.querySelector('.toast-container');
-      if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container';
-        document.body.appendChild(toastContainer);
-      }
-      
-      const toast = document.createElement('div');
-      toast.className = `toast-message toast-${type}`;
-      
-      const iconContainer = document.createElement('div');
-      iconContainer.className = 'toast-icon';
-      
-      const icon = document.createElement('i');
-      icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
-      iconContainer.appendChild(icon);
-      
-      const content = document.createElement('div');
-      content.className = 'toast-content';
-      content.textContent = message;
-      
-      toast.appendChild(iconContainer);
-      toast.appendChild(content);
-      
-      toastContainer.appendChild(toast);
-      
-      setTimeout(() => {
-        toast.style.animation = 'slideIn 0.5s ease forwards';
-      }, 10);
-      
-      setTimeout(() => {
-        toast.style.animation = 'fadeOut 0.5s ease forwards';
-        setTimeout(() => {
-          toast.remove();
-        }, 500);
-      }, 5000);
+  });
+}
+
+updateRecipientFields();
+
+const reasonCountInput = document.getElementById('reasonCount');
+const reasonsContainer = document.getElementById('reasonsContainer');
+const reasonSubmitBtn = document.getElementById('reason-submit-btn');
+const rejectReasonForm = document.getElementById('rejectReasonForm');
+const reasonValidation = document.getElementById('reason-count-validation');
+
+const existingReasons = [
+  {% for reason in reject_reasons %}
+    { id: {{ reason.id }}, reason: "{{ reason.reason|escapejs }}" },
+  {% endfor %}
+];
+
+function validateReasonCount() {
+  const count = parseInt(reasonCountInput.value) || 0;
+  if (count < 0 || count > 20) {
+    reasonCountInput.classList.add('error');
+    reasonValidation.classList.add('error');
+    return false;
+  }
+  reasonCountInput.classList.remove('error');
+  reasonValidation.classList.remove('error');
+  return true;
+}
+
+function validateReasons() {
+  let allValid = true;
+
+  // Validate new reasons only if reasonCount > 0
+  const newReasonInputs = document.querySelectorAll('input[name="reject_reason"]');
+  newReasonInputs.forEach(input => {
+    const validationMessage = input.nextElementSibling;
+    if (parseInt(reasonCountInput.value) > 0 && input.value.trim() === '') {
+      input.classList.add('error');
+      validationMessage.classList.add('error');
+      allValid = false;
+    } else {
+      input.classList.remove('error');
+      validationMessage.classList.remove('error');
     }
+  });
 
-    // Rejection Alert scripts
-    const phoneNumberCount = document.getElementById('phoneNumberCount');
-    const container = document.getElementById('phoneNumbersContainer');
-    const submitBtn = document.getElementById('submit-btn');
-    const configForm = document.getElementById('configForm');
-    const rejectionThreshold = document.getElementById('rejectionThreshold');
-    const thresholdValidation = document.getElementById('threshold-validation');
-    const countValidation = document.getElementById('count-validation');
-
-    const existingNumbers = [
-      {% for number in phone_numbers %}
-        "{{ number }}",
-      {% endfor %}
-    ];
-
-    function validateThreshold() {
-      const threshold = rejectionThreshold.value.trim();
-      if (threshold === '' || parseInt(threshold) < 1) {
-        rejectionThreshold.classList.add('error');
-        thresholdValidation.classList.add('error');
-        return false;
-      }
-      rejectionThreshold.classList.remove('error');
-      thresholdValidation.classList.remove('error');
-      return true;
+  // Validate existing reasons - Updated selector
+  const editReasonInputs = document.querySelectorAll('input[name^="edit_reason_"]');
+  editReasonInputs.forEach(input => {
+    const validationMessage = input.nextElementSibling;
+    if (input.value.trim() === '') {
+      input.classList.add('error');
+      validationMessage.classList.add('error');
+      allValid = false;
+    } else {
+      input.classList.remove('error');
+      validationMessage.classList.remove('error');
     }
+  });
 
-    function validateCount() {
-      const count = phoneNumberCount.value.trim();
-      if (count === '' || parseInt(count) < 1 || parseInt(count) > 10) {
-        phoneNumberCount.classList.add('error');
-        countValidation.classList.add('error');
-        return false;
+  return allValid;
+}
+
+function updateReasonFields() {
+  const count = parseInt(reasonCountInput.value) || 0;
+  reasonsContainer.innerHTML = '';
+  reasonsContainer.className = 'reasons-table' + (count >= 2 ? ' two-columns' : '');
+
+  for (let i = 0; i < count; i++) {
+    const newGroup = document.createElement('div');
+    newGroup.className = 'reason-input-group';
+    newGroup.innerHTML = `
+      <div class="input-group mb-2">
+        <input type="text" class="form-input reject-reason" name="reject_reason" 
+               placeholder="Enter new reject reason">
+        <div class="validation-message">
+          Please enter a valid reason
+        </div>
+      </div>
+    `;
+    reasonsContainer.appendChild(newGroup);
+  }
+}
+
+if (reasonCountInput) {
+  reasonCountInput.addEventListener('input', function() {
+    validateReasonCount();
+    updateReasonFields();
+  });
+}
+
+if (reasonSubmitBtn) {
+  reasonSubmitBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    const isCountValid = validateReasonCount();
+    const isReasonsValid = validateReasons();
+
+    if (isCountValid && isReasonsValid) {
+      // Log form data for debugging
+      const formData = new FormData(rejectReasonForm);
+      console.log('Form Data:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
       }
-      phoneNumberCount.classList.remove('error');
-      countValidation.classList.remove('error');
-      return true;
+      rejectReasonForm.submit();
+    } else {
+      alert("Please fix the validation errors before submitting.");
     }
+  });
+}
 
-    function validatePhoneNumbers() {
-      const phoneInputs = document.querySelectorAll('input[name="phone_number"]');
-      let allValid = true;
-      phoneInputs.forEach(input => {
-        const phoneRegex = /^\+[0-9]{1,3}[0-9]{5,14}$/;
-        const validationMessage = input.nextElementSibling;
-        if (!phoneRegex.test(input.value.trim())) {
-          input.classList.add('error');
-          validationMessage.classList.add('error');
-          allValid = false;
-        } else {
-          input.classList.remove('error');
-          validationMessage.classList.remove('error');
+// Delete reason functionality
+const deleteButtons = document.querySelectorAll('.delete-reason-btn');
+deleteButtons.forEach(button => {
+  button.addEventListener('click', function(e) {
+    e.preventDefault(); // Prevent form submission
+    const reasonId = this.getAttribute('data-reason-id');
+    if (confirm('Are you sure you want to delete this reason?')) {
+      fetch(`/api/delete-reject-reason/${reasonId}/`, {
+        method: 'DELETE',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'Content-Type': 'application/json',
         }
-      });
-      return allValid;
-    }
-
-    function updatePhoneFields() {
-      const count = parseInt(phoneNumberCount.value) || 0;
-      
-      container.innerHTML = '';
-      
-      container.className = 'phone-numbers-table' + (count >= 2 ? ' two-columns' : '');
-      
-      for (let i = 1; i <= count; i++) {
-        const newGroup = document.createElement('div');
-        newGroup.className = 'phone-input-group';
-        
-        const value = i <= existingNumbers.length ? existingNumbers[i-1] : '';
-        
-        newGroup.innerHTML = `
-          <div class="input-group mb-2">
-            <input type="tel" class="form-input phone-number" name="phone_number" 
-                   value="${value}" placeholder="+918XXXXXXXXXX" required>
-            <div class="validation-message">
-              Please enter a valid phone number with country code
-            </div>
-          </div>
-        `;
-        container.appendChild(newGroup);
-      }
-    }
-
-    if (phoneNumberCount) {
-      phoneNumberCount.addEventListener('input', function() {
-        validateCount();
-        updatePhoneFields();
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to delete reason');
+        }
+        return response.json();
+      })
+      .then(data => {
+        showToast("Reject reason deleted successfully!", "success");
+        document.querySelector(`tr[data-reason-id="${reasonId}"]`).remove();
+        const index = existingReasons.findIndex(r => r.id == reasonId);
+        if (index !== -1) {
+          existingReasons.splice(index, 1);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showToast("Failed to delete reject reason.", "error");
       });
     }
+  });
+});
 
-    if (rejectionThreshold) {
-      rejectionThreshold.addEventListener('input', validateThreshold);
+// Initialize reason fields on page load
+updateReasonFields();
+
+  // Set default date for Error Editor
+  const dateInput = document.getElementById('date');
+  if (dateInput) {
+    const today = new Date();
+    const dateString = today.toISOString().split('T')[0];
+    dateInput.value = dateString;
+  }
+
+  // Production target validation
+  const productionTargetInput = document.getElementById('productionTarget');
+  const targetValidation = document.getElementById('target-validation');
+  const targetSubmitBtn = document.getElementById('target-submit-btn');
+
+  function validateProductionTarget() {
+    const target = productionTargetInput.value.trim();
+    if (target === '' || parseInt(target) < 0) {
+      productionTargetInput.classList.add('error');
+      targetValidation.classList.add('error');
+      return false;
     }
+    productionTargetInput.classList.remove('error');
+    targetValidation.classList.remove('error');
+    return true;
+  }
 
-    if (submitBtn) {
-      submitBtn.addEventListener('click', function(e) {
+  if (productionTargetInput) {
+    productionTargetInput.addEventListener('input', function() {
+      validateProductionTarget();
+    });
+  }
+
+  if (targetSubmitBtn) {
+    targetSubmitBtn.addEventListener('click', function(e) {
+      if (!validateProductionTarget()) {
         e.preventDefault();
-        
-        const isThresholdValid = validateThreshold();
-        const isCountValid = validateCount();
-        const isPhoneValid = validatePhoneNumbers();
-        
-        if (isThresholdValid && isCountValid && isPhoneValid) {
-          configForm.submit();
-        } else {
-          alert("Please fix the validation errors before submitting.");
-        }
-      });
-    }
-
-    updatePhoneFields();
-  });
-
-  document.addEventListener('DOMContentLoaded', function() {
-    const dateInput = document.getElementById('date');
-    if (dateInput) {
-      const today = new Date();
-      const dateString = today.toISOString().split('T')[0];
-      dateInput.value = dateString;
-    }
-  });
+        alert("Please fix the validation errors before submitting.");
+      }
+    });
+  }
+});
 </script>
 {% endblock %}
