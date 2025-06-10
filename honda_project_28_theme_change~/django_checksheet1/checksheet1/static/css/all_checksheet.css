@@ -271,6 +271,7 @@ body.white-mode .action-button{
 
 .assi {
     color: var(--text-light);
+    color: var(--text-light);
 }
 
 .assi:hover {
@@ -278,6 +279,7 @@ body.white-mode .action-button{
 }
 
 .acti {
+    color:var(--text-light);
     color:var(--text-light);
 }
 
@@ -888,9 +890,9 @@ body.white-mode .approval-radio label::before {
     align-items: center;
     justify-content: center;
     width: 35px;
-    height: 35px;
+    height: 33px;
     border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--accent-color);
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
@@ -899,9 +901,9 @@ body.white-mode .approval-radio label::before {
 }
 
 body.white-mode .toggle-btn {
-    background-color: #f1f5f9;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
+    background-color: var(--accent-color-solid);
+    color: white;
+    
 }
 
 .toggle-btn:hover {
@@ -1048,6 +1050,8 @@ body.white-mode .checksheets-container.grid-view td::before {
     content: "Line:";
 }
 
+
+
 .checksheets-container.grid-view td:nth-child(5) {
     order: 4; /* Assigned Users */
 }
@@ -1120,10 +1124,9 @@ body.white-mode .checksheets-container.grid-view td:nth-child(10) {
 .checksheets-container.grid-view .zone-chip,
 .checksheets-container.grid-view .user-chip,
 .checksheets-container.grid-view .approval-chip {
-    padding: 3px 8px;
-    border-radius: 12px;
+   
     font-size: 0.75rem;
-    background-color: rgba(255, 255, 255, 0.1);
+    
     display: inline-flex;
     align-items: center;
 }
@@ -1198,8 +1201,8 @@ body.white-mode .checksheets-container.grid-view .action-button {
 }
 
 body.white-mode .checksheets-container.grid-view .action-button.assi {
-    background-color: rgba(99, 102, 241, 0.1);
-    color: #6366f1;
+    background-color: var(--accent-color-solid);
+    color: white;
 }
 
 .checksheets-container.grid-view .action-button.assi:hover {

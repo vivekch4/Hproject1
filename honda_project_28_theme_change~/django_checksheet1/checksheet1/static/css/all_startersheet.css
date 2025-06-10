@@ -290,6 +290,8 @@ body.white-mode .startersheets-container.grid-view td::before {
     content: "Line:";
 }
 
+
+
 .startersheets-container.grid-view td:nth-child(5) {
     order: 4; /* Assignee */
 }
@@ -367,10 +369,10 @@ body.white-mode .startersheets-container.grid-view td:nth-child(10) {
 .startersheets-container.grid-view .user-chip,
 .startersheets-container.grid-view .approval-chip,
 .startersheets-container.grid-view .pdf-link {
-    padding: 3px 8px;
-    border-radius: 12px;
+   
+    
     font-size: 0.75rem;
-    background-color: rgba(255, 255, 255, 0.1);
+    
     display: inline-flex;
     align-items: center;
 }
@@ -565,8 +567,8 @@ body.white-mode .startersheets-container.grid-view .action-button.copy-btn:hover
 
 .zone-chip {
     display: inline-flex;
-    padding: 4px 10px;
-    border-radius: 9999px;
+    
+    
     font-size: 0.75rem;
     font-weight: 500;
     color: #ffffff;
@@ -590,8 +592,8 @@ body.white-mode .zone-chip {
 .user-chip, .approval-chip {
     display: inline-flex;
     align-items: center;
-    padding: 4px 10px;
-    border-radius: 9999px;
+    /* padding: 4px 10px; */
+    
     font-size: 0.75rem;
     font-weight: 500;
     color: #ffffff;
@@ -695,7 +697,7 @@ body.white-mode .startersheet-name:hover {
 }
 
 .add-zone-btn {
-    color: #3b82f6;
+    color: var(--text-light);
 }
 
 .add-zone-btn:hover {
@@ -1136,8 +1138,8 @@ body.white-mode .detail-modal-header {
     width: 35px;
     height: 35px;
     border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    background-color: var(--accent-color);
+    color: var(--text-light);
     border: 1px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
     font-size: 1rem;
@@ -1145,9 +1147,9 @@ body.white-mode .detail-modal-header {
 }
 
 body.white-mode .toggle-btn {
-    background-color: #f1f5f9;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
+    background-color:var(--accent-color-solid);
+    color: white;
+    
 }
 
 .toggle-btn:hover {

@@ -27,6 +27,8 @@ DEBUG = True
 
 # ALLOWED_HOSTS = []
 ALLOWED_HOSTS = ["worksp.pythonanywhere.com"]
+# ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["worksp.pythonanywhere.com"]
 # ALLOWED_HOSTS = ["192.168.1.60","122.180.247.129"]
 # Application definition
 
@@ -50,6 +52,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'checksheet1.middleware.content_security_policy',
 ]
 
 ROOT_URLCONF = "django_checksheet1.urls"
