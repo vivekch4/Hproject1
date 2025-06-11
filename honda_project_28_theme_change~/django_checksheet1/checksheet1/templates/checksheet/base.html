@@ -88,7 +88,7 @@
         {% endif %}
         
         {% if request.user|has_page_access:"upload_poc" %}
-        <a href="{% url 'upload_poc' %}"><i class="fas fa-upload"></i><span class="sidebar-text">OPS</span></a>
+        <a href="{% url 'upload_poc' %}"><i class="fas fa-upload"></i><span class="sidebar-text">Q-Gallery</span></a>
         {% endif %}
         
         {% if request.user|has_page_access:"acknowledgment_list" %}
