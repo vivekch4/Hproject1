@@ -47,7 +47,17 @@ from PIL import Image as PILImage
 from dateutil.parser import parse as parse_date, ParserError
 from django.db import transaction
 from django.views.decorators.http import require_http_methods
-
+import random
+import string
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.utils import timezone
+from datetime import timedelta
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import smtplib
+from django.conf import settings
+from .models import CustomUser, OTP  # Ensure these are imported
 
 
 User = get_user_model()
@@ -160,41 +170,14 @@ def has_page_access(user, page_name):
     return PageAccess.objects.filter(
         user=user, page_name=page_name, has_access=True
     ).exists()
-
-import random
-import string
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
-from django.utils import timezone
-from datetime import timedelta
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
-from .models import OTP, CustomUser
-
-import json
-
 def generate_otp(length=6):
     """Generate a random 6-digit OTP."""
     return ''.join(random.choices(string.digits, k=length))
 
-
-import random
-import string
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
-from django.utils import timezone
-from datetime import timedelta
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import smtplib
-from django.conf import settings
-from .models import CustomUser, OTP  # Ensure these are imported
-
 def login_view(request):
     if request.method == "POST":
-        employee_id = request.POST.get("employee_id")
-        password = request.POST.get("password")
+        employee_id = request.POST.get("emp_id")  # Updated name
+        password = request.POST.get("user_pass")  # Updated name
 
         user = authenticate(request, employee_id=employee_id, password=password)
 
@@ -206,24 +189,24 @@ def login_view(request):
                     {"error": "Your account is deactivated. Please contact an admin."}
                 )
 
-            # Store user info in session immediately
+            # Generate and store OTP
+            otp_code = generate_otp()
+            expires_at = timezone.now() + timedelta(minutes=10)
+
+            # Clear any existing OTPs for this user
+            OTP.objects.filter(user=user).delete()
+
+            # Create new OTP
+            OTP.objects.create(user=user, otp_code=otp_code, expires_at=expires_at)
+
+            # Store OTP in session for auto-fill (temporary, for this feature)
             request.session['otp_user_id'] = user.id
             request.session['employee_id'] = employee_id
+            request.session['otp_code'] = otp_code  # Store OTP temporarily
             request.session.save()
 
-            # Generate and send OTP synchronously
+            # Send OTP via email
             try:
-                # Generate OTP
-                otp_code = ''.join(random.choices(string.digits, k=6))
-                expires_at = timezone.now() + timedelta(minutes=10)
-
-                # Clear any existing OTPs for this user
-                OTP.objects.filter(user=user).delete()
-
-                # Create new OTP
-                OTP.objects.create(user=user, otp_code=otp_code, expires_at=expires_at)
-
-                # Email content
                 subject = 'Your OTP Code for Login'
                 message = f"""
                 Hello {user.username},
@@ -238,7 +221,6 @@ def login_view(request):
                 Your Security Team
                 """
 
-                # Send email
                 email = user.email
                 msg = MIMEMultipart()
                 msg["From"] = settings.SMTP_EMAIL
@@ -246,7 +228,6 @@ def login_view(request):
                 msg["Subject"] = subject
                 msg.attach(MIMEText(message, "plain"))
 
-                # Send via SMTP
                 with smtplib.SMTP("smtp.gmail.com", 587) as server:
                     server.starttls()
                     server.login(settings.SMTP_EMAIL, settings.SMTP_APP_PASSWORD)
@@ -269,7 +250,6 @@ def login_view(request):
                     {"error": "An error occurred. Please try again."}
                 )
 
-            # Redirect immediately after sending OTP
             return redirect('verify_otp')
         else:
             return render(
@@ -279,7 +259,6 @@ def login_view(request):
             )
 
     return render(request, "checksheet/login.html")
-
 
 def verify_otp(request):
     if request.method == "POST":
@@ -326,6 +305,7 @@ def verify_otp(request):
             OTP.objects.filter(user=user).delete()
             request.session.pop('otp_user_id', None)
             request.session.pop('employee_id', None)
+            request.session.pop('otp_code', None)  # Clear OTP from session
             request.session.save()
             
             # Redirect based on role
@@ -354,12 +334,14 @@ def verify_otp(request):
                 {"error": "An error occurred. Please try again."}
             )
     
-    # Check if user session exists when loading the page
+    # Check if user session exists
     user_id = request.session.get('otp_user_id')
     if not user_id:
         return redirect('login')
     
-    return render(request, "checksheet/verify_otp.html")
+    # Pass OTP to template for auto-fill
+    otp_code = request.session.get('otp_code', '')
+    return render(request, "checksheet/verify_otp.html", {'otp_code': otp_code})
 
 def logout_view(request):
     logout(request)

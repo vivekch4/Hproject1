@@ -269,7 +269,7 @@
         
         <div class="email-status">
             <i class="fas fa-paper-plane"></i>
-            OTP is being sent to your email address
+            OTP sent to your email address
         </div>
         
         <form method="post" id="otpForm">
@@ -315,19 +315,41 @@
     </div>
 
     <script>
-        // Auto-format OTP input
+        // Auto-fill OTP with typing effect
         const otpInput = document.getElementById('otp_code');
         const verifyBtn = document.getElementById('verifyBtn');
         const messageContainer = document.getElementById('messageContainer');
         
-        // Format OTP input
+        // Get OTP from template context (passed securely from session)
+        const otpCode = "{{ otp_code | escapejs }}";
+        
+        if (otpCode) {
+            // Simulate typing effect
+            let index = 0;
+            otpInput.value = '';
+            const typeOTP = () => {
+                if (index < otpCode.length) {
+                    otpInput.value += otpCode[index];
+                    index++;
+                    setTimeout(typeOTP, 300); // Adjust typing speed (300ms per digit)
+                } else {
+                    // Auto-submit the form after typing is complete
+                    setTimeout(() => {
+                        document.getElementById('otpForm').submit();
+                    }, 500);
+                }
+            };
+            setTimeout(typeOTP, 500); // Start typing after a short delay
+        }
+
+        // Auto-format OTP input (for manual input)
         otpInput.addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
             if (value.length > 6) value = value.slice(0, 6);
             e.target.value = value;
             
-            // Auto-submit when 6 digits are entered
-            if (value.length === 6) {
+            // Auto-submit when 6 digits are entered manually
+            if (value.length === 6 && !otpCode) {
                 setTimeout(() => {
                     document.getElementById('otpForm').submit();
                 }, 100);
@@ -352,7 +374,7 @@
             const otpValue = paste.replace(/\D/g, '').slice(0, 6);
             otpInput.value = otpValue;
             
-            if (otpValue.length === 6) {
+            if (otpValue.length === 6 && !otpCode) {
                 setTimeout(() => {
                     document.getElementById('otpForm').submit();
                 }, 100);
