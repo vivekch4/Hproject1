@@ -12,6 +12,7 @@ from django.utils import timezone
 from django.utils.timezone import localdate, localtime, now, make_aware
 from django.views.decorators.csrf import csrf_exempt
 from reportlab.pdfgen import canvas
+from django.http import JsonResponse
 
 from .models import (
     CheckSheet,
@@ -636,6 +637,50 @@ def home(request):
             "target_value": target_value,  # Add target value to context
         },
     )
+    
+    
+@login_required
+def production_target_view(request):
+    """
+    View to handle production target form submission
+    """
+    if request.method == "POST":
+        # Check if the request is AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
+        target_value = request.POST.get("production_target")
+        try:
+            target_value = int(target_value)
+            if target_value < 0:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Production target must be a positive number.'
+                }, status=400)
+            else:
+                # Update or create the production target
+                production_target, created = ProductionTarget.objects.get_or_create(
+                    id=1, defaults={"target_value": target_value}
+                )
+                if not created:
+                    production_target.target_value = target_value
+                    production_target.save()
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Production target saved successfully!',
+                    'target_value': target_value
+                })
+                
+        except ValueError:
+            return JsonResponse({
+                'success': False,
+                'message': 'Please enter a valid number for the production target.'
+            }, status=400)
+        
+    # For non-POST or non-AJAX, redirect to home
+    return redirect('home')
+
+    
 @login_required
 def get_pie_chart_data(request):
     checksheet_id = request.GET.get("checksheet_id")
@@ -5484,7 +5529,7 @@ def delete_reject_reason(request, reason_id):
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 @login_required
-def production_target_view(request):
+def production_target_view1(request):
     """
     View to handle production target form submission
     """

@@ -147,6 +147,8 @@ urlpatterns = [
     path('api/delete-reject-reason/<int:reason_id>/', delete_reject_reason, name='delete_reject_reason'),
     path('verify-otp/', verify_otp, name='verify_otp'),
     path('api/delete-recipient/<int:index>/', delete_recipient, name='delete_recipient'),
+    path("production_target/", production_target_view, name="production_target"),
+    path("production_target1/", production_target_view1, name="production_target1"),
     
 
 path('api/save-reject-reasons/', save_reject_reasons, name='save_reject_reasons'),

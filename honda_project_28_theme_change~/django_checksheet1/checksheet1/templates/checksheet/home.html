@@ -229,6 +229,26 @@ body:not(.white-mode) .date-filter-input {
             </div>
         </div>
     </div>
+    <div id="targetEditModal" class="target-modal" style="display: none;">
+        <div class="target-modal-content">
+            <div class="target-modal-header">
+                <h3>Update Production Target</h3>
+                <span class="target-modal-close">&times;</span>
+            </div>
+            <form id="targetEditForm" method="post" action="{% url 'production_target' %}">
+                {% csrf_token %}
+                <div class="target-form-group">
+                    <label for="production_target">Target Value:</label>
+                    <input type="number" id="production_target" name="production_target" 
+                           min="0" required class="target-input">
+                </div>
+                <div class="target-form-actions">
+                    <button type="button" class="target-btn target-btn-cancel">Cancel</button>
+                    <button type="submit" class="target-btn target-btn-save">Save Target</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- Chart.js from CDN -->
@@ -237,6 +257,195 @@ body:not(.white-mode) .date-filter-input {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <script>
 window.targetValue = {{ target_value|safe }};
+function getCsrfToken() {
+    const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    return csrfInput ? csrfInput.value : '';
+}
+function initializeTargetEditor() {
+    // Add edit button to line chart
+    const lineChartCard = document.querySelector('.chart-card.line-chart .chart-content');
+    if (lineChartCard) {
+        const editButton = document.createElement('button');
+        editButton.className = 'chart-target-edit';
+        editButton.innerHTML = `
+            <div>Edit Target</div>
+            <div class="chart-target-current">Current: ${window.targetValue || 0}</div>
+        `;
+        editButton.onclick = openTargetModal;
+        lineChartCard.style.position = 'relative';
+        lineChartCard.appendChild(editButton);
+    }
+}
+
+function openTargetModal() {
+    const modal = document.getElementById('targetEditModal');
+    const input = document.getElementById('production_target');
+    
+    if (modal && input) {
+        input.value = window.targetValue || 0;
+        modal.style.display = 'block';
+        setTimeout(() => input.focus(), 100);
+    }
+}
+
+function closeTargetModal() {
+    const modal = document.getElementById('targetEditModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function updateTargetInChart(newTargetValue) {
+    window.targetValue = newTargetValue;
+    
+    // Update the line chart target line
+    if (window.lineChart && window.lineChart.data.datasets[1]) {
+        const targetData = Array(window.lineChart.data.labels.length).fill(newTargetValue);
+        window.lineChart.data.datasets[1].data = targetData;
+        
+        // Update the y-axis scale to accommodate the new target
+        const productionMax = Math.max(...window.lineChart.data.datasets[0].data, newTargetValue);
+        window.lineChart.options.scales.y.suggestedMax = Math.ceil(productionMax * 1.1);
+        
+        window.lineChart.update();
+    }
+    
+    // Update the edit button text
+    const editButton = document.querySelector('.chart-target-edit .chart-target-current');
+    if (editButton) {
+        editButton.textContent = `Current: ${newTargetValue}`;
+    }
+}
+
+// Modal event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTargetEditor();
+    
+    // Modal close events
+    const modal = document.getElementById('targetEditModal');
+    const closeBtn = document.querySelector('.target-modal-close');
+    const cancelBtn = document.querySelector('.target-btn-cancel');
+    
+    if (closeBtn) closeBtn.onclick = closeTargetModal;
+    if (cancelBtn) cancelBtn.onclick = closeTargetModal;
+    
+    // Close modal when clicking outside
+    if (modal) {
+        modal.onclick = function(event) {
+            if (event.target === modal) {
+                closeTargetModal();
+            }
+        };
+    }
+    
+    // Handle form submission
+    const form = document.getElementById('targetEditForm');
+if (form) {
+    form.onsubmit = function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const targetValue = parseInt(formData.get('production_target'));
+        
+        if (isNaN(targetValue) || targetValue < 0) {
+            showToast('Please enter a valid positive number for the target.', 'error');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = form.querySelector('.target-btn-save');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Saving...';
+        submitBtn.disabled = true;
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCsrfToken() // Add CSRF token to headers
+            }
+        })
+        .then(response => {
+            if (response.status === 403) {
+                throw new Error('Authentication required. Please log in.');
+            }
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                updateTargetInChart(targetValue);
+                closeTargetModal();
+                showToast('Production target updated successfully!', 'success');
+            } else {
+                showToast(data.message || 'Failed to update target', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (error.message.includes('Authentication required')) {
+                showToast('Please log in to update the target.', 'error');
+                // Optionally redirect to login page
+                window.location.href = '/accounts/login/';
+            } else {
+                showToast('An error occurred while updating the target', 'error');
+            }
+        })
+        .finally(() => {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        });
+    };
+}
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeTargetModal();
+        }
+    });
+});
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#2ecc71' : type === 'error' ? '#e74c3c' : '#3498db'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        font-size: 14px;
+        font-weight: 500;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+    }, 10);
+    
+    // Animate out and remove
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => document.body.removeChild(toast), 300);
+    }, 3000);
+}
 window.onload = function () {
     setupWebSocketUpdates();
 };
