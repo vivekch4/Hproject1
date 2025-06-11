@@ -28,8 +28,8 @@ DEBUG = True
 # ALLOWED_HOSTS = []
 # ALLOWED_HOSTS = ["worksp.pythonanywhere.com"]
 # ALLOWED_HOSTS = []
-# ALLOWED_HOSTS = ["worksp.pythonanywhere.com"]
-ALLOWED_HOSTS = ["192.168.1.60","122.180.247.129"]
+ALLOWED_HOSTS = ["worksp.pythonanywhere.com"]
+# ALLOWED_HOSTS = ["192.168.1.60","122.180.247.129"]
 # Application definition
 
 INSTALLED_APPS = [

@@ -176,7 +176,7 @@
                         </div>
                     </td>
                     <td class="content-cell">
-                        <div4534 class="approver-chips">
+                        <div class="approver-chips">
                             {% if startersheet.level_1_approver %}
                                 <span class="approval-chip">{{ startersheet.level_1_approver.username }}</span>
                             {% else %}
@@ -304,8 +304,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 let currentStartersheetId = null;
 let currentApproverType = null;
 
-// Pagination settings
-const rowsPerPage = 5;
+// Function to get current rows per page based on view mode
+function getCurrentRowsPerPage() {
+    const tableContainer = document.querySelector('.startersheets-container');
+    const isGridView = tableContainer && tableContainer.classList.contains('grid-view');
+    return isGridView ? 3 : 5; // 3 for grid view, 5 for table view
+}
 
 // Function to setup pagination for the startersheet table
 function setupPagination() {
@@ -321,6 +325,9 @@ function setupPagination() {
 
     // Function to update displayed rows
     function updateTable() {
+        // Get current rows per page based on view mode
+        const rowsPerPage = getCurrentRowsPerPage();
+        
         // Filter rows based on search term
         const searchInput = document.getElementById('startersheetSearch');
         const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
@@ -392,6 +399,7 @@ function setupPagination() {
     });
 
     nextButton.addEventListener('click', () => {
+        const rowsPerPage = getCurrentRowsPerPage();
         const searchInput = document.getElementById('startersheetSearch');
         const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
         const filteredRows = allRows.filter(row => {
@@ -617,6 +625,9 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleBtn.title = isGridView ? 'Switch to Table View' : 'Switch to Grid View';
             
             localStorage.setItem('startersheetView', isGridView ? 'grid-view' : 'table-view');
+            
+            // Reset to first page when switching views to handle different pagination
+            currentPage = 1;
             updateStartersheetTable(); // Update pagination after view toggle
         });
     }
@@ -645,7 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 pageContainer.classList.add('hidden');
                 fullPageViewer.style.display = 'flex';
-                pdfTitle.textContent = pdfName || 'PDF Document';
+                pdfTitle.textContent = pdfName || 'PDF';
                 
                 pdfCanvas = document.createElement('canvas');
                 pdfCanvas.className = 'pdf-canvas';
