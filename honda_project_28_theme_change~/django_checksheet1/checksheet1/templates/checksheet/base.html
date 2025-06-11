@@ -107,6 +107,7 @@
 
         
         <a href="{% url 'operator_dashboard' %}"><i class="fa-solid fa-user-nurse"></i><span class="sidebar-text">operator</span></a>
+        <a href="http://abhay188.pythonanywhere.com/"><i class="fa-solid fa-industry"></i><span class="sidebar-text">Oee Dashboard</span></a>
         
         {% if request.user.role != "admin" %}
             {% if request.user.role == "operator" or request.user|has_page_access:"fill_checksheet_detail" %}

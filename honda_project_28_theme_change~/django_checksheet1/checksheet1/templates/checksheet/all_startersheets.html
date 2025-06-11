@@ -1,6 +1,5 @@
 {% extends 'checksheet/base.html' %}
 {% load static %}
-{% load custom_tags %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/all_startersheet.css' %}">
 <style>
@@ -112,7 +111,6 @@
                             {% with zones=startersheet.zones.all %}
                                 {% if zones|length > 0 %}
                                     {% for zone in zones|slice:":1" %}
-                                    {% for zone in zones|slice:":1" %}
                                         <span class="zone-chip">{{ zone.name }}</span>
                                     {% endfor %}
                                     
@@ -128,19 +126,17 @@
                         </div>
                     </td>
                     <td class="content-cell">
-                        {{ startersheet.line|replace_underscore }}
-                        
+                        {{ startersheet.line }}
                     </td>
                     <td class="content-cell">
                         <div class="user-chips">
                             {% with users=startersheet.assigned_users.all %}
                                 {% if users|length > 0 %}
                                     {% for user in users|slice:":1" %}
-                                    {% for user in users|slice:":1" %}
                                         <span class="user-chip">{{ user.username }}</span>
                                     {% endfor %}
-                                    {% if users|length > 1 %}
-                                        
+                                    {% if users|length > 2 %}
+                                        <span class="view-all-chip">. . .</span>
                                     {% endif %}
                                 {% endif %}
                             {% endwith %}

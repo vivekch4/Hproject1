@@ -42,75 +42,75 @@ import logging
 # Set up logging
 logger = logging.getLogger(__name__)
 
-@shared_task(bind=True, max_retries=3, default_retry_delay=60)
-def send_otp_email(self, user_id, employee_id):
-    """
-    Send OTP via email with retry mechanism
-    """
-    try:
-        user = CustomUser.objects.get(id=user_id)
+# @shared_task(bind=True, max_retries=3, default_retry_delay=60)
+# def send_otp_email(self, user_id, employee_id):
+#     """
+#     Send OTP via email with retry mechanism
+#     """
+#     try:
+#         user = CustomUser.objects.get(id=user_id)
         
-        # Generate OTP
-        otp_code = ''.join(random.choices(string.digits, k=6))
-        expires_at = timezone.now() + timedelta(minutes=10)
+#         # Generate OTP
+#         otp_code = ''.join(random.choices(string.digits, k=6))
+#         expires_at = timezone.now() + timedelta(minutes=10)
         
-        # Clear any existing OTPs for this user
-        OTP.objects.filter(user=user).delete()
+#         # Clear any existing OTPs for this user
+#         OTP.objects.filter(user=user).delete()
         
-        # Create new OTP
-        OTP.objects.create(user=user, otp_code=otp_code, expires_at=expires_at)
+#         # Create new OTP
+#         OTP.objects.create(user=user, otp_code=otp_code, expires_at=expires_at)
         
-        # Email content
-        subject = 'Your OTP Code for Login'
-        message = f"""
-        Hello {user.username},
+#         # Email content
+#         subject = 'Your OTP Code for Login'
+#         message = f"""
+#         Hello {user.username},
         
-        Your One-Time Password (OTP) for login is: {otp_code}
+#         Your One-Time Password (OTP) for login is: {otp_code}
         
-        This OTP is valid for 10 minutes only.
+#         This OTP is valid for 10 minutes only.
         
-        If you didn't request this OTP, please ignore this email.
+#         If you didn't request this OTP, please ignore this email.
         
-        Best regards,
-        Your Security Team
-        """
+#         Best regards,
+#         Your Security Team
+#         """
         
-        # Send email
-        email = user.email
+#         # Send email
+#         email = user.email
         
-        # Create message
-        msg = MIMEMultipart()
-        msg["From"] = settings.SMTP_EMAIL
-        msg["To"] = email
-        msg["Subject"] = subject
-        msg.attach(MIMEText(message, "plain"))
+#         # Create message
+#         msg = MIMEMultipart()
+#         msg["From"] = settings.SMTP_EMAIL
+#         msg["To"] = email
+#         msg["Subject"] = subject
+#         msg.attach(MIMEText(message, "plain"))
         
-        # Send via SMTP
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(settings.SMTP_EMAIL, settings.SMTP_APP_PASSWORD)
-            server.send_message(msg)
+#         # Send via SMTP
+#         with smtplib.SMTP("smtp.gmail.com", 587) as server:
+#             server.starttls()
+#             server.login(settings.SMTP_EMAIL, settings.SMTP_APP_PASSWORD)
+#             server.send_message(msg)
         
-        logger.info(f"OTP sent successfully to {email} for user {employee_id}")
-        return f"OTP sent successfully to {email} for user {employee_id}"
+#         logger.info(f"OTP sent successfully to {email} for user {employee_id}")
+#         return f"OTP sent successfully to {email} for user {employee_id}"
         
-    except CustomUser.DoesNotExist:
-        logger.error(f"User with ID {user_id} not found")
-        return f"User with ID {user_id} not found"
+#     except CustomUser.DoesNotExist:
+#         logger.error(f"User with ID {user_id} not found")
+#         return f"User with ID {user_id} not found"
         
-    except smtplib.SMTPException as e:
-        logger.error(f"SMTP error sending OTP to user {employee_id}: {str(e)}")
-        # Retry the task
-        raise self.retry(exc=e, countdown=60, max_retries=3)
+#     except smtplib.SMTPException as e:
+#         logger.error(f"SMTP error sending OTP to user {employee_id}: {str(e)}")
+#         # Retry the task
+#         raise self.retry(exc=e, countdown=60, max_retries=3)
         
-    except Exception as e:
-        logger.error(f"Unexpected error in send_otp_email task for user {employee_id}: {str(e)}")
-        # Retry for unexpected errors too
-        try:
-            raise self.retry(exc=e, countdown=60, max_retries=3)
-        except self.MaxRetriesExceededError:
-            logger.error(f"Max retries exceeded for sending OTP to user {employee_id}")
-            return f"Failed to send OTP after maximum retries: {str(e)}"
+#     except Exception as e:
+#         logger.error(f"Unexpected error in send_otp_email task for user {employee_id}: {str(e)}")
+#         # Retry for unexpected errors too
+#         try:
+#             raise self.retry(exc=e, countdown=60, max_retries=3)
+#         except self.MaxRetriesExceededError:
+#             logger.error(f"Max retries exceeded for sending OTP to user {employee_id}")
+#             return f"Failed to send OTP after maximum retries: {str(e)}"
 
 @shared_task
 def cleanup_expired_otps():

@@ -171,20 +171,33 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from .models import OTP, CustomUser
-from .tasks import send_otp_email
+
 import json
 
 def generate_otp(length=6):
     """Generate a random 6-digit OTP."""
     return ''.join(random.choices(string.digits, k=length))
 
+
+import random
+import string
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.utils import timezone
+from datetime import timedelta
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import smtplib
+from django.conf import settings
+from .models import CustomUser, OTP  # Ensure these are imported
+
 def login_view(request):
     if request.method == "POST":
         employee_id = request.POST.get("employee_id")
         password = request.POST.get("password")
-        
+
         user = authenticate(request, employee_id=employee_id, password=password)
-        
+
         if user and user.is_authenticated:
             if not user.is_active:
                 return render(
@@ -192,22 +205,71 @@ def login_view(request):
                     "checksheet/login.html",
                     {"error": "Your account is deactivated. Please contact an admin."}
                 )
-            
+
             # Store user info in session immediately
             request.session['otp_user_id'] = user.id
             request.session['employee_id'] = employee_id
             request.session.save()
-            
-            # Queue the email task asynchronously (non-blocking)
+
+            # Generate and send OTP synchronously
             try:
-                print("jjjjjjjjjjjjjjjjjjjjjj")
-                send_otp_email.delay(user.id, employee_id)
-                print("send")
+                # Generate OTP
+                otp_code = ''.join(random.choices(string.digits, k=6))
+                expires_at = timezone.now() + timedelta(minutes=10)
+
+                # Clear any existing OTPs for this user
+                OTP.objects.filter(user=user).delete()
+
+                # Create new OTP
+                OTP.objects.create(user=user, otp_code=otp_code, expires_at=expires_at)
+
+                # Email content
+                subject = 'Your OTP Code for Login'
+                message = f"""
+                Hello {user.username},
+
+                Your One-Time Password (OTP) for login is: {otp_code}
+
+                This OTP is valid for 10 minutes only.
+
+                If you didn't request this OTP, please ignore this email.
+
+                Best regards,
+                Your Security Team
+                """
+
+                # Send email
+                email = user.email
+                msg = MIMEMultipart()
+                msg["From"] = settings.SMTP_EMAIL
+                msg["To"] = email
+                msg["Subject"] = subject
+                msg.attach(MIMEText(message, "plain"))
+
+                # Send via SMTP
+                with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                    server.starttls()
+                    server.login(settings.SMTP_EMAIL, settings.SMTP_APP_PASSWORD)
+                    server.send_message(msg)
+
+                print(f"OTP sent successfully to {email} for user {employee_id}")
+
+            except smtplib.SMTPException as e:
+                print(f"SMTP error sending OTP to user {employee_id}: {str(e)}")
+                return render(
+                    request,
+                    "checksheet/login.html",
+                    {"error": "Failed to send OTP. Please try again."}
+                )
             except Exception as e:
-                # Log the error but don't block the redirect
-                print(f"Error queuing OTP email: {str(e)}")
-            
-            # Redirect immediately - don't wait for email
+                print(f"Unexpected error sending OTP to user {employee_id}: {str(e)}")
+                return render(
+                    request,
+                    "checksheet/login.html",
+                    {"error": "An error occurred. Please try again."}
+                )
+
+            # Redirect immediately after sending OTP
             return redirect('verify_otp')
         else:
             return render(
@@ -215,8 +277,9 @@ def login_view(request):
                 "checksheet/login.html",
                 {"error": "Invalid credentials"}
             )
-    
+
     return render(request, "checksheet/login.html")
+
 
 def verify_otp(request):
     if request.method == "POST":
