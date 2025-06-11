@@ -443,7 +443,7 @@ body.white-mode .startersheets-container.grid-view .edit-users-btn:hover {
 .startersheets-container.grid-view .action-button {
     background-color: rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.8);
-    width: 32px;
+    width: 66px;
     height: 32px;
     border-radius: 6px;
     display: flex;
@@ -462,12 +462,13 @@ body.white-mode .startersheets-container.grid-view .action-button {
 }
 
 .startersheets-container.grid-view .action-button.update-btn {
-    background-color: rgba(16, 185, 129, 0.2);
+    background-color: var(--accent-color);
     color: rgba(209, 250, 229, 0.9);
 }
 
 body.white-mode .startersheets-container.grid-view .action-button.update-btn {
-    background-color: rgba(16, 185, 129, 0.1);
+    background-color: var(--accent-color-solid);
+    color: white;
 }
 
 .startersheets-container.grid-view .action-button.update-btn:hover {
@@ -479,13 +480,18 @@ body.white-mode .startersheets-container.grid-view .action-button.update-btn:hov
 }
 
 .startersheets-container.grid-view .action-button.copy-btn {
-    background-color: rgba(59, 130, 246, 0.2);
+    background-color: var(--accent-color);
     color: rgba(224, 231, 255, 0.9);
 }
 
 body.white-mode .startersheets-container.grid-view .action-button.copy-btn {
-    background-color: rgba(59, 130, 246, 0.1);
+    background-color: var(--accent-color-solid);
     color: #3b82f6;
+}
+
+.fa-copy:before {
+    content: "\f0c5";
+    color: white;
 }
 
 .startersheets-container.grid-view .action-button.copy-btn:hover {
