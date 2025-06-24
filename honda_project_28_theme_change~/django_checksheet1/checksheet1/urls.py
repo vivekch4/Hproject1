@@ -11,7 +11,8 @@ urlpatterns = [
     path("all-checksheets/", all_checksheets, name="all_checksheets"),
     path("update/<int:checksheet_id>/", update_checksheet, name="update_checksheet"),
     # path("add-zone/<int:checksheet_id>/", add_zone, name="add_zone"),
-    path("", login_view, name="login"),
+    path("login/", login_view, name="login"),
+    path("", All_dashboard, name="all_dashboard"),
     path("logout/", logout_view, name="logout"),
     path("create-user/", create_user, name="create_user"),
     path(

@@ -347,6 +347,9 @@ def verify_otp(request):
 def logout_view(request):
     logout(request)
     return redirect("login")
+
+def All_dashboard(request):
+    return render (request,"checksheet/all_dashboard.html")
 # ----------------------------------------- bashboard function  --------------------------------#
 
 

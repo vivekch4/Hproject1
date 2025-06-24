@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <title>Technoviz Automation - Product Demos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            color: white;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+            overflow: hidden;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .company-name {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            background: linear-gradient(45deg, #00d4ff, #ffffff, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .demo-card {
+            background: linear-gradient(145deg, #1e1e3f, #2a2a5a);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,212,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .demo-card:hover::before {
+            left: 100%;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,212,255,0.2);
+            border: 1px solid rgba(0,212,255,0.3);
+        }
+
+        .demo-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .demo-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 15px;
+        }
+
+        .demo-description {
+            color: #b8b8d6;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .demo-button {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            margin-top: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+            box-shadow: 0 5px 15px rgba(0,212,255,0.3);
+        }
+
+        .demo-button:hover {
+            background: linear-gradient(45deg, #0099cc, #00d4ff);
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,212,255,0.5);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .company-name {
+                font-size: 2rem;
+            }
+            
+            .demo-card {
+                padding: 30px 20px;
+            }
+        }
+
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .demo-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Color themes for each card */
+        .card-1 { --accent-color: #00ff88; }
+        .card-2 { --accent-color: #00d4ff; }
+        .card-3 { --accent-color: #ffa500; }
+        .card-4 { --accent-color: #ff6b9d; }
+        .card-5 { --accent-color: #ff4757; }
+        .card-6 { --accent-color: #7bed9f; }
+
+        .demo-card[class*="card-"]:hover {
+            border-top: 4px solid var(--accent-color);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="{% static 'images/logo-.png' %}" alt="Technoviz Automation Logo">
+        </div>
+        <h1 class="company-name">TECHNOVIZ AUTOMATION</h1>
+        <p class="subtitle">Product Demonstration Hub</p>
+    </div>
+
+    <div class="demo-grid">
+        <div class="demo-card card-1" onclick="openDemo('digital-checklist')">
+            <span class="demo-icon">📋</span>
+            <h3 class="demo-title">Digital Checklist</h3>
+            <p class="demo-description">Streamline your inspection processes with our comprehensive digital checklist solution for enhanced quality control.</p>
+            <button class="demo-button">View Demo</button>
+        </div>
+
+        <div class="demo-card card-2" onclick="openDemo('oee-dashboard')">
+            <span class="demo-icon">📊</span>
+            <h3 class="demo-title">OEE Dashboard</h3>
+            <p class="demo-description">Monitor Overall Equipment Effectiveness with real-time analytics and performance insights for optimal productivity.</p>
+            <button class="demo-button">View Demo</button>
+        </div>
+
+        <div class="demo-card card-3" onclick="openDemo('utility-control')">
+            <span class="demo-icon">⚡</span>
+            <h3 class="demo-title">Utility Control</h3>
+            <p class="demo-description">Manage and optimize utility consumption with intelligent control systems for energy efficiency and cost reduction.</p>
+            <button class="demo-button">View Demo</button>
+        </div>
+
+        <div class="demo-card card-4" onclick="openDemo('ems')">
+            <span class="demo-icon">🏭</span>
+            <h3 class="demo-title">EMS</h3>
+            <p class="demo-description">Enterprise Management System for comprehensive facility monitoring and automated control operations.</p>
+            <button class="demo-button">View Demo</button>
+        </div>
+
+        <div class="demo-card card-5" onclick="openDemo('image-processing')">
+            <span class="demo-icon">🖼️</span>
+            <h3 class="demo-title">Image Processing</h3>
+            <p class="demo-description">Advanced computer vision solutions for automated quality inspection and defect detection systems.</p>
+            <button class="demo-button">View Demo</button>
+        </div>
+
+        <div class="demo-card card-6" onclick="openDemo('ar-vr')">
+            <span class="demo-icon">🥽</span>
+            <h3 class="demo-title">AR/VR</h3>
+            <p class="demo-description">Immersive augmented and virtual reality applications for training, visualization, and remote assistance.</p>
+            <button class="demo-button">View Demo</button>
+        </div>
+    </div>
+
+    <script>
+        // Demo URLs - Replace these with your actual demo links
+        const demoLinks = {
+            'digital-checklist': '/login/',
+            'oee-dashboard': 'https://abhay188.pythonanywhere.com/',
+            'utility-control': 'https://utility.pythonanywhere.com/',
+            'ems': '#',
+            'image-processing': '#',
+            'ar-vr': '#'
+        };
+
+        function openDemo(demoType) {
+            const url = demoLinks[demoType];
+            if (url && url !== 'https://your-demo-link-1.com') {
+                window.open(url, '_blank');
+            } else {
+                alert(`Demo for ${demoType.replace('-', ' ').toUpperCase()} will be available soon!\n\nPlease replace the demo URL in the JavaScript section.`);
+            }
+        }
+
+        // Add some interactive animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.demo-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.style.animation = 'fadeInUp 0.6s ease forwards';
+            });
+        });
+
+        // CSS animation keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
