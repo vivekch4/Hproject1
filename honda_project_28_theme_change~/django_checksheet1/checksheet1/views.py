@@ -1012,28 +1012,30 @@ def all_checksheets(request):
         if request.user.role == "admin" or has_page_access(
             request.user, "all_checksheets"
         ):
-            # Admin sees all CheckSheets
+            # Admin sees all CheckSheets - ordered by display_order
             checksheets = CheckSheet.objects.prefetch_related(
                 "zones", "assigned_users"
-            ).all()
+            ).all().order_by('display_order', 'id')
             Starter = StarterSheet.objects.all()
         else:
-            # Operators see only assigned CheckSheets
+            # Operators see only assigned CheckSheets - ordered by display_order
             Starter = StarterSheet.objects.filter(assigned_users=request.user)
             checksheets = CheckSheet.objects.prefetch_related(
                 "zones", "assigned_users"
-            ).filter(assigned_users=request.user)
+            ).filter(assigned_users=request.user).order_by('display_order', 'id')
+        
         all_users = get_user_model().objects.all()
-
+        
         return render(
             request,
             "checksheet/all_checksheets.html",
-            {"checksheets": checksheets, "Starter": Starter, "all_users": all_users},
+            {
+                "checksheets": checksheets, 
+                "Starter": Starter, 
+                "all_users": all_users
+            },
         )
-
     return render(request, "checksheet/access_denied.html")
-
-
 def get_unique_copy_name(original_name):
     base_name = f"{original_name} copy"
     counter = 1
@@ -1042,17 +1044,29 @@ def get_unique_copy_name(original_name):
         new_name = f"{base_name} {counter}"
         counter += 1
     return new_name
-
 @login_required
 def copy_checksheet(request, checksheet_id):
     if request.user.role != "admin" and not has_page_access(request.user, "all_checksheets"):
         return render(request, "checksheet/access_denied.html")
-
+    
     original_checksheet = get_object_or_404(CheckSheet, id=checksheet_id)
-
+    
     # Get a unique name for the copy
     new_name = get_unique_copy_name(original_checksheet.name)
-
+    
+    # Calculate the display_order to place the copy right after the original
+    # Get the next checksheet's display_order to insert between
+    next_checksheet = CheckSheet.objects.filter(
+        display_order__gt=original_checksheet.display_order
+    ).order_by('display_order').first()
+    
+    if next_checksheet:
+        # Insert between original and next checksheet
+        new_display_order = (original_checksheet.display_order + next_checksheet.display_order) / 2
+    else:
+        # If no next checksheet, add after the original
+        new_display_order = original_checksheet.display_order + 1
+    
     new_checksheet = CheckSheet.objects.create(
         name=new_name,
         line=original_checksheet.line,
@@ -1060,24 +1074,30 @@ def copy_checksheet(request, checksheet_id):
         level_1_approver=original_checksheet.level_1_approver,
         level_2_approver=original_checksheet.level_2_approver,
         require_level_3_approval=original_checksheet.require_level_3_approval,
+        display_order=new_display_order,  # Set the calculated display_order
     )
-
+    
     new_checksheet.assigned_users.set(original_checksheet.assigned_users.all())
-
+    
     for zone in original_checksheet.zones.all():
         Zone.objects.create(
             checksheet=new_checksheet,
             name=zone.name,
             input_type=zone.input_type,
         )
-
+    
     for image in original_checksheet.images.all():
         CheckSheetImage.objects.create(
             checksheet=new_checksheet,
             image=image.image,
         )
-
-    messages.success(request, f'CheckSheet "{original_checksheet.name}" copied successfully as "{new_name}".', extra_tags='checksheet_creation')
+    
+    messages.success(
+        request, 
+        f'CheckSheet "{original_checksheet.name}" copied successfully as "{new_name}".', 
+        extra_tags='checksheet_creation'
+    )
+    
     return redirect('all_checksheets')
 import csv
 

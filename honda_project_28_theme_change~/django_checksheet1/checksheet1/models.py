@@ -27,7 +27,10 @@ class CheckSheet(models.Model):
         related_name="created_check_sheets",
     )
     created_on = models.DateTimeField(auto_now_add=True)
-
+    
+    # Add display_order field for custom ordering
+    display_order = models.FloatField(default=0, db_index=True)
+    
     # Designated approvers for each level
     level_1_approver = models.ForeignKey(
         "CustomUser",
@@ -51,6 +54,9 @@ class CheckSheet(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ['display_order', 'id']
 
 
 class CheckSheetImage(models.Model):
