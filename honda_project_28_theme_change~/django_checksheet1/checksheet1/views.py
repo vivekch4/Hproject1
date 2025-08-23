@@ -5660,3 +5660,134 @@ def delete_recipient(request, index):
         return JsonResponse({"message": "Recipient deleted successfully"}, status=200)
     except Exception as e:
         return JsonResponse({"error": f"Error deleting recipient: {str(e)}"}, status=500)
+    
+
+
+
+from django.shortcuts import render
+import joblib
+import numpy as np
+import json
+
+model = joblib.load("fuel_tank_model_for_today.pkl")
+
+# Store history for chart
+history = []
+
+# Feature names for safe ranges
+feature_names = [
+    "Ambient_Temp_C",
+    "Ambient_Humidity_pct",
+    "Welding_Voltage_V",
+    "Operator_Skill",
+    "Dust_Level",
+    "Cooling_Time_min"
+]
+
+
+def get_safe_ranges_from_forest(model, scaler=None):
+    """Extract safe ranges from RandomForest that lead to class 1 (Accepted)."""
+    if hasattr(model, "named_steps"):
+        rf_model = list(model.named_steps.values())[-1]
+    else:
+        rf_model = model
+
+    if not hasattr(rf_model, "estimators_"):
+        return {"error": "Model is not a RandomForestClassifier"}
+
+    safe_conditions = {f: [] for f in feature_names}
+
+    for estimator in rf_model.estimators_:
+        tree = estimator.tree_
+
+        def traverse(node, constraints):
+            if tree.feature[node] != -2:  # not a leaf
+                feat = tree.feature[node]
+                thresh = tree.threshold[node]
+
+                left_constraints = constraints.copy()
+                left_constraints.append((feat, "<=", thresh))
+                traverse(tree.children_left[node], left_constraints)
+
+                right_constraints = constraints.copy()
+                right_constraints.append((feat, ">", thresh))
+                traverse(tree.children_right[node], right_constraints)
+            else:
+                values = tree.value[node][0]
+                pred_class = np.argmax(values)
+                if pred_class == 1:  # ✅ Accepted
+                    for feat, op, thresh in constraints:
+                        safe_conditions[feature_names[feat]].append((op, thresh))
+
+        traverse(0, [])
+
+    # Convert constraints into min/max ranges
+    safe_ranges = {}
+    for feat, conds in safe_conditions.items():
+        lowers = [t for op, t in conds if op == ">"]
+        uppers = [t for op, t in conds if op == "<="]
+        if lowers or uppers:
+            min_val = max(lowers) if lowers else -np.inf
+            max_val = min(uppers) if uppers else np.inf
+
+            if scaler is not None:
+                idx = feature_names.index(feat)
+                dummy = np.zeros((1, len(feature_names)))
+                dummy[0, idx] = min_val
+                min_val = scaler.inverse_transform(dummy)[0, idx] if min_val != -np.inf else min_val
+                dummy[0, idx] = max_val
+                max_val = scaler.inverse_transform(dummy)[0, idx] if max_val != np.inf else max_val
+
+            safe_ranges[feat] = (round(min_val, 2), round(max_val, 2))
+
+    return safe_ranges
+
+
+def analytics_page(request):
+    prediction = None
+    probability = None
+    chart_data = []
+    safe_ranges = None
+
+    if request.method == "POST":
+        if "predict" in request.POST:
+            temp = float(request.POST["Ambient_Temp_C"])
+            humidity = float(request.POST["Ambient_Humidity_pct"])
+            voltage = float(request.POST["Welding_Voltage_V"])
+            skill = float(request.POST["Operator_Skill"])
+            dust = float(request.POST["Dust_Level"])
+            cooling = float(request.POST["Cooling_Time_min"])
+
+            features = np.array([[temp, humidity, voltage, skill, dust, cooling]])
+
+            prob = model.predict_proba(features)[0][1]
+            probability = round(prob * 100, 2)
+
+            result = model.predict(features)[0]
+            prediction = "✅ Accepted" if result == 0 else "❌ Rejected"
+
+            history.append({
+                "Ambient_Temp_C": temp,
+                "Ambient_Humidity_pct": humidity,
+                "Welding_Voltage_V": voltage,
+                "Operator_Skill": skill,
+                "Dust_Level": dust,
+                "Cooling_Time_min": cooling,
+                "probability": probability
+            })
+
+            if len(history) > 20:
+                history.pop(0)
+
+            chart_data = history
+
+        elif "safe_ranges" in request.POST:
+            scaler = model.named_steps.get("scaler", None) if hasattr(model, "named_steps") else None
+            safe_ranges = get_safe_ranges_from_forest(model, scaler=scaler)
+
+    return render(request, "checksheet/analytics.html", {
+        "prediction": prediction,
+        "probability": probability,
+        "chart_data": json.dumps(chart_data),
+        "safe_ranges": safe_ranges
+    })

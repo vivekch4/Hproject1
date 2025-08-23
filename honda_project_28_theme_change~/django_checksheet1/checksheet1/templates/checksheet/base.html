@@ -100,7 +100,12 @@
             <a href="{% url 'form_request' %}"><i class="fab fa-wpforms"></i><span class="sidebar-text">Form Request</span></a>
             {% endif %}
         {% endif %}
+        {% if request.user.role == "admin" %}
+           
+            <a href="{% url 'analytics_page' %}"><i class="fab fa-wpforms"></i><span class="sidebar-text">Analytics</span></a>
 
+        {% endif %}
+        
         {% if request.user|has_page_access:"report" %}
         <a href="{% url 'report' %}"><i class="fas fa-file"></i><span class="sidebar-text">Report</span></a>
         {% endif %}

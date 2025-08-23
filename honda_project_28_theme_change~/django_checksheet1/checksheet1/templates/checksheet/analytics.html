@@ -1,0 +1,752 @@
+{% extends 'checksheet/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .analytics-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1rem;
+        color: var(--text-light);
+    }
+
+    .analytics-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        animation: fadeInDown 0.8s ease-out;
+    }
+
+    .analytics-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent-color-solid), #fff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .analytics-header p {
+        color: var(--text-light-muted);
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        align-items: start;
+    }
+
+    .prediction-card {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        animation: slideInLeft 0.8s ease-out;
+        height: fit-content;
+    }
+
+    .prediction-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+        border-color: var(--accent-color);
+    }
+
+    .right-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .result-card {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 16px;
+        padding: 1.25rem;
+        text-align: center;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+        animation: slideInRight 0.8s ease-out;
+        transition: all 0.4s ease;
+        height: fit-content;
+        min-height: 150px;
+    }
+
+    .chart-container {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 16px;
+        padding: 1.25rem;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+        animation: fadeInUp 1s ease-out 0.3s both;
+        height: 300px;
+    }
+
+    .card-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-light);
+    }
+
+    .card-title i {
+        color: var(--accent-color-solid);
+        font-size: 1.25rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+        animation: fadeInUp 0.6s ease-out;
+        animation-fill-mode: both;
+    }
+
+    .form-group:nth-child(1) { animation-delay: 0.1s; }
+    .form-group:nth-child(2) { animation-delay: 0.2s; }
+    .form-group:nth-child(3) { animation-delay: 0.3s; }
+    .form-group:nth-child(4) { animation-delay: 0.4s; }
+    .form-group:nth-child(5) { animation-delay: 0.5s; }
+    .form-group:nth-child(6) { animation-delay: 0.6s; }
+
+    .slider-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .slider-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .slider-container label {
+        font-weight: 500;
+        color: var(--text-light);
+        font-size: 0.9rem;
+    }
+
+    .slider-value {
+        background: var(--accent-color);
+        color: white;
+        padding: 0.2rem 0.6rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: 1px solid var(--accent-color-solid);
+        min-width: 40px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .range-input {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 6px;
+        background: linear-gradient(90deg, var(--accent-color) 0%, var(--accent-color-solid) 100%);
+        border-radius: 8px;
+        outline: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .range-input::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        background: white;
+        border: 2px solid var(--accent-color-solid);
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .range-input::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .range-input::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        background: white;
+        border: 2px solid var(--accent-color-solid);
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .safe-range {
+        color: var(--accent-color-solid);
+        font-size: 0.8rem;
+        font-weight: 500;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        border: 1px solid var(--accent-color);
+    }
+
+    .button-group {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .btn-primary {
+        flex: 1;
+        padding: 0.8rem 1.25rem;
+        background: linear-gradient(135deg, var(--accent-color), var(--accent-color-solid));
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.6s;
+    }
+
+    .btn-primary:hover::before {
+        left: 100%;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-primary:active {
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        flex: 1;
+        padding: 0.8rem 1.25rem;
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-light);
+        border: 2px solid var(--accent-color);
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(8px);
+    }
+
+    .btn-secondary:hover {
+        background: var(--accent-color);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+
+    .result-display {
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .result-placeholder {
+        color: var(--text-light-muted);
+        font-size: 1rem;
+        text-align: center;
+        opacity: 0.7;
+    }
+
+    .result-content {
+        text-align: center;
+        animation: resultBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .result-status {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .result-accepted {
+        color: #22c55e;
+        text-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+        animation: pulse 2s infinite;
+    }
+
+    .result-rejected {
+        color: #ef4444;
+        text-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        animation: shake 0.8s ease-in-out;
+    }
+
+    .result-probability {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text-light);
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        border: 2px solid var(--accent-color);
+        backdrop-filter: blur(8px);
+    }
+
+    .chart-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        text-align: center;
+        color: var(--text-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .chart-title i {
+        color: var(--accent-color-solid);
+        font-size: 1.2rem;
+    }
+
+    #chart {
+        border-radius: 10px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.05);
+        height: 220px;
+    }
+
+    /* Loading Animation */
+    .loading {
+        display: none;
+        text-align: center;
+        color: var(--accent-color-solid);
+    }
+
+    .loading.show {
+        display: block;
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    .spinner {
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-top: 2px solid var(--accent-color-solid);
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 0.75rem;
+    }
+
+    /* Animations */
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-50px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(50px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes resultBounce {
+        0% { opacity: 0; transform: scale(0.3) rotateY(180deg); }
+        50% { transform: scale(1.1) rotateY(90deg); }
+        100% { opacity: 1; transform: scale(1) rotateY(0deg); }
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* White Mode Styles */
+    body.white-mode .analytics-container {
+        color: var(--text-light);
+    }
+
+    body.white-mode .prediction-card,
+    body.white-mode .result-card,
+    body.white-mode .chart-container {
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        color: #333;
+    }
+
+    body.white-mode .card-title,
+    body.white-mode .chart-title {
+        color: #333;
+    }
+
+    body.white-mode .slider-container label {
+        color: #333;
+    }
+
+    body.white-mode .result-placeholder {
+        color: #666;
+    }
+
+    body.white-mode .result-probability {
+        color: #333;
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .main-grid {
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+
+        .analytics-header h1 {
+            font-size: 1.8rem;
+        }
+
+        .chart-container {
+            height: 250px;
+        }
+
+        #chart {
+            height: 180px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .analytics-container {
+            padding: 0.75rem;
+        }
+
+        .prediction-card,
+        .result-card,
+        .chart-container {
+            padding: 1rem;
+        }
+
+        .button-group {
+            flex-direction: column;
+        }
+
+        .result-status {
+            font-size: 1.5rem;
+        }
+
+        .result-probability {
+            font-size: 1rem;
+        }
+
+        .chart-container {
+            height: 200px;
+        }
+
+        #chart {
+            height: 140px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-container">
+    <div class="analytics-header">
+        <h1><i class="fas fa-chart-line"></i> Ai Fuel tank Prediction</h1>
+       
+    </div>
+
+    <div class="main-grid">
+        <!-- Prediction Form - Left Side (Half Screen) -->
+        <div class="prediction-card">
+            <h2 class="card-title">
+                <i class="fas fa-sliders-h"></i>
+                Parameter Configuration
+            </h2>
+
+            <form method="POST" id="predictionForm">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <label>Ambient Temperature (°C)</label>
+                            <div class="slider-value" id="temp_val">25</div>
+                        </div>
+                        <input type="range" name="Ambient_Temp_C" min="5" max="50" value="25" 
+                               class="range-input" oninput="updateValue('temp_val', this.value)">
+                        {% if safe_ranges %}
+                        <div class="safe-range">Safe: {{ safe_ranges.Ambient_Temp_C.0 }}–{{ safe_ranges.Ambient_Temp_C.1 }}°C</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <label>Ambient Humidity (%)</label>
+                            <div class="slider-value" id="hum_val">50</div>
+                        </div>
+                        <input type="range" name="Ambient_Humidity_pct" min="10" max="95" value="50" 
+                               class="range-input" oninput="updateValue('hum_val', this.value)">
+                        {% if safe_ranges %}
+                        <div class="safe-range">Safe: {{ safe_ranges.Ambient_Humidity_pct.0 }}–{{ safe_ranges.Ambient_Humidity_pct.1 }}%</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <label>Welding Voltage (V)</label>
+                            <div class="slider-value" id="volt_val">220</div>
+                        </div>
+                        <input type="range" name="Welding_Voltage_V" min="150" max="270" value="220" 
+                               class="range-input" oninput="updateValue('volt_val', this.value)">
+                        {% if safe_ranges %}
+                        <div class="safe-range">Safe: {{ safe_ranges.Welding_Voltage_V.0 }}–{{ safe_ranges.Welding_Voltage_V.1 }}V</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <label>Operator Skill Level</label>
+                            <div class="slider-value" id="skill_val">3</div>
+                        </div>
+                        <input type="range" name="Operator_Skill" min="1" max="5" value="3" 
+                               class="range-input" oninput="updateValue('skill_val', this.value)">
+                        {% if safe_ranges %}
+                        <div class="safe-range">Optimal: {{ safe_ranges.Operator_Skill.0 }}–{{ safe_ranges.Operator_Skill.1 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <label>Dust Level</label>
+                            <div class="slider-value" id="dust_val">5</div>
+                        </div>
+                        <input type="range" name="Dust_Level" min="1" max="10" value="5" 
+                               class="range-input" oninput="updateValue('dust_val', this.value)">
+                        {% if safe_ranges %}
+                        <div class="safe-range">Safe: {{ safe_ranges.Dust_Level.0 }}–{{ safe_ranges.Dust_Level.1 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <label>Cooling Time (min)</label>
+                            <div class="slider-value" id="cool_val">10</div>
+                        </div>
+                        <input type="range" name="Cooling_Time_min" min="1" max="25" value="10" 
+                               class="range-input" oninput="updateValue('cool_val', this.value)">
+                        {% if safe_ranges %}
+                        <div class="safe-range">Optimal: {{ safe_ranges.Cooling_Time_min.0 }}–{{ safe_ranges.Cooling_Time_min.1 }} min</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" name="predict" class="btn-primary">
+                        <i class="fas fa-brain"></i> Predict Quality
+                    </button>
+                    <button type="submit" name="safe_ranges" class="btn-secondary">
+                        <i class="fas fa-shield-alt"></i> Show Safe Values
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Right Section - Result and Chart Stacked -->
+        <div class="right-section">
+            <!-- Result Display - Small and at Top Right -->
+            <div class="result-card">
+                <h2 class="card-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Prediction Results
+                </h2>
+
+                <div class="result-display">
+                    <div class="loading" id="loadingIndicator">
+                        <div class="spinner"></div>
+                        <p>Analyzing parameters...</p>
+                    </div>
+
+                    {% if prediction %}
+                    <div class="result-content">
+                        <div class="result-status {% if 'Accepted' in prediction %}result-accepted{% else %}result-rejected{% endif %}">
+                            {% if 'Accepted' in prediction %}
+                                <i class="fas fa-check-circle"></i> {{ prediction }}
+                            {% else %}
+                                <i class="fas fa-times-circle"></i> {{ prediction }}
+                            {% endif %}
+                        </div>
+                        <div class="result-probability">
+                            <i class="fas fa-percentage"></i> {{ probability }}% Confidence
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="result-placeholder">
+                        <i class="fas fa-analytics"></i>
+                        <p>Configure parameters and click "Predict Quality" to see results</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Chart Section - Below Result on Right Side -->
+            {% if chart_data %}
+            <div class="chart-container">
+                <h2 class="chart-title">
+                    <i class="fas fa-chart-area"></i>
+                    Quality Prediction Trends
+                </h2>
+                <div id="chart"></div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+<script>
+    function updateValue(elementId, value) {
+        document.getElementById(elementId).textContent = value;
+        
+        // Add a subtle animation to the value display
+        const element = document.getElementById(elementId);
+        element.style.transform = 'scale(1.1)';
+        element.style.transition = 'transform 0.2s ease';
+        
+        setTimeout(() => {
+            element.style.transform = 'scale(1)';
+        }, 200);
+    }
+
+    // Form submission with loading animation
+    document.getElementById('predictionForm').addEventListener('submit', function(e) {
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        if (e.submitter && e.submitter.name === 'predict') {
+            loadingIndicator.classList.add('show');
+        }
+    });
+
+    // Chart rendering with animation
+    var chartData = {{ chart_data|safe }};
+
+    if (chartData && chartData.length > 0) {
+        var trace1 = {
+            x: chartData.map((d, i) => i + 1),
+            y: chartData.map(d => d.probability),
+            mode: 'lines+markers',
+            name: 'Acceptance Probability (%)',
+            line: {
+                color: 'rgba(148, 200, 235, 0.8)',
+                width: 3,
+                shape: 'spline'
+            },
+            marker: {
+                color: chartData.map(d => d.probability > 50 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
+                size: 8,
+                line: {
+                    color: 'white',
+                    width: 2
+                }
+            },
+            fill: 'tonexty',
+            fillcolor: 'rgba(148, 200, 235, 0.1)'
+        };
+
+        var layout = {
+            title: {
+                text: '',
+                font: { color: '#f8fafc', size: 14, family: 'Segoe UI, sans-serif' }
+            },
+            xaxis: {
+                title: { text: 'Prediction Count', font: { color: '#cbd5e1', size: 12 } },
+                gridcolor: 'rgba(255, 255, 255, 0.1)',
+                tickfont: { color: '#cbd5e1', size: 10 }
+            },
+            yaxis: {
+                title: { text: 'Probability (%)', font: { color: '#cbd5e1', size: 12 } },
+                range: [0, 100],
+                gridcolor: 'rgba(255, 255, 255, 0.1)',
+                tickfont: { color: '#cbd5e1', size: 10 }
+            },
+            plot_bgcolor: 'transparent',
+            paper_bgcolor: 'transparent',
+            font: { color: '#f8fafc', size: 11 },
+            hovermode: 'x unified',
+            showlegend: false,
+            margin: { t: 30, r: 25, b: 40, l: 50 }
+        };
+
+        var config = {
+            displayModeBar: false,
+            responsive: true
+        };
+
+        Plotly.newPlot('chart', [trace1], layout, config);
+    }
+
+    // Add smooth scrolling for better UX
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add entrance animations to form groups
+        const formGroups = document.querySelectorAll('.form-group');
+        formGroups.forEach((group, index) => {
+            group.style.animationDelay = `${0.1 * index}s`;
+        });
+    });
+</script>
+{% endblock %}

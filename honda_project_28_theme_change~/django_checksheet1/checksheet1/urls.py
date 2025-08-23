@@ -153,6 +153,8 @@ urlpatterns = [
     
 
 path('api/save-reject-reasons/', save_reject_reasons, name='save_reject_reasons'),
+
+path("analytics_page/", analytics_page, name="analytics_page"),
 ]
 
 
