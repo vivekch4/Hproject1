@@ -134,11 +134,12 @@
             box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 40px rgba(232, 200, 74, 0.06);
         }
 
-        .main-player video {
+        /* ✅ UPDATED: iframe instead of video */
+        .main-player iframe {
             width: 100%;
             aspect-ratio: 16 / 9;
-            object-fit: cover;
             display: block;
+            border: none;
         }
 
         .main-player .card-label {
@@ -218,7 +219,7 @@
             box-shadow: 0 0 18px rgba(232, 200, 74, 0.08);
         }
 
-        /* ── THUMBNAIL: actual video frame ── */
+        /* ✅ UPDATED: thumbnail is now a static image/placeholder (no video preview for Drive) */
         .vtab-thumb {
             width: 100%;
             aspect-ratio: 16 / 9;
@@ -227,17 +228,14 @@
             overflow: hidden;
         }
 
-        /* The muted preview video fills the thumbnail */
-        .vtab-thumb video {
+        .vtab-thumb img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
-            /* Seek to 0 so the first frame is visible without playing */
-            pointer-events: none;
         }
 
-        /* Semi-transparent overlay so the play icon reads */
+        /* Semi-transparent overlay */
         .vtab-thumb::after {
             content: '';
             position: absolute;
@@ -254,12 +252,11 @@
             background: rgba(8, 9, 15, 0.15);
         }
 
-        /* Play icon centred on top of the overlay */
+        /* Play icon */
         .play-ring {
             position: absolute;
             inset: 0;
             z-index: 2;
-            /* above the ::after overlay */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -322,27 +319,34 @@
             <div class="tag">
                 <div class="tag-dot"></div>Immersive Tech<div class="tag-dot"></div>
             </div>
-            <h1><span class="outline">AR</span> &amp; VR Demo</h1>
+            <h1><span class="outline">AR</span> &amp; VR Training</h1>
         </div>
 
         <div class="player-layout">
 
-            <!-- Main player (80%) -->
+            <!-- ✅ UPDATED: Main player now uses iframe -->
             <div class="main-player">
-                <video id="main-video" src="{% static 'videos/video1.mp4' %}" controls></video>
+                <iframe
+                    id="main-video"
+                    src="https://drive.google.com/file/d/1jM8CAk9dvqkg6eGCqDaxSG9MqAaW3fCP/preview"
+                    allow="autoplay"
+                    allowfullscreen>
+                </iframe>
                 <div class="card-label">
                     <span class="lbl-title" id="main-title">Experience 01</span>
                     <span class="lbl-num" id="main-num">01 / 03</span>
                 </div>
             </div>
 
-            <!-- Tab list (20%) — each .vtab-thumb now has a real <video> for the thumbnail -->
+            <!-- ✅ UPDATED: Tabs now use Drive preview URLs in data-src -->
             <div class="tab-list">
 
-                <div class="vtab active" data-src="{% static 'videos/video1.mp4' %}" data-title="Experience 01"
-                    data-num="01 / 03">
+                <div class="vtab active"
+                     data-src="https://drive.google.com/file/d/1jM8CAk9dvqkg6eGCqDaxSG9MqAaW3fCP/preview"
+                     data-title="Experience 01"
+                     data-num="01 / 03">
                     <div class="vtab-thumb">
-                        <video src="{% static 'videos/video1.mp4' %}" muted preload="metadata"></video>
+                        <!-- Use a thumbnail image, or leave as plain background -->
                         <div class="play-ring">
                             <div class="play-ring-inner">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -354,10 +358,11 @@
                     <div class="vtab-label">Experience 01</div>
                 </div>
 
-                <div class="vtab" data-src="{% static 'videos/video2.mp4' %}" data-title="Experience 02"
-                    data-num="02 / 03">
+                <div class="vtab"
+                     data-src="https://drive.google.com/file/d/14LABygDWiU8-ZweqZuZ9FI5uC1x3fflv/preview"
+                     data-title="Experience 02"
+                     data-num="02 / 03">
                     <div class="vtab-thumb">
-                        <video src="{% static 'videos/video2.mp4' %}" muted preload="metadata"></video>
                         <div class="play-ring">
                             <div class="play-ring-inner">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -369,10 +374,11 @@
                     <div class="vtab-label">Experience 02</div>
                 </div>
 
-                <div class="vtab" data-src="{% static 'videos/video3.mp4' %}" data-title="Experience 03"
-                    data-num="03 / 03">
+                <div class="vtab"
+                     data-src="https://drive.google.com/file/d/1I9SqpQj-VgaZWR159jPPRmMCDwNwaw6S/preview"
+                     data-title="Experience 03"
+                     data-num="03 / 03">
                     <div class="vtab-thumb">
-                        <video src="{% static 'videos/video3.mp4' %}" muted preload="metadata"></video>
                         <div class="play-ring">
                             <div class="play-ring-inner">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -389,6 +395,7 @@
 
     </main>
 
+    <!-- ✅ UPDATED: Simplified JS — no pause/load, just swap iframe src -->
     <script>
         const tabs = document.querySelectorAll('.vtab');
         const mainVideo = document.getElementById('main-video');
@@ -400,16 +407,8 @@
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
 
-                // ✅ FULL RESET (IMPORTANT)
-                mainVideo.pause();
-                mainVideo.removeAttribute("src");   // clear old source
-                mainVideo.load();                   // reset player
-
-                // ✅ set new source
+                // Just change iframe source
                 mainVideo.src = tab.dataset.src;
-
-                // ✅ force fresh load
-                mainVideo.load();
 
                 // Update labels
                 mainTitle.textContent = tab.dataset.title;
