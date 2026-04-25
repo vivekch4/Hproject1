@@ -4,85 +4,221 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% load static %}
-    <title>Technoviz Automation - Product Demos</title>
+    <title>Technoviz Automation — Product Demos</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        *, *::before, *::after {
+            margin: 0; padding: 0; box-sizing: border-box;
         }
+
+        :root {
+            --bg:       #203f78;
+--surface:  #1a3568;
+--surface2: #152d5a;
+            --border:   rgba(255,255,255,0.07);
+            --border2:  rgba(255,255,255,0.13);
+            --text:     #f0f0f4;
+            --muted:    #a8b8d8;
+--accent:   #6fa8ff;
+            --accent2:  #00e5b4;
+            --amber:    #f5a623;
+            --red:      #ff4e6a;
+        }
+
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
+            padding: 0;
+            overflow-x: hidden;
         }
 
+        /* ── Subtle grid background ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(79,143,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(79,143,255,0.03) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 40px 24px 64px;
+        }
+
+        /* ── Header ── */
         .header {
-            text-align: center;
-            margin-bottom: 50px;
-            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 52px;
+            padding-bottom: 28px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
 
         .logo {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
-            background: linear-gradient(135deg, #00d4ff, #0099cc);
-            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+          
+         
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .logo img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 50%;
+            border-radius: 10px;
         }
 
-        .company-name {
-            font-size: 3rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            background: linear-gradient(45deg, #00d4ff, #ffffff, #00d4ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .brand-text h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: var(--text);
+            line-height: 1.1;
         }
 
-        .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            font-weight: 300;
+        .brand-text p {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 0.06em;
+            margin-top: 3px;
         }
 
+        .header-badge {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--accent2);
+            background: rgba(0,229,180,0.08);
+            border: 1px solid rgba(0,229,180,0.18);
+            border-radius: 20px;
+            padding: 5px 14px;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── Section labels ── */
+        .section-label {
+            font-size: 0.67rem;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ── About card (full-width) ── */
+        .about-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 14px;
+            padding: 20px 24px;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 40px;
+            text-decoration: none;
+        }
+
+        .about-card:hover {
+            border-color: rgba(79,143,255,0.35);
+            background: var(--surface2);
+        }
+
+        .about-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: rgba(79,143,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .about-text h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .about-text p {
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .about-arrow {
+            margin-left: auto;
+            font-size: 1.1rem;
+            color: var(--muted);
+            transition: transform 0.2s, color 0.2s;
+        }
+
+        .about-card:hover .about-arrow {
+            transform: translateX(4px);
+            color: var(--accent);
+        }
+
+        /* ── Demo grid ── */
         .demo-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-            max-width: 1200px;
-            width: 100%;
+            gap: 12px;
+            margin-bottom: 40px;
         }
 
+        @media (max-width: 860px) { .demo-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 520px) { .demo-grid { grid-template-columns: 1fr; } }
+
+        /* ── Demo card ── */
         .demo-card {
-            background: linear-gradient(145deg, #1e1e3f, #2a2a5a);
-            border-radius: 20px;
-            padding: 40px 30px;
-            text-align: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 18px 18px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
+            transition: border-color 0.2s, background 0.2s, transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
             position: relative;
             overflow: hidden;
         }
@@ -90,198 +226,291 @@
         .demo-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0,212,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .demo-card:hover::before {
-            left: 100%;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--card-accent, transparent);
+            border-radius: 14px 14px 0 0;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
 
         .demo-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(0,212,255,0.2);
-            border: 1px solid rgba(0,212,255,0.3);
+            border-color: var(--border2);
+            background: var(--surface2);
+            transform: translateY(-2px);
         }
 
-        .demo-icon {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            display: block;
+        .demo-card:hover::before { opacity: 1; }
+
+        .card-icon-wrap {
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background: var(--icon-bg, rgba(255,255,255,0.05));
+            margin-bottom: 4px;
         }
 
-        .demo-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #ffffff;
-            margin-bottom: 15px;
+        .demo-card h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.2;
         }
 
-        .demo-description {
-            color: #b8b8d6;
-            font-size: 0.95rem;
-            line-height: 1.5;
+        .demo-card p {
+            font-size: 0.75rem;
+            color: var(--muted);
+            line-height: 1.55;
+            flex: 1;
         }
 
-        .demo-button {
-            background: linear-gradient(45deg, #00d4ff, #0099cc);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 25px;
-            margin-top: 20px;
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 6px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        .card-btn {
+            font-size: 0.7rem;
+            font-weight: 500;
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid;
             cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.85rem;
-            box-shadow: 0 5px 15px rgba(0,212,255,0.3);
+            letter-spacing: 0.04em;
+            transition: background 0.15s;
+            background: transparent;
+            font-family: 'DM Sans', sans-serif;
         }
 
-        .demo-button:hover {
-            background: linear-gradient(45deg, #0099cc, #00d4ff);
-            transform: scale(1.05);
-            box-shadow: 0 8px 25px rgba(0,212,255,0.5);
+        .btn-login {
+            color: var(--accent);
+            border-color: rgba(79,143,255,0.3);
+        }
+        .btn-login:hover { background: rgba(79,143,255,0.1); }
+
+        .btn-open {
+            color: var(--accent2);
+            border-color: rgba(0,229,180,0.3);
+        }
+        .btn-open:hover { background: rgba(0,229,180,0.08); }
+
+        .card-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
         }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .demo-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-            
-            .company-name {
-                font-size: 2rem;
-            }
-            
-            .demo-card {
-                padding: 30px 20px;
-            }
+        /* Coming soon dimmed */
+        .coming-soon {
+            opacity: 0.55;
         }
 
-        @media (max-width: 1024px) and (min-width: 769px) {
-            .demo-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .coming-soon-tag {
+            font-size: 0.62rem;
+            color: var(--amber);
+            background: rgba(245,166,35,0.1);
+            border: 1px solid rgba(245,166,35,0.2);
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-weight: 500;
+            letter-spacing: 0.04em;
         }
 
-        /* Color themes for each card */
-        .card-1 { --accent-color: #00ff88; }
-        .card-2 { --accent-color: #00d4ff; }
-        .card-3 { --accent-color: #ffa500; }
-        .card-4 { --accent-color: #ff6b9d; }
-        .card-5 { --accent-color: #ff4757; }
-        .card-6 { --accent-color: #7bed9f; }
+        /* ── Animations ── */
+        .page { animation: fadeUp 0.4s ease both; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
 
-        .demo-card[class*="card-"]:hover {
-            border-top: 4px solid var(--accent-color);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px var(--accent-color);
+        .demo-card {
+            animation: cardIn 0.35s ease both;
+        }
+        .demo-card:nth-child(1) { animation-delay: 0.05s; }
+        .demo-card:nth-child(2) { animation-delay: 0.10s; }
+        .demo-card:nth-child(3) { animation-delay: 0.15s; }
+        .demo-card:nth-child(4) { animation-delay: 0.20s; }
+        .demo-card:nth-child(5) { animation-delay: 0.25s; }
+        .demo-card:nth-child(6) { animation-delay: 0.30s; }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
+
 <body>
+<div class="page">
+
+    <!-- Header -->
     <div class="header">
-        <div class="logo">
-            <img src="{% static 'images/logo-.png' %}" alt="Technoviz Automation Logo">
+        <div class="header-left">
+            <div class="logo">
+                <img src="{% static 'images/logo-.png' %}" alt="Technoviz Logo">
+            </div>
+            <div class="brand-text">
+                <h1>TECHNOVIZ AUTOMATION</h1>
+                <p>INDUSTRIAL AI &amp; AUTOMATION SOLUTIONS</p>
+            </div>
         </div>
-        <h1 class="company-name">TECHNOVIZ AUTOMATION</h1>
-        <p class="subtitle">Product Demonstration Hub</p>
+     
     </div>
 
+    <!-- About Us -->
+    <div class="section-label">Company</div>
+    <div class="about-card" onclick="go('about')">
+        <div class="about-icon">🏢</div>
+        <div class="about-text">
+            <h3>About us</h3>
+            <p>Discover Technoviz Automation — our mission, expertise, and innovative solutions in industrial automation and AI.</p>
+        </div>
+        <span class="about-arrow">→</span>
+    </div>
+
+    <!-- Live Demos -->
+   
     <div class="demo-grid">
-        <div class="demo-card card-1" onclick="openDemo('digital-checklist')">
-            <span class="demo-icon">📋</span>
-            <h3 class="demo-title">Digital Checklist</h3>
-            <p class="demo-description">Streamline your inspection processes with our comprehensive digital checklist solution for enhanced quality control.</p>
-            <button class="demo-button">View Demo</button>
+
+        <div class="demo-card" style="--card-accent: linear-gradient(90deg,#4f8fff,#1a5ad4); --icon-bg: rgba(79,143,255,0.1);" onclick="go('digital-checklist')">
+            <div class="card-icon-wrap">📋</div>
+            <h3>Digital checklist</h3>
+            <p>Streamline inspection and quality control workflows with digital checklists and audit trails.</p>
+            <div class="card-footer">
+                <button class="card-btn btn-login" onclick="event.stopPropagation(); go('digital-checklist')">Login →</button>
+                <span class="card-dot" style="background:#4f8fff;"></span>
+            </div>
         </div>
 
-        <div class="demo-card card-2" onclick="openDemo('oee-dashboard')">
-            <span class="demo-icon">📊</span>
-            <h3 class="demo-title">OEE Dashboard</h3>
-            <p class="demo-description">Monitor Overall Equipment Effectiveness with real-time analytics and performance insights for optimal productivity.</p>
-            <button class="demo-button">View Demo</button>
+        <div class="demo-card" style="--card-accent: linear-gradient(90deg,#4f8fff,#1a5ad4); --icon-bg: rgba(79,143,255,0.1);" onclick="go('oee-dashboard')">
+            <div class="card-icon-wrap">📊</div>
+            <h3>OEE dashboard</h3>
+            <p>Monitor overall equipment effectiveness with real-time analytics, trends, and productivity insights.</p>
+            <div class="card-footer">
+                <button class="card-btn btn-login" onclick="event.stopPropagation(); go('oee-dashboard')">Login →</button>
+                <span class="card-dot" style="background:#4f8fff;"></span>
+            </div>
         </div>
 
-        <div class="demo-card card-3" onclick="openDemo('utility-control')">
-            <span class="demo-icon">⚡</span>
-            <h3 class="demo-title">Utility Control</h3>
-            <p class="demo-description">Manage and optimize utility consumption with intelligent control systems for energy efficiency and cost reduction.</p>
-            <button class="demo-button">View Demo</button>
+        <div class="demo-card" style="--card-accent: linear-gradient(90deg,#f5a623,#d4810a); --icon-bg: rgba(245,166,35,0.1);" onclick="go('utility-control')">
+            <div class="card-icon-wrap">⚡</div>
+            <h3>Utility control</h3>
+            <p>Optimise energy consumption and utility operations with smart, real-time control systems.</p>
+            <div class="card-footer">
+                <button class="card-btn btn-login" onclick="event.stopPropagation(); go('utility-control')">Login →</button>
+                <span class="card-dot" style="background:#f5a623;"></span>
+            </div>
         </div>
 
-        <div class="demo-card card-4" onclick="openDemo('ems')">
-            <span class="demo-icon">🏭</span>
-            <h3 class="demo-title">EMS</h3>
-            <p class="demo-description">Enterprise Management System for comprehensive facility monitoring and automated control operations.</p>
-            <button class="demo-button">View Demo</button>
+        <div class="demo-card" style="--card-accent: linear-gradient(90deg,#7a7d8a,#555); --icon-bg: rgba(255,255,255,0.05);" onclick="go('ems')">
+            <div class="card-icon-wrap">🏭</div>
+            <h3>EMS</h3>
+            <p>Enterprise Management System for comprehensive facility monitoring, reporting, and control.</p>
+            <div class="card-footer">
+                <button class="card-btn btn-login" onclick="event.stopPropagation(); go('ems')">Login →</button>
+                <span class="card-dot" style="background:#7a7d8a;"></span>
+            </div>
         </div>
 
-        <div class="demo-card card-5" onclick="openDemo('image-processing')">
-            <span class="demo-icon">🖼️</span>
-            <h3 class="demo-title">Image Processing</h3>
-            <p class="demo-description">Advanced computer vision solutions for automated quality inspection and defect detection systems.</p>
-            <button class="demo-button">View Demo</button>
+        <div class="demo-card" style="--card-accent: linear-gradient(90deg,#7a7d8a,#555); --icon-bg: rgba(255,255,255,0.05);" onclick="go('image-processing')">
+            <div class="card-icon-wrap">🖼️</div>
+            <h3>Image processing</h3>
+            <p>Computer vision for automated visual inspection, defect detection, and quality assurance.</p>
+            <div class="card-footer">
+                <button class="card-btn btn-login" onclick="event.stopPropagation(); go('image-processing')">Login →</button>
+                <span class="card-dot" style="background:#7a7d8a;"></span>
+            </div>
         </div>
 
-        <div class="demo-card card-6" onclick="openDemo('ar-vr')">
-            <span class="demo-icon">🥽</span>
-            <h3 class="demo-title">AR/VR</h3>
-            <p class="demo-description">Immersive augmented and virtual reality applications for training, visualization, and remote assistance.</p>
-            <button class="demo-button">View Demo</button>
+        <div class="demo-card" style="--card-accent: linear-gradient(90deg,#00e5b4,#00a882); --icon-bg: rgba(0,229,180,0.08);" onclick="go('maintenancemate-ai')">
+            <div class="card-icon-wrap">🛠️</div>
+            <h3>MaintenanceMate AI</h3>
+            <p>AI-powered assistant for fault detection, predictive maintenance, and smart equipment care.</p>
+            <div class="card-footer">
+                <button class="card-btn btn-login" onclick="event.stopPropagation(); go('maintenancemate-ai')">Login →</button>
+                <span class="card-dot" style="background:#00e5b4;"></span>
+            </div>
         </div>
+       <div class="demo-card coming-soon" style="--card-accent: linear-gradient(90deg,#f5a623,#d4810a); --icon-bg: rgba(245,166,35,0.1);" onclick="go('dojo')">
+    <div class="card-icon-wrap">📊</div>
+    <h3>Dojo</h3>
+    <p>
+        Centralized workforce training and analytics platform to monitor manpower, track performance, and optimize operational efficiency in real time.
+    </p>
+    <div class="card-footer">
+        <button class="card-btn btn-open" onclick="event.stopPropagation(); go('dojo')">Open →</button>
+        <span class="card-dot" style="background:#f5a623;"></span>
+    </div>
+</div>
+
+<div class="demo-card coming-soon" style="--card-accent: linear-gradient(90deg,#4f8fff,#1a5ad4); --icon-bg: rgba(79,143,255,0.1);" onclick="go('arvr-demo')">
+    <div class="card-icon-wrap">🕶️</div>
+    <h3>AR/VR demo</h3>
+    <p>Immersive AR/VR solutions for industrial training, visualisation, and digital environment interaction.</p>
+    <div class="card-footer">
+        <button class="card-btn btn-open" onclick="event.stopPropagation(); go('arvr-demo')">Open →</button>
+        <span class="card-dot" style="background:#4f8fff;"></span>
+    </div>
+</div>
+
+<div class="demo-card coming-soon" style="--card-accent: linear-gradient(90deg,#00e5b4,#00a882); --icon-bg: rgba(0,229,180,0.08);" onclick="go('slm-normal')">
+    <div class="card-icon-wrap">📦</div>
+    <h3>SLM</h3>
+    <p>Smart Learning Management system for tracking training, performance, and workforce development.</p>
+    <div class="card-footer">
+        <button class="card-btn btn-open" onclick="event.stopPropagation(); go('slm-normal')">Open →</button>
+        <span class="card-dot" style="background:#00e5b4;"></span>
+    </div>
+</div>
+
+<div class="demo-card coming-soon" style="--card-accent: linear-gradient(90deg,#4f8fff,#1a5ad4); --icon-bg: rgba(79,143,255,0.1);" onclick="go('slm-arvr')">
+    <div class="card-icon-wrap">🚀</div>
+    <h3>SLM AR/VR</h3>
+    <p>Next-gen SLM integrated with AR/VR for immersive training and enhanced skill retention.</p>
+    <div class="card-footer">
+        <button class="card-btn btn-open" onclick="event.stopPropagation(); go('slm-arvr')">Open →</button>
+        <span class="card-dot" style="background:#4f8fff;"></span>
+    </div>
+</div>
+
     </div>
 
-    <script>
-        // Demo URLs - Replace these with your actual demo links
-        const demoLinks = {
-            'digital-checklist': '/login/',
-            'oee-dashboard': 'https://abhay188.pythonanywhere.com/',
-            'utility-control': 'https://utility.pythonanywhere.com/',
-            'ems': '#',
-            'image-processing': '#',
-            'ar-vr': '#'
-        };
+ 
 
-        function openDemo(demoType) {
-            const url = demoLinks[demoType];
-            if (url && url !== 'https://your-demo-link-1.com') {
-                window.open(url, '_blank');
-            } else {
-                alert(`Demo for ${demoType.replace('-', ' ').toUpperCase()} will be available soon!\n\nPlease replace the demo URL in the JavaScript section.`);
-            }
-        }
+</div>
 
-        // Add some interactive animations
-        document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.demo-card');
-            cards.forEach((card, index) => {
-                card.style.animationDelay = `${index * 0.1}s`;
-                card.style.animation = 'fadeInUp 0.6s ease forwards';
-            });
-        });
+<script>
+const demoLinks = {
+    'about':              '/about/',
+    'digital-checklist':  '/login/',
+    'oee-dashboard':      'https://abhay188.pythonanywhere.com/',
+    'utility-control':    'https://utility.pythonanywhere.com/',
+    'ems':                'https://emstech.pythonanywhere.com/',
+    'image-processing':   '/image-processing/',
+    'maintenancemate-ai': 'https://aidemopro.pythonanywhere.com/',
+    'dojo':     'https://workforce-app-beta.vercel.app/',
+    'arvr-demo':'/arvrvideo/',
+    'slm-normal':'https://slmfront.vercel.app/login',
+    'slm-arvr':  'https://slmfront.vercel.app/AR-VR'
+};
 
-        // CSS animation keyframes
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-        `;
-        document.head.appendChild(style);
-    </script>
+function go(key) {
+    const url = demoLinks[key];
+    if (url && url !== '#') {
+        window.open(url, '_blank');
+    } else {
+        alert(key.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase()) + ' — coming soon!');
+    }
+}
+</script>
 </body>
 </html>

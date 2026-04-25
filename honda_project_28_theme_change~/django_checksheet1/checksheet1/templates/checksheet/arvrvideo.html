@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AR / VR Demo</title>
+    {% load static%}
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Grotesk:wght@300;400;600&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #08090f;
+            --accent: #e8c84a;
+            --text: #f0f0f0;
+            --muted: #6a6a80;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* BACK BUTTON */
+        .back-btn {
+            position: fixed;
+            top: 18px;
+            right: 22px;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.75);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 8px 16px 8px 12px;
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+            transition: all 0.25s;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .back-btn svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        /* PAGE */
+        .page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px 40px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* HEADING */
+        .heading {
+            margin-bottom: 24px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 6px;
+        }
+
+        .tag-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            color: #fff;
+        }
+
+        h1 .outline {
+            color: transparent;
+            -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.3);
+        }
+
+        /* MAIN LAYOUT */
+        .player-layout {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        /* LEFT: Main video — 80% */
+        .main-player {
+            flex: 0 0 80%;
+            position: relative;
+            background: #12131f;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(232, 200, 74, 0.35);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 40px rgba(232, 200, 74, 0.06);
+        }
+
+        .main-player video {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            display: block;
+        }
+
+        .main-player .card-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 14px 18px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .main-player .card-label .lbl-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .main-player .card-label .lbl-num {
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            color: var(--accent);
+        }
+
+        /* Corner marks */
+        .main-player::before,
+        .main-player::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .main-player::before {
+            top: 10px;
+            left: 10px;
+            border-top: 1.5px solid var(--accent);
+            border-left: 1.5px solid var(--accent);
+        }
+
+        .main-player::after {
+            bottom: 10px;
+            right: 10px;
+            border-bottom: 1.5px solid var(--accent);
+            border-right: 1.5px solid var(--accent);
+        }
+
+        /* RIGHT: Video tabs — 20% */
+        .tab-list {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .vtab {
+            background: #1c1d2e;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+
+        .vtab:hover {
+            border-color: rgba(232, 200, 74, 0.3);
+        }
+
+        .vtab.active {
+            border-color: rgba(232, 200, 74, 0.55);
+            box-shadow: 0 0 18px rgba(232, 200, 74, 0.08);
+        }
+
+        /* ── THUMBNAIL: actual video frame ── */
+        .vtab-thumb {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #12131f;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* The muted preview video fills the thumbnail */
+        .vtab-thumb video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            /* Seek to 0 so the first frame is visible without playing */
+            pointer-events: none;
+        }
+
+        /* Semi-transparent overlay so the play icon reads */
+        .vtab-thumb::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(8, 9, 15, 0.35);
+            transition: background 0.25s;
+        }
+
+        .vtab:hover .vtab-thumb::after {
+            background: rgba(8, 9, 15, 0.2);
+        }
+
+        .vtab.active .vtab-thumb::after {
+            background: rgba(8, 9, 15, 0.15);
+        }
+
+        /* Play icon centred on top of the overlay */
+        .play-ring {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            /* above the ::after overlay */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .play-ring-inner {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(255, 255, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.25s, background 0.25s;
+            background: rgba(0, 0, 0, 0.25);
+        }
+
+        .vtab.active .play-ring-inner {
+            border-color: var(--accent);
+            background: rgba(232, 200, 74, 0.15);
+        }
+
+        .play-ring-inner svg {
+            color: rgba(255, 255, 255, 0.7);
+            transition: color 0.25s;
+        }
+
+        .vtab.active .play-ring-inner svg {
+            color: var(--accent);
+        }
+
+        .vtab-label {
+            padding: 7px 10px;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            text-transform: uppercase;
+            transition: color 0.25s;
+        }
+
+        .vtab.active .vtab-label {
+            color: var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="/" class="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Back
+    </a>
+
+    <main class="page">
+
+        <div class="heading">
+            <div class="tag">
+                <div class="tag-dot"></div>Immersive Tech<div class="tag-dot"></div>
+            </div>
+            <h1><span class="outline">AR</span> &amp; VR Demo</h1>
+        </div>
+
+        <div class="player-layout">
+
+            <!-- Main player (80%) -->
+            <div class="main-player">
+                <video id="main-video" src="{% static 'videos/video1.mp4' %}" controls></video>
+                <div class="card-label">
+                    <span class="lbl-title" id="main-title">Experience 01</span>
+                    <span class="lbl-num" id="main-num">01 / 03</span>
+                </div>
+            </div>
+
+            <!-- Tab list (20%) — each .vtab-thumb now has a real <video> for the thumbnail -->
+            <div class="tab-list">
+
+                <div class="vtab active" data-src="{% static 'videos/video1.mp4' %}" data-title="Experience 01"
+                    data-num="01 / 03">
+                    <div class="vtab-thumb">
+                        <video src="{% static 'videos/video1.mp4' %}" muted preload="metadata"></video>
+                        <div class="play-ring">
+                            <div class="play-ring-inner">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="5,3 19,12 5,21" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="vtab-label">Experience 01</div>
+                </div>
+
+                <div class="vtab" data-src="{% static 'videos/video2.mp4' %}" data-title="Experience 02"
+                    data-num="02 / 03">
+                    <div class="vtab-thumb">
+                        <video src="{% static 'videos/video2.mp4' %}" muted preload="metadata"></video>
+                        <div class="play-ring">
+                            <div class="play-ring-inner">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="5,3 19,12 5,21" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="vtab-label">Experience 02</div>
+                </div>
+
+                <div class="vtab" data-src="{% static 'videos/video3.mp4' %}" data-title="Experience 03"
+                    data-num="03 / 03">
+                    <div class="vtab-thumb">
+                        <video src="{% static 'videos/video3.mp4' %}" muted preload="metadata"></video>
+                        <div class="play-ring">
+                            <div class="play-ring-inner">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="5,3 19,12 5,21" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="vtab-label">Experience 03</div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const tabs = document.querySelectorAll('.vtab');
+        const mainVideo = document.getElementById('main-video');
+        const mainTitle = document.getElementById('main-title');
+        const mainNum = document.getElementById('main-num');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                // ✅ FULL RESET (IMPORTANT)
+                mainVideo.pause();
+                mainVideo.removeAttribute("src");   // clear old source
+                mainVideo.load();                   // reset player
+
+                // ✅ set new source
+                mainVideo.src = tab.dataset.src;
+
+                // ✅ force fresh load
+                mainVideo.load();
+
+                // Update labels
+                mainTitle.textContent = tab.dataset.title;
+                mainNum.textContent = tab.dataset.num;
+            });
+        });
+    </script>
+
+</body>
+
+</html>

@@ -150,11 +150,15 @@ urlpatterns = [
     path('api/delete-recipient/<int:index>/', delete_recipient, name='delete_recipient'),
     path("production_target/", production_target_view, name="production_target"),
     path("production_target1/", production_target_view1, name="production_target1"),
-    
+
 
 path('api/save-reject-reasons/', save_reject_reasons, name='save_reject_reasons'),
 
 path("analytics_page/", analytics_page, name="analytics_page"),
+path("get_safe_ranges/", get_safe_ranges_view, name="get_safe_ranges"),
+  path('image-processing/', image_processing_view, name='image_processing'),
+   path('arvrvideo/', arvrvideo_view, name='arvrvideo'),
+    path('about/', about_view, name='about'),
 ]
 
 

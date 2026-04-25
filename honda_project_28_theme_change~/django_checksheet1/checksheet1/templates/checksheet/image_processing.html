@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Processing Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cyan: #00e5ff;
+            --bg: #070712;
+            --surface: #0d0d1f;
+            --border: rgba(0, 229, 255, 0.15);
+            --text: #e8eaf6;
+            --muted: #6b7280;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Syne', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Glow orb */
+        body::after {
+            content: '';
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 229, 255, 0.06) 0%, transparent 70%);
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Back button — fixed top right ── */
+        .back-btn {
+            position: fixed;
+            top: 16px;
+            right: 20px;
+            z-index: 100;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(0,229,255,0.3);
+            background: rgba(7, 7, 18, 0.75);
+            backdrop-filter: blur(10px);
+            color: var(--cyan);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.2s;
+            animation: fadeDown 0.5s ease both;
+        }
+
+        .back-btn:hover {
+            background: rgba(0,229,255,0.08);
+            border-color: var(--cyan);
+            box-shadow: 0 0 20px rgba(0,229,255,0.15);
+            transform: translateY(-1px);
+        }
+
+        .back-btn:active { transform: scale(0.98); }
+
+        /* ── Page wrapper ── */
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 960px;
+            padding: 28px 20px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            animation: fadeDown 0.6s ease both;
+        }
+
+        .label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.25em;
+            color: var(--cyan);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .label::before,
+        .label::after {
+            content: '';
+            display: block;
+            width: 28px;
+            height: 1px;
+            background: var(--cyan);
+            opacity: 0.5;
+        }
+
+        .title {
+            font-size: clamp(1.6rem, 4vw, 2.4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 30%, var(--cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 0.04em;
+        }
+
+        /* ── Video card ── */
+        .video-card {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow:
+                0 0 0 1px rgba(0,229,255,0.05),
+                0 20px 50px rgba(0,0,0,0.7),
+                0 0 60px rgba(0,229,255,0.04);
+            animation: fadeUp 0.6s 0.15s ease both;
+            position: relative;
+        }
+
+        .card-chrome {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+        }
+
+        .chrome-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+        }
+        .chrome-dot:nth-child(1) { background: #ff5f57; }
+        .chrome-dot:nth-child(2) { background: #febc2e; }
+        .chrome-dot:nth-child(3) { background: #28c840; }
+
+        .chrome-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--muted);
+            margin-left: 6px;
+            flex: 1;
+        }
+
+        .chrome-badge {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.58rem;
+            letter-spacing: 0.12em;
+            color: var(--cyan);
+            background: rgba(0,229,255,0.08);
+            border: 1px solid rgba(0,229,255,0.2);
+            border-radius: 4px;
+            padding: 2px 8px;
+            text-transform: uppercase;
+        }
+
+        .video-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+        }
+
+        .video-wrap::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 3px,
+                rgba(0,0,0,0.04) 3px,
+                rgba(0,0,0,0.04) 4px
+            );
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .video-wrap iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        .corner {
+            position: absolute;
+            width: 14px; height: 14px;
+            border-color: var(--cyan);
+            border-style: solid;
+            opacity: 0.5;
+            z-index: 3;
+        }
+        .corner.tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
+        .corner.tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+        .corner.bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; }
+        .corner.br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<a href="/" class="back-btn">← Back</a>
+
+<div class="page-wrapper">
+    <div class="header">
+        <div class="label">Computer Vision</div>
+        <div class="title">Image Processing Demo</div>
+        <div class="subtitle">Automated inspection powered by AI &amp; computer vision</div>
+    </div>
+
+    <div class="video-card">
+        <div class="card-chrome">
+            <span class="chrome-dot"></span>
+            <span class="chrome-dot"></span>
+            <span class="chrome-dot"></span>
+            <span class="chrome-title">inspection_feed_live.mp4</span>
+            <span class="chrome-badge">AI Vision</span>
+        </div>
+        <div class="video-wrap">
+            <span class="corner tl"></span>
+            <span class="corner tr"></span>
+            <span class="corner bl"></span>
+            <span class="corner br"></span>
+            <iframe
+                src="https://drive.google.com/uc?export=preview&id=1ZKYBzsVi8U8hNOxEZRvf1Hb5VIfhRjjI"
+                allow="autoplay"
+                allowfullscreen>
+            </iframe>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
