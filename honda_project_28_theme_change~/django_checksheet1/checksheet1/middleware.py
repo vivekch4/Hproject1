@@ -6,9 +6,9 @@ def content_security_policy(get_response):
             "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
             "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
             "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
-            "img-src 'self' data:; "
+            "img-src 'self' data: https://drive.google.com https://lh3.googleusercontent.com; "
             "frame-src 'self' https://drive.google.com; "
-"media-src 'self' https://drive.google.com; "
+            "media-src 'self' https://drive.google.com; "
         )
         return response
     return middleware

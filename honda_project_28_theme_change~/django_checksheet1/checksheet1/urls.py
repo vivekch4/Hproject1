@@ -159,6 +159,7 @@ path("get_safe_ranges/", get_safe_ranges_view, name="get_safe_ranges"),
   path('image-processing/', image_processing_view, name='image_processing'),
    path('arvrvideo/', arvrvideo_view, name='arvrvideo'),
     path('about/', about_view, name='about'),
+    path('maintenance-video/', maintenance_video_view, name='maintenance_video'),
 ]
 
 

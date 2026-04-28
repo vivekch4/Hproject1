@@ -5729,3 +5729,8 @@ def arvrvideo_view(request):
 
 def about_view(request):
     return render(request, 'checksheet/about.html')
+
+
+
+def maintenance_video_view(request):
+    return render(request, 'checksheet/maintenance_video.html')

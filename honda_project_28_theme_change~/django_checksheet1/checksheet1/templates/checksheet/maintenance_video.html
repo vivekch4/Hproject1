@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Mate — Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #162d56;
+            min-height: 100vh;
+        }
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            height: 56px;
+            background: #203f78;
+            border-bottom: 1px solid #2a5099;
+        }
+        .logo {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        .logo span { color: #f59e0b; }
+        .back-btn {
+            font-size: 0.85rem;
+            color: #93c5fd;
+            text-decoration: none;
+            padding: 6px 12px;
+            border: 1px solid #2a5099;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+        .back-btn:hover {
+            color: #fff;
+            border-color: #3b6cc7;
+            background: rgba(255,255,255,0.08);
+        }
+        main {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 48px 24px;
+        }
+        .video-card {
+            width: 100%;
+            max-width: 860px;
+            background: #fff;
+            border: 1px solid #2a5099;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .video-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f9fafb;
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot-red    { background: #ff5f57; }
+        .dot-yellow { background: #febc2e; }
+        .dot-green  { background: #28c840; }
+        .video-title {
+            margin-left: 6px;
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+        .video-wrap {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+        }
+        .video-wrap iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="logo">Maintenance<span>Mate</span></div>
+    <a href="/" class="back-btn">← Back</a>
+</nav>
+<main>
+    <div class="video-card">
+        <div class="video-header">
+            <div class="dot dot-red"></div>
+            <div class="dot dot-yellow"></div>
+            <div class="dot dot-green"></div>
+            <span class="video-title">maintenance_mate.mp4</span>
+        </div>
+        <div class="video-wrap">
+            <iframe
+                src="https://drive.google.com/file/d/1UUN29o2bG-k98oXaY5CXn3XHhqTiXDGX/preview"
+                allow="autoplay"
+                allowfullscreen>
+            </iframe>
+        </div>
+    </div>
+</main>
+</body>
+</html>
