@@ -70,15 +70,19 @@
         }
 
         .brand-icon {
-           
-            border-radius: 7px;
-         
+            width: 120px;
+            height: 120px;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
 
-        
+        .brand-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
 
         .nav-links {
             display: flex;
@@ -161,8 +165,17 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.8); }
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.8);
+            }
         }
 
         .hero h1 {
@@ -222,8 +235,18 @@
             font-size: 16px;
         }
 
-        .industry-badge p { font-size: 11px; color: rgba(255,255,255,0.4); margin: 0; }
-        .industry-badge h4 { font-size: 13px; font-weight: 500; color: white; margin: 0; }
+        .industry-badge p {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            margin: 0;
+        }
+
+        .industry-badge h4 {
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+            margin: 0;
+        }
 
         .stats-row {
             display: grid;
@@ -240,10 +263,26 @@
             text-align: center;
         }
 
-        .stat-card .num { font-size: 20px; font-weight: 700; color: white; line-height: 1; }
-        .stat-card .lbl { font-size: 10px; color: rgba(255,255,255,0.38); text-transform: uppercase; letter-spacing: 0.8px; margin-top: 4px; }
+        .stat-card .num {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            line-height: 1;
+        }
 
-        .tech-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+        .stat-card .lbl {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.38);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 4px;
+        }
+
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
 
         .tech-tag {
             background: rgba(255, 255, 255, 0.06);
@@ -255,7 +294,9 @@
         }
 
         /* SECTIONS */
-        section { padding: 96px 5vw; }
+        section {
+            padding: 96px 5vw;
+        }
 
         .section-tag {
             font-size: 11px;
@@ -283,10 +324,14 @@
             font-weight: 400;
         }
 
-        .section-header { margin-bottom: 52px; }
+        .section-header {
+            margin-bottom: 52px;
+        }
 
         /* ABOUT */
-        .about { background: var(--off-white); }
+        .about {
+            background: var(--off-white);
+        }
 
         .about-grid {
             display: grid;
@@ -295,7 +340,12 @@
             align-items: center;
         }
 
-        .pillar-list { margin-top: 32px; display: flex; flex-direction: column; gap: 10px; }
+        .pillar-list {
+            margin-top: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
 
         .pillar {
             display: flex;
@@ -308,135 +358,317 @@
             transition: border-color 0.2s, transform 0.2s;
         }
 
-        .pillar:hover { border-color: rgba(32,63,120,0.22); transform: translateX(3px); }
-
-        .pillar-icon {
-            width: 36px; height: 36px; border-radius: 8px;
-            background: var(--navy-pale); display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; font-size: 16px;
+        .pillar:hover {
+            border-color: rgba(32, 63, 120, 0.22);
+            transform: translateX(3px);
         }
 
-        .pillar h4 { font-size: 14px; font-weight: 600; color: var(--navy-deep); margin-bottom: 3px; }
-        .pillar p { font-size: 13px; color: var(--text-muted); line-height: 1.55; }
+        .pillar-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--navy-pale);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 16px;
+        }
+
+        .pillar h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--navy-deep);
+            margin-bottom: 3px;
+        }
+
+        .pillar p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.55;
+        }
 
         .founder-card {
-            background: var(--navy); border-radius: 18px; padding: 32px;
-            color: white; position: relative; overflow: hidden;
+            background: var(--navy);
+            border-radius: 18px;
+            padding: 32px;
+            color: white;
+            position: relative;
+            overflow: hidden;
         }
 
         .founder-card::before {
-            content: ''; position: absolute; top: -50px; right: -50px;
-            width: 160px; height: 160px; border-radius: 50%;
-            background: rgba(255,255,255,0.04);
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.04);
         }
 
         .founder-avatar {
-            width: 56px; height: 56px; border-radius: 50%;
-            background: rgba(255,255,255,0.1); display: flex; align-items: center;
-            justify-content: center; font-size: 18px; font-weight: 700; color: white;
-            margin-bottom: 16px; border: 1.5px solid rgba(255,255,255,0.18);
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 16px;
+            border: 1.5px solid rgba(255, 255, 255, 0.18);
         }
 
-        .founder-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
-        .founder-card .role { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 22px; }
+        .founder-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .founder-card .role {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 22px;
+        }
 
         .cert-badge {
-            background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13);
-            border-radius: 10px; padding: 13px; margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: 10px;
+            padding: 13px;
+            margin-bottom: 16px;
         }
 
-        .cert-badge p { font-size: 11px; color: rgba(255,255,255,0.45); margin-bottom: 3px; }
-        .cert-badge span { font-size: 13px; color: white; font-weight: 500; }
+        .cert-badge p {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.45);
+            margin-bottom: 3px;
+        }
 
-        .founder-skills { display: flex; flex-direction: column; gap: 9px; }
+        .cert-badge span {
+            font-size: 13px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .founder-skills {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
 
         .founder-skill {
-            display: flex; align-items: center; gap: 10px;
-            font-size: 13px; color: rgba(255,255,255,0.62);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.62);
         }
 
         .founder-skill::before {
-            content: ''; width: 4px; height: 4px; border-radius: 50%;
-            background: var(--accent2); flex-shrink: 0;
+            content: '';
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--accent2);
+            flex-shrink: 0;
         }
 
         /* SERVICES */
-        .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
 
         .service-card {
-            background: white; border: 1px solid var(--border); border-radius: 14px; padding: 26px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 26px;
             transition: border-color 0.22s, transform 0.22s, box-shadow 0.22s;
-            position: relative; overflow: hidden;
+            position: relative;
+            overflow: hidden;
         }
 
         .service-card::after {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, var(--navy), var(--accent)); opacity: 0; transition: opacity 0.22s;
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--navy), var(--accent));
+            opacity: 0;
+            transition: opacity 0.22s;
         }
 
         .service-card:hover {
-            border-color: rgba(32,63,120,0.18); transform: translateY(-3px);
-            box-shadow: 0 10px 32px rgba(32,63,120,0.07);
+            border-color: rgba(32, 63, 120, 0.18);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 32px rgba(32, 63, 120, 0.07);
         }
 
-        .service-card:hover::after { opacity: 1; }
+        .service-card:hover::after {
+            opacity: 1;
+        }
 
-        .service-icon { font-size: 24px; margin-bottom: 14px; display: block; }
-        .service-card h3 { font-size: 14px; font-weight: 600; color: var(--navy-deep); margin-bottom: 9px; }
-        .service-card p { font-size: 13px; color: var(--text-muted); line-height: 1.65; }
+        .service-icon {
+            font-size: 24px;
+            margin-bottom: 14px;
+            display: block;
+        }
+
+        .service-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--navy-deep);
+            margin-bottom: 9px;
+        }
+
+        .service-card p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.65;
+        }
 
         /* SIRI */
-        .siri-section { background: var(--navy-deep); }
-        .siri-section .section-title { color: white; }
-        .siri-section .section-tag { color: var(--accent2); }
-        .siri-section .section-desc { color: rgba(255,255,255,0.48); }
-
-        .siri-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
-
-        .siri-dimensions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 32px; }
-
-        .dimension-box {
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 12px; padding: 18px 14px; text-align: center;
+        .siri-section {
+            background: var(--navy-deep);
         }
 
-        .dimension-box .dim-num { font-size: 26px; font-weight: 700; color: var(--accent2); line-height: 1; margin-bottom: 8px; }
-        .dimension-box p { font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; }
+        .siri-section .section-title {
+            color: white;
+        }
 
-        .siri-cards { display: flex; flex-direction: column; gap: 12px; }
+        .siri-section .section-tag {
+            color: var(--accent2);
+        }
+
+        .siri-section .section-desc {
+            color: rgba(255, 255, 255, 0.48);
+        }
+
+        .siri-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .siri-dimensions {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .dimension-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 18px 14px;
+            text-align: center;
+        }
+
+        .dimension-box .dim-num {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--accent2);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .dimension-box p {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .siri-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
 
         .siri-card {
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 12px; padding: 20px; display: flex; gap: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            gap: 14px;
         }
 
         .siri-card-icon {
-            width: 40px; height: 40px; border-radius: 9px;
-            background: rgba(74,127,212,0.14); display: flex; align-items: center;
-            justify-content: center; font-size: 18px; flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 9px;
+            background: rgba(74, 127, 212, 0.14);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
         }
 
-        .siri-card h4 { font-size: 14px; font-weight: 600; color: white; margin-bottom: 5px; }
-        .siri-card p { font-size: 13px; color: rgba(255,255,255,0.48); line-height: 1.55; }
+        .siri-card h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .siri-card p {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.48);
+            line-height: 1.55;
+        }
 
         /* TECH */
-        .tech-section { background: var(--off-white); }
-
-        .tech-strip { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 40px; }
-
-        .tech-pill {
-            background: white; border: 1px solid var(--border); border-radius: 100px;
-            padding: 8px 18px; font-size: 13px; font-weight: 400; color: var(--navy);
-            transition: background 0.2s, color 0.2s, border-color 0.2s; cursor: default;
+        .tech-section {
+            background: var(--off-white);
         }
 
-        .tech-pill:hover { background: var(--navy); color: white; border-color: var(--navy); }
+        .tech-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 40px;
+        }
+
+        .tech-pill {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--navy);
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            cursor: default;
+        }
+
+        .tech-pill:hover {
+            background: var(--navy);
+            color: white;
+            border-color: var(--navy);
+        }
 
         /* CLIENTS */
-        .clients-section { background: white; }
-        .clients-intro { margin-bottom: 52px; }
+        .clients-section {
+            background: white;
+        }
 
-        /* Logo-only client grid */
+        .clients-intro {
+            margin-bottom: 52px;
+        }
+
         .clients-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -463,20 +695,14 @@
             transform: translateY(-3px);
         }
 
-        /* Logo image inside client card */
         .client-logo {
             width: 100%;
             height: 56px;
             object-fit: contain;
             display: block;
-         
-            
             transition: filter 0.25s, opacity 0.25s;
         }
 
-        
-
-        /* Placeholder shown when no image src is set or image fails to load */
         .client-placeholder {
             width: 100%;
             height: 56px;
@@ -486,32 +712,6 @@
             flex-direction: column;
             gap: 6px;
             color: var(--text-muted);
-        }
-
-        .client-placeholder .placeholder-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 8px;
-            background: var(--navy-pale);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .client-placeholder .placeholder-icon svg {
-            width: 16px;
-            height: 16px;
-            stroke: var(--navy);
-            fill: none;
-            stroke-width: 1.5;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        .client-placeholder span {
-            font-size: 10px;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
         }
 
         .clients-note {
@@ -525,13 +725,27 @@
         }
 
         .clients-note .note-icon {
-            width: 38px; height: 38px; border-radius: 9px;
-            background: var(--navy); display: flex; align-items: center;
-            justify-content: center; font-size: 16px; flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            background: var(--navy);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
         }
 
-        .clients-note p { font-size: 14px; color: var(--navy-dark); line-height: 1.6; }
-        .clients-note strong { color: var(--navy); font-weight: 600; }
+        .clients-note p {
+            font-size: 14px;
+            color: var(--navy-dark);
+            line-height: 1.6;
+        }
+
+        .clients-note strong {
+            color: var(--navy);
+            font-weight: 600;
+        }
 
         /* REVEAL */
         .reveal {
@@ -540,36 +754,277 @@
             transition: opacity 0.6s ease, transform 0.6s ease;
         }
 
-        .reveal.visible { opacity: 1; transform: none; }
-
-        @media (max-width: 1100px) {
-            .clients-grid { grid-template-columns: repeat(4, 1fr); }
+        .reveal.visible {
+            opacity: 1;
+            transform: none;
         }
 
-        @media (max-width: 700px) {
-            .clients-grid { grid-template-columns: repeat(3, 1fr); }
+        /* INDUSTRY REVOLUTION */
+        .revolution-section {
+            background: linear-gradient(135deg, var(--navy-deep), var(--navy));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .revolution-section .section-title,
+        .revolution-section .section-tag {
+            color: white;
+        }
+
+        .revolution-section .section-desc {
+            color: rgba(255, 255, 255, 0.58);
+        }
+
+        .revolution-horizontal {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 22px;
+            margin-top: 55px;
+        }
+
+        .revolution-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 28px 24px;
+            position: relative;
+            transition: 0.25s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .revolution-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(255, 255, 255, 0.16);
+            box-shadow: 0 14px 35px rgba(0, 0, 0, 0.18);
+        }
+
+        .rev-top {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .rev-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: white;
+            color: var(--navy);
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .rev-line {
+            height: 2px;
+            flex: 1;
+            margin-left: 14px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.05));
+        }
+
+        .revolution-card h3 {
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .revolution-card span {
+            display: inline-block;
+            color: #7aaff0;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .revolution-card p {
+            color: rgba(255, 255, 255, 0.62);
+            line-height: 1.8;
+            font-size: 14px;
+        }
+
+        /* ===================== */
+        /* IIOT SECTION UPDATED  */
+        /* ===================== */
+        .iiot-section {
+            background: var(--navy-deep);
+            padding: 100px 5vw;
+            overflow: hidden;
+        }
+
+        .iiot-section .section-title {
+            color: white;
+        }
+
+        .iiot-section .section-tag {
+            color: var(--accent2);
+        }
+
+        .iiot-section .section-desc {
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .iiot-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 70px;
+            align-items: center;
+            margin-top: 60px;
+        }
+
+        /* Pyramid SVG container */
+        .iiot-pyramid-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .iiot-pyramid-img {
+            max-width: 500px;
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Right side items — compact */
+        .iiot-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .iiot-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 14px 18px;
+            transition: 0.25s ease;
+        }
+
+        .iiot-item:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .iiot-item h3 {
+            color: white;
+            font-size: 13px;
+            margin-bottom: 3px;
+            font-weight: 600;
+        }
+
+        .iiot-item p {
+            color: rgba(255, 255, 255, 0.52);
+            line-height: 1.55;
+            font-size: 12px;
+            margin: 0;
+        }
+
+
+        .cio-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-top: 48px;
+        }
+
+        .cio-card {
+            border-radius: 16px;
+            overflow: hidden;
+            background: white;
+            border: 1px solid var(--border);
+            box-shadow: 0 6px 24px rgba(32, 63, 120, 0.07);
+            padding: 24px;
+            max-width: 680px;
+            width: 100%;
+        }
+
+        .cio-card img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            border-radius: 8px;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .cio-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .cio-card:last-child img {
+                max-height: 400px;
+                object-position: top center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .cio-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .cio-card:last-child {
+                max-height: 360px;
+            }
+
+            .cio-card:last-child img {
+                max-height: 336px;
+            }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1100px) {
+            .clients-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .revolution-horizontal {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .iiot-wrapper {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .iiot-pyramid-wrap img {
+                max-width: 340px;
+            }
         }
 
         @media (max-width: 860px) {
-            .hero { grid-template-columns: 1fr; }
-            .hero-visual { display: none; }
-            .about-grid, .siri-grid { grid-template-columns: 1fr; gap: 36px; }
-            .nav-links { display: none; }
-        }
-        .brand-icon {
-    width: 120px;
-    height: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
+            .hero {
+                grid-template-columns: 1fr;
+            }
 
-.brand-icon img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;   /* use 'cover' if you want it filled */
-}
+            .hero-visual {
+                display: none;
+            }
+
+            .about-grid,
+            .siri-grid {
+                grid-template-columns: 1fr;
+                gap: 36px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .clients-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .revolution-horizontal {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -579,9 +1034,8 @@
     <nav>
         <div class="brand">
             <div class="brand-icon">
-    <img src="{% static 'images/Techlogo.png' %}" alt="Technoviz Logo">
-</div>
-          
+                <img src="{% static 'images/Techlogo.png' %}" alt="Technoviz Logo">
+            </div>
         </div>
         <ul class="nav-links">
             <li><a href="#about">About</a></li>
@@ -643,7 +1097,7 @@
         <div class="about-grid">
             <div class="about-content reveal">
                 <p class="section-tag">Who We Are</p>
-        <h2 class="section-title">Powering the Future of Smart Industry</h2>
+                <h2 class="section-title">Powering the Future of Smart Industry</h2>
                 <p class="section-desc">Technoviz Automation Solutions Pvt. Ltd. is a technology firm built around the
                     belief that intelligent manufacturing drives competitive advantage. We combine connectivity,
                     mobility, cloud, AI, and security into one integrated ecosystem.</p>
@@ -652,7 +1106,8 @@
                         <div class="pillar-icon">🌐</div>
                         <div>
                             <h4>Big Data & IoT</h4>
-                            <p>Harnessing real-time industrial data streams to drive decisions and optimization at scale.</p>
+                            <p>Harnessing real-time industrial data streams to drive decisions and optimization at
+                                scale.</p>
                         </div>
                     </div>
                     <div class="pillar">
@@ -674,26 +1129,81 @@
 
             <div class="about-visual reveal">
                 <div class="founder-card" style="position: relative;">
+                    <div
+                        style="position: absolute; top: 1.25rem; right: 1.90rem; width: 150px; height: 150px; border-radius: 8px; overflow: hidden; border: 0.5px solid rgba(0,0,0,0.1);">
+                        <img src="/static/images/k3n.jpg" alt="Kapil Khurana"
+                            style="width: 100%; height: 100%; object-fit: cover;" />
+                    </div>
+                    <div class="founder-avatar">KK</div>
+                    <h3>Mr. Kapil Khurana</h3>
+                    <p class="role">Founder & Director · IIT Delhi</p>
+                    <ul
+                        style="margin-top: 18px; margin-bottom: 22px; padding-left: 20px; color: rgba(255,255,255,0.72); line-height: 1.9; font-size: 14px; max-width: 72%;">
+                        <li>22+ years across industrial automation and software</li>
+                        <li>Hands-on work with plant digitization, IIoT, AI, AR/VR</li>
+                        <li>Author of <i>Digital Revolution – Industry 4.0 & IIoT</i></li>
+                    </ul>
+                    <div class="cert-badge">
+                        <p>SIRI Certified Assessor (CSA)</p>
+                        <span>Assessor ID: 150126SN003</span>
+                    </div>
+                    <div class="founder-skills">
+                        <div class="founder-skill">Leading digital transformation initiatives</div>
+                        <div class="founder-skill">Driving Industry 4.0 adoption strategies</div>
+                        <div class="founder-skill">Expertise in smart manufacturing excellence</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-  <!-- Profile image – top right corner -->
-  <div style="position: absolute; top: 1.25rem; right: 1.90rem; width: 150px; height: 150px; border-radius: 8px; overflow: hidden; border: 0.5px solid rgba(0,0,0,0.1);">
-    <img src="/static/images/k3n.jpg" alt="Kapil Khurana" style="width: 100%; height: 100%; object-fit: cover;" />
-  </div>
+    <!-- INDUSTRY REVOLUTION -->
+    <section class="revolution-section">
+        <div class="section-header reveal">
+            <p class="section-tag">Industrial Evolution</p>
+            <h2 class="section-title">Four Revolutions, One Continuous Journey</h2>
+            <p class="section-desc">From steam-powered machinery to AI-driven smart factories —
+                industry has evolved through multiple technological revolutions.</p>
+        </div>
 
-  <div class="founder-avatar">KK</div>
-  <h3>Mr. Kapil Khurana</h3>
-  <p class="role">Founder & Director · IIT Delhi</p>
-  <div class="cert-badge">
-    <p>SIRI Certified Assessor (CSA)</p>
-    <span>Assessor ID: 150126SN003</span>
-  </div>
-  <div class="founder-skills">
-    <div class="founder-skill">Leading digital transformation initiatives</div>
-    <div class="founder-skill">Driving Industry 4.0 adoption strategies</div>
-    <div class="founder-skill">Expertise in smart manufacturing excellence</div>
-  </div>
+        <div class="revolution-horizontal reveal">
+            <div class="revolution-card">
+                <div class="rev-top">
+                    <div class="rev-number">1</div>
+                    <div class="rev-line"></div>
+                </div>
+                <h3>Industry 1.0</h3>
+                <span>1760–1840</span>
+                <p>Steam engines and mechanization transformed production and transportation systems.</p>
+            </div>
 
-</div>
+            <div class="revolution-card">
+                <div class="rev-top">
+                    <div class="rev-number">2</div>
+                    <div class="rev-line"></div>
+                </div>
+                <h3>Industry 2.0</h3>
+                <span>1870–1914</span>
+                <p>Electricity and assembly lines enabled mass production and industrial scalability.</p>
+            </div>
+
+            <div class="revolution-card">
+                <div class="rev-top">
+                    <div class="rev-number">3</div>
+                    <div class="rev-line"></div>
+                </div>
+                <h3>Industry 3.0</h3>
+                <span>1970s–2000s</span>
+                <p>Computers and automation introduced digital control into manufacturing processes.</p>
+            </div>
+
+            <div class="revolution-card">
+                <div class="rev-top">
+                    <div class="rev-number">4</div>
+                </div>
+                <h3>Industry 4.0</h3>
+                <span>2010s–Present</span>
+                <p>Cyber-physical systems, IIoT, AI, and connected factories drive intelligent manufacturing.</p>
             </div>
         </div>
     </section>
@@ -825,6 +1335,95 @@
         </div>
     </section>
 
+    <!-- IIOT LAYERS SECTION — UPDATED -->
+    <section class="iiot-section" id="iiot-layers">
+        <div class="section-header reveal">
+            <p class="section-tag">Industrial Architecture</p>
+            <h2 class="section-title">IIoT Layers & Smart Manufacturing Stack</h2>
+            <p class="section-desc">
+                Our Industry 4.0 ecosystem is built on a layered architecture connecting
+                field devices, control systems, manufacturing execution, enterprise planning,
+                and business analytics into one intelligent platform.
+            </p>
+        </div>
+
+        <div class="iiot-wrapper reveal">
+
+            <!-- LEFT: TRUE TRIANGLE PYRAMID SVG -->
+            <div class="iiot-pyramid-wrap">
+                <img src="/static/images/left_image.png" alt="IIoT Layers Pyramid" class="iiot-pyramid-img">
+            </div>
+
+            <!-- RIGHT: Compact content cards -->
+            <div class="iiot-content">
+                <div class="iiot-item">
+                    <h3>Business Management</h3>
+                    <p>Strategic decisions powered by AI-driven insights and enterprise-wide operational visibility.</p>
+                </div>
+                <div class="iiot-item">
+                    <h3>ERP — Enterprise Resource Planning</h3>
+                    <p>Centralizes planning, inventory, procurement, finance, and manufacturing operations.</p>
+                </div>
+                <div class="iiot-item">
+                    <h3>MES — Manufacturing Execution System</h3>
+                    <p>Real-time production monitoring, scheduling, quality management, and performance tracking.</p>
+                </div>
+                <div class="iiot-item">
+                    <h3>DCS / PCS — Process Control System</h3>
+                    <p>Automation and control systems ensuring stable, efficient, and safe industrial operations.</p>
+                </div>
+                <div class="iiot-item">
+                    <h3>Sensors & Smart Field Devices</h3>
+                    <p>PLCs, actuators, and edge devices collecting live industrial data from the shop floor.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- CIO SECTION -->
+    <section class="cio-section" style="padding: 96px 5vw; background: var(--off-white);">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: center;">
+
+            <!-- LEFT: Text -->
+            <div class="reveal">
+                <p class="section-tag">Global Recognition</p>
+                <h2 class="section-title">Recognized by CIO Insider</h2>
+                <p class="section-desc">
+                    Technoviz Automation has been recognized among the
+                    Top Industrial IoT companies for driving smart manufacturing,
+                    Industry 4.0 innovation, and intelligent automation solutions across India.
+                </p>
+                <div style="margin-top: 28px; display: flex; flex-direction: column; gap: 12px;">
+                    <div
+                        style="display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--navy-dark);">
+                        <span
+                            style="width: 8px; height: 8px; border-radius: 50%; background: #203f78; flex-shrink: 0;"></span>
+                        Top Industrial IoT Solution Provider
+                    </div>
+                    <div
+                        style="display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--navy-dark);">
+                        <span
+                            style="width: 8px; height: 8px; border-radius: 50%; background: #203f78; flex-shrink: 0;"></span>
+                        Industry 4.0 Innovation Leader
+                    </div>
+                    <div
+                        style="display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--navy-dark);">
+                        <span
+                            style="width: 8px; height: 8px; border-radius: 50%; background: #203f78; flex-shrink: 0;"></span>
+                        Smart Manufacturing Excellence Award
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: CIO Image -->
+            <div class="reveal" style="display: flex; justify-content: center; align-items: center;">
+                <img src="/static/images/CIO.jpg" alt="CIO Insider Recognition"
+                    style="max-width: 100%; border-radius: 16px; box-shadow: 0 16px 48px rgba(32, 63, 120, 0.13); border: 1px solid var(--border);">
+            </div>
+
+        </div>
+    </section>
     <!-- CLIENTS -->
     <section class="clients-section" id="clients">
         <div class="clients-intro reveal">
@@ -834,122 +1433,56 @@
                 accelerate their digital transformation journey.</p>
         </div>
 
-        <!--
-            HOW TO ADD LOGOS:
-            Replace the `src=""` attribute on each <img> with the path or URL to your logo file.
-            Example: src="./logos/tata-technologies.png"  or  src="https://yourdomain.com/logos/tata.svg"
-
-            Supported formats: PNG, SVG, JPEG, WebP
-            Recommended size: ~200×80 px, transparent background preferred
-        -->
         <div class="clients-grid reveal">
-
-            <!-- Client 1 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/Apl.png" alt="Tata Technologies"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                {% comment %} <div class="client-placeholder" style="display:flex">
-                    <div class="placeholder-icon">
-                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-                    </div>
-                    <span>Logo Here</span>
-                </div> {% endcomment %}
+                <img class="client-logo" src="/static/images/Apl.png" alt="APL" onerror="this.style.display='none'">
             </div>
-
-            <!-- Client 2 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/carrier.png" alt="Havells India"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                
+                <img class="client-logo" src="/static/images/carrier.png" alt="Carrier"
+                    onerror="this.style.display='none'">
             </div>
-
-            <!-- Client 3 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/cdac.png" alt="Motherson Group"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                
+                <img class="client-logo" src="/static/images/cdac.png" alt="CDAC" onerror="this.style.display='none'">
             </div>
-
-            <!-- Client 4 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/DRDO.png" alt="Hero MotoCorp"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-              
+                <img class="client-logo" src="/static/images/DRDO.png" alt="DRDO" onerror="this.style.display='none'">
             </div>
-
-            <!-- Client 5 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/Fabcon.jpeg" alt="Schneider Electric"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-               
+                <img class="client-logo" src="/static/images/Fabcon.jpeg" alt="Fabcon"
+                    onerror="this.style.display='none'">
             </div>
-
-            <!-- Client 6 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/Honda.png" alt="JK Cement"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                
+                <img class="client-logo" src="/static/images/Honda.png" alt="Honda" onerror="this.style.display='none'">
             </div>
-
-            <!-- Client 7 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/jubilent.png" alt="Bharat Forge"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                
+                <img class="client-logo" src="/static/images/jubilent.png" alt="Jubilant"
+                    onerror="this.style.display='none'">
             </div>
-
-            <!-- Client 8 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/Maruti.png" alt="ABB India"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-               
+                <img class="client-logo" src="/static/images/Maruti.png" alt="Maruti"
+                    onerror="this.style.display='none'">
             </div>
-
-            <!-- Client 9 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/MEITT.png" alt="Client 9"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-              
+                <img class="client-logo" src="/static/images/MEITT.png" alt="MEITT" onerror="this.style.display='none'">
             </div>
-
-            <!-- Client 10 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/Multi.png" alt="Client 10"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                
+                <img class="client-logo" src="/static/images/Multi.png" alt="Multi" onerror="this.style.display='none'">
             </div>
-
-            <!-- Client 11 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/nalco-logo.png" alt="Client 11"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-               
+                <img class="client-logo" src="/static/images/nalco-logo.png" alt="NALCO"
+                    onerror="this.style.display='none'">
             </div>
-
-            <!-- Client 12 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/SMS.png" alt="Client 12"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-               
+                <img class="client-logo" src="/static/images/SMS.png" alt="SMS" onerror="this.style.display='none'">
             </div>
-
-            <!-- Client 13 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/STPII.jpg" alt="Client 13"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                
+                <img class="client-logo" src="/static/images/STPII.jpg" alt="STPII" onerror="this.style.display='none'">
             </div>
-
-            <!-- Client 14 -->
             <div class="client-card">
-                <img class="client-logo" src="/static/images/WowMomo.jpeg" alt="Client 14"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                
+                <img class="client-logo" src="/static/images/WowMomo.jpeg" alt="Wow Momo"
+                    onerror="this.style.display='none'">
             </div>
-
         </div>
-
-        
     </section>
 
     <script>
@@ -963,6 +1496,7 @@
         }, { threshold: 0.1 });
         document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
     </script>
+
 </body>
 
 </html>
