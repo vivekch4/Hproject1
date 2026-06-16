@@ -253,36 +253,129 @@ body:not(.white-mode) .date-filter-input {
 
 <!-- Chart.js from CDN -->
 <!-- Chart.js from CDN -->
+<!-- Chart.js from CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <script>
-window.targetValue = {{ target_value|safe }};
+window.targetValue = 500;
+
+// ─── Dummy Data ───────────────────────────────────────────────────────────────
+const DUMMY = {
+    stats: {
+        production_count: 487,
+        total_rejects: 23,
+        actual_production: 464,
+        efficiency: "95.3%"
+    },
+    lineChart: {
+        labels: ['07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00'],
+        production: [42, 58, 61, 55, 63, 49, 57, 52, 60, 47]
+    },
+    barChart: [
+        { name: 'Station A',  yes_count: 72 },
+        { name: 'Station B',  yes_count: 58 },
+        { name: 'Station C',  yes_count: 84 },
+        { name: 'Station D',  yes_count: 61 },
+        { name: 'Station E',  yes_count: 49 },
+        { name: 'Station F',  yes_count: 77 },
+    ],
+    pieChart: {
+        zone_yes_counts: {
+            'Zone Alpha': 134,
+            'Zone Beta':  98,
+            'Zone Gamma': 156,
+            'Zone Delta': 76
+        }
+    }
+};
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function getChartTextColor() {
+    return document.body.classList.contains('white-mode') ? '#333333' : '#ffffff';
+}
+
+function updateChartTextColors(chart) {
+    if (!chart) return;
+    const textColor = getChartTextColor();
+    const isWhite = document.body.classList.contains('white-mode');
+    const gridColor = isWhite ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
+    if (chart.options.scales) {
+        ['x','y'].forEach(axis => {
+            if (chart.options.scales[axis]) {
+                chart.options.scales[axis].ticks.color = textColor;
+                chart.options.scales[axis].grid.color = gridColor;
+            }
+        });
+    }
+    if (chart.options.plugins?.datalabels) {
+        chart.options.plugins.datalabels.color = textColor;
+    }
+    if (chart.options.plugins?.legend?.labels) {
+        chart.options.plugins.legend.labels.color = textColor;
+    }
+    chart.update();
+}
+
+function generateColorArray(count, alpha) {
+    return Array(count).fill().map((_, i) => {
+        const hue = (i * 137) % 360;
+        return `hsla(${hue}, 70%, 60%, ${alpha})`;
+    });
+}
+
+function shortenLabel(label, maxLength) {
+    if (!label || label.length <= maxLength) return label || '';
+    return label.substring(0, maxLength - 3) + '...';
+}
+
+function updateElementText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+}
+
 function getCsrfToken() {
     const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
     return csrfInput ? csrfInput.value : '';
 }
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    toast.style.cssText = `
+        position:fixed;top:20px;right:20px;
+        background:${type==='success'?'#2ecc71':type==='error'?'#e74c3c':'#3498db'};
+        color:white;padding:12px 20px;border-radius:6px;
+        box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:10000;
+        font-size:14px;font-weight:500;opacity:0;
+        transform:translateX(100%);transition:all 0.3s ease;`;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity='1'; toast.style.transform='translateX(0)'; }, 10);
+    setTimeout(() => {
+        toast.style.opacity='0'; toast.style.transform='translateX(100%)';
+        setTimeout(() => document.body.removeChild(toast), 300);
+    }, 3000);
+}
+
+// ─── Target Editor ────────────────────────────────────────────────────────────
 function initializeTargetEditor() {
-    // Add edit button to line chart
     const lineChartCard = document.querySelector('.chart-card.line-chart .chart-content');
-    if (lineChartCard) {
-        const editButton = document.createElement('button');
-        editButton.className = 'chart-target-edit';
-        editButton.innerHTML = `
-            <div>Edit Target</div>
-            <div class="chart-target-current">Current: ${window.targetValue || 0}</div>
-        `;
-        editButton.onclick = openTargetModal;
-        lineChartCard.style.position = 'relative';
-        lineChartCard.appendChild(editButton);
-    }
+    if (!lineChartCard) return;
+    const editButton = document.createElement('button');
+    editButton.className = 'chart-target-edit';
+    editButton.innerHTML = `
+        <div>Edit Target</div>
+        <div class="chart-target-current">Current: ${window.targetValue}</div>`;
+    editButton.onclick = openTargetModal;
+    lineChartCard.style.position = 'relative';
+    lineChartCard.appendChild(editButton);
 }
 
 function openTargetModal() {
     const modal = document.getElementById('targetEditModal');
     const input = document.getElementById('production_target');
-    
     if (modal && input) {
-        input.value = window.targetValue || 0;
+        input.value = window.targetValue;
         modal.style.display = 'block';
         setTimeout(() => input.focus(), 100);
     }
@@ -290,299 +383,37 @@ function openTargetModal() {
 
 function closeTargetModal() {
     const modal = document.getElementById('targetEditModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
+    if (modal) modal.style.display = 'none';
 }
 
-function updateTargetInChart(newTargetValue) {
-    window.targetValue = newTargetValue;
-    
-    // Update the line chart target line
-    if (window.lineChart && window.lineChart.data.datasets[1]) {
-        const targetData = Array(window.lineChart.data.labels.length).fill(newTargetValue);
-        window.lineChart.data.datasets[1].data = targetData;
-        
-        // Update the y-axis scale to accommodate the new target
-        const productionMax = Math.max(...window.lineChart.data.datasets[0].data, newTargetValue);
+function updateTargetInChart(newVal) {
+    window.targetValue = newVal;
+    if (window.lineChart?.data.datasets[1]) {
+        window.lineChart.data.datasets[1].data = Array(window.lineChart.data.labels.length).fill(newVal);
+        const productionMax = Math.max(...window.lineChart.data.datasets[0].data, newVal);
         window.lineChart.options.scales.y.suggestedMax = Math.ceil(productionMax * 1.1);
-        
         window.lineChart.update();
     }
-    
-    // Update the edit button text
-    const editButton = document.querySelector('.chart-target-edit .chart-target-current');
-    if (editButton) {
-        editButton.textContent = `Current: ${newTargetValue}`;
-    }
+    const btn = document.querySelector('.chart-target-edit .chart-target-current');
+    if (btn) btn.textContent = `Current: ${newVal}`;
 }
 
-// Modal event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    initializeTargetEditor();
-    
-    // Modal close events
-    const modal = document.getElementById('targetEditModal');
-    const closeBtn = document.querySelector('.target-modal-close');
-    const cancelBtn = document.querySelector('.target-btn-cancel');
-    
-    if (closeBtn) closeBtn.onclick = closeTargetModal;
-    if (cancelBtn) cancelBtn.onclick = closeTargetModal;
-    
-    // Close modal when clicking outside
-    if (modal) {
-        modal.onclick = function(event) {
-            if (event.target === modal) {
-                closeTargetModal();
-            }
-        };
-    }
-    
-    // Handle form submission
-    const form = document.getElementById('targetEditForm');
-if (form) {
-    form.onsubmit = function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(form);
-        const targetValue = parseInt(formData.get('production_target'));
-        
-        if (isNaN(targetValue) || targetValue < 0) {
-            showToast('Please enter a valid positive number for the target.', 'error');
-            return;
-        }
-        
-        // Show loading state
-        const submitBtn = form.querySelector('.target-btn-save');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Saving...';
-        submitBtn.disabled = true;
-        
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': getCsrfToken() // Add CSRF token to headers
-            }
-        })
-        .then(response => {
-            if (response.status === 403) {
-                throw new Error('Authentication required. Please log in.');
-            }
-            if (!response.ok) {
-                throw new Error('Network response was not ok: ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                updateTargetInChart(targetValue);
-                closeTargetModal();
-                showToast('Production target updated successfully!', 'success');
-            } else {
-                showToast(data.message || 'Failed to update target', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            if (error.message.includes('Authentication required')) {
-                showToast('Please log in to update the target.', 'error');
-                // Optionally redirect to login page
-                window.location.href = '/accounts/login/';
-            } else {
-                showToast('An error occurred while updating the target', 'error');
-            }
-        })
-        .finally(() => {
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-        });
-    };
-}
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeTargetModal();
-        }
-    });
-});
-
-// Toast notification function
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#2ecc71' : type === 'error' ? '#e74c3c' : '#3498db'};
-        color: white;
-        padding: 12px 20px;
-        border-radius: 6px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 10000;
-        font-size: 14px;
-        font-weight: 500;
-        opacity: 0;
-        transform: translateX(100%);
-        transition: all 0.3s ease;
-    `;
-    
-    document.body.appendChild(toast);
-    
-    // Animate in
-    setTimeout(() => {
-        toast.style.opacity = '1';
-        toast.style.transform = 'translateX(0)';
-    }, 10);
-    
-    // Animate out and remove
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(100%)';
-        setTimeout(() => document.body.removeChild(toast), 300);
-    }, 3000);
-}
-window.onload = function () {
-    setupWebSocketUpdates();
-};
-
-// Utility function to get chart text color based on theme
-function getChartTextColor() {
-    return document.body.classList.contains('white-mode') ? '#333333' : '#ffffff';
-}
-
-// Utility function to update chart text colors
-function updateChartTextColors(chart) {
-    if (!chart) return;
-    const textColor = getChartTextColor();
-    if (chart.options.scales) {
-        if (chart.options.scales.x) {
-            chart.options.scales.x.ticks.color = textColor;
-            chart.options.scales.x.grid.color = document.body.classList.contains('white-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
-        }
-        if (chart.options.scales.y) {
-            chart.options.scales.y.ticks.color = textColor;
-            chart.options.scales.y.grid.color = document.body.classList.contains('white-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
-        }
-    }
-    if (chart.options.plugins.datalabels) {
-        chart.options.plugins.datalabels.color = textColor;
-        if (chart.options.plugins.datalabels.backgroundColor && chart.config.type === 'line') {
-            chart.options.plugins.datalabels.backgroundColor = document.body.classList.contains('white-mode') ? 'rgba(52, 152, 219, 0.9)' : 'rgba(52, 152, 219, 0.7)';
-        }
-    }
-    if (chart.options.plugins.legend && chart.options.plugins.legend.labels) {
-        chart.options.plugins.legend.labels.color = textColor;
-    }
-    chart.update();
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Register the Chart.js DataLabels plugin
-    if (typeof ChartDataLabels !== 'undefined') {
-        Chart.register(ChartDataLabels);
-    } else {
-        console.warn('ChartDataLabels plugin not found.');
-    }
-
-    // Parse checksheets data globally
-    window.checksheets = parseChecksheets();
-
-    // Initialize all charts and UI components
-    initializeCharts();
-    setupEventListeners();
-    loadInitialData();
-
-    // Watch for theme changes
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.attributeName === 'class') {
-                updateChartTextColors(window.barChart);
-                updateChartTextColors(window.pieChart);
-                updateChartTextColors(window.lineChart);
-            }
-        });
-    });
-    observer.observe(document.body, { attributes: true });
-
-    // Navbar filter integration
-    if (document.querySelector('.dashboard')) {
-        const navbar = document.querySelector('.navbar');
-        if (navbar) {
-            const logoutBtn = navbar.querySelector('.logout-btn');
-            if (logoutBtn) {
-                const navbarRight = document.createElement('div');
-                navbarRight.className = 'navbar-right line-filter-nav';
-                const lineFilterContainer = document.querySelector('.line-filter-container');
-                if (lineFilterContainer) {
-                    const lineFilterClone = lineFilterContainer.cloneNode(true);
-                    logoutBtn.parentNode.removeChild(logoutBtn);
-                    navbarRight.appendChild(lineFilterClone);
-                    navbarRight.appendChild(logoutBtn);
-                    navbar.appendChild(navbarRight);
-                    lineFilterContainer.style.display = 'none';
-
-                    const navbarLineFilter = navbarRight.querySelector('#lineFilter');
-                    const dashboardLineFilter = lineFilterContainer.querySelector('#lineFilter');
-                    const navbarDateFilter = navbarRight.querySelector('#dateFilter');
-                    const dashboardDateFilter = lineFilterContainer.querySelector('#dateFilter');
-
-                    if (navbarLineFilter && dashboardLineFilter) {
-                        navbarLineFilter.addEventListener('change', function() {
-                            dashboardLineFilter.value = this.value;
-                            dashboardLineFilter.dispatchEvent(new Event('change'));
-                        });
-                    }
-                    if (navbarDateFilter && dashboardDateFilter) {
-                        navbarDateFilter.addEventListener('change', function() {
-                            dashboardDateFilter.value = this.value;
-                            dashboardDateFilter.dispatchEvent(new Event('change'));
-                        });
-                    }
-                }
-            }
-        }
-    }
-});
-
-function parseChecksheets() {
-    try {
-        return JSON.parse('{{ checksheets_data_json|safe }}');
-    } catch (e) {
-        console.error('Error parsing checksheets data:', e);
-        return [];
-    }
-}
-
-function initializeCharts() {
-    configureChartDefaults();
-    window.barChart = initializeBarChart();
-    window.pieChart = initializePieChart();
-    window.lineChart = initializeLineChart();
-    setupResizeHandlers();
-}
-
-function configureChartDefaults() {
-    Chart.defaults.color = getChartTextColor();
-    Chart.defaults.borderColor = document.body.classList.contains('white-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
-}
-
+// ─── Chart Initializers ───────────────────────────────────────────────────────
 function initializeBarChart() {
-    const barCtx = document.getElementById('barChart');
-    if (!barCtx) return null;
-    return new Chart(barCtx.getContext('2d'), {
+    const ctx = document.getElementById('barChart');
+    if (!ctx) return null;
+    const labels = DUMMY.barChart.map(d => d.name);
+    const counts = DUMMY.barChart.map(d => d.yes_count);
+    const isMobile = window.innerWidth <= 480;
+    return new Chart(ctx.getContext('2d'), {
         type: 'bar',
         data: {
-            labels: [],
+            labels,
             datasets: [{
                 label: 'Count',
-                data: [],
-                backgroundColor: [],
-                borderColor: [],
+                data: counts,
+                backgroundColor: generateColorArray(labels.length, 0.7),
+                borderColor:     generateColorArray(labels.length, 1),
                 borderWidth: 2,
                 borderRadius: 5,
             }]
@@ -590,75 +421,61 @@ function initializeBarChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: window.innerWidth <= 480 ? 15 : 25 } },
+            layout: { padding: { top: isMobile ? 15 : 25 } },
             plugins: {
                 legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        title: function(tooltipItems) {
-                            const index = tooltipItems[0].dataIndex;
-                            return this.chart.originalLabels ? this.chart.originalLabels[index] : tooltipItems[0].label;
-                        }
-                    }
-                },
                 datalabels: {
-                    display: true,
-                    anchor: 'end',
-                    align: 'top',
-                    offset: 4,
-                    formatter: function(value) { return value; },
-                    font: { weight: 'bold', size: window.innerWidth <= 480 ? 8 : 10 },
-                    color: getChartTextColor(),
-                    clamp: true
+                    display: true, anchor: 'end', align: 'top', offset: 4,
+                    formatter: v => v,
+                    font: { weight: 'bold', size: isMobile ? 8 : 10 },
+                    color: getChartTextColor(), clamp: true
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    grid: { color: document.body.classList.contains('white-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)' },
-                    ticks: {
-                        color: getChartTextColor(),
-                        font: { size: window.innerWidth <= 480 ? 8 : 10 },
-                        stepSize: 1,
-                        callback: function(value) { return Number.isInteger(value) ? value : null; }
-                    },
-                    suggestedMax: function(context) {
-                        const maxValue = context.chart.data.datasets[0].data.reduce((max, value) => value > max ? value : max, 0);
-                        return Math.ceil(maxValue * 1.1);
-                    }
+                    suggestedMax: Math.max(...counts) * 1.15,
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: getChartTextColor(), font: { size: isMobile ? 8 : 10 },
+                        stepSize: 1, callback: v => Number.isInteger(v) ? v : null }
                 },
                 x: {
                     grid: { display: false },
                     ticks: {
                         color: getChartTextColor(),
-                        callback: function(value, index) {
-                            const label = this.getLabelForValue(value);
-                            return shortenLabel(label, window.innerWidth <= 480 ? 8 : 10);
-                        },
-                        font: { size: window.innerWidth <= 480 ? 8 : 10 }
+                        font: { size: isMobile ? 8 : 10 },
+                        callback: function(val, i) {
+                            return shortenLabel(this.getLabelForValue(val), isMobile ? 8 : 10);
+                        }
                     }
                 }
             },
-            barPercentage: 0.3,
-            categoryPercentage: 0.5
+            barPercentage: 0.3, categoryPercentage: 0.5
         }
     });
 }
 
 function initializePieChart() {
-    const pieChartNoData = document.getElementById('pieChartNoData');
-    const pieChartElement = document.getElementById('pieChart');
-    if (!pieChartElement) return null;
-    if (pieChartNoData) pieChartNoData.style.display = 'flex';
-    pieChartElement.style.display = 'none';
-    return new Chart(pieChartElement.getContext('2d'), {
+    const el = document.getElementById('pieChart');
+    const noData = document.getElementById('pieChartNoData');
+    if (!el) return null;
+
+    // Hide "no data" message, show chart immediately with dummy data
+    if (noData) noData.style.display = 'none';
+    el.style.display = 'block';
+
+    const fields = Object.keys(DUMMY.pieChart.zone_yes_counts);
+    const counts = Object.values(DUMMY.pieChart.zone_yes_counts);
+    const isMobile = window.innerWidth <= 480;
+
+    return new Chart(el.getContext('2d'), {
         type: 'doughnut',
         data: {
-            labels: [],
+            labels: fields,
             datasets: [{
-                data: [],
-                backgroundColor: ['rgba(46, 204, 113, 0.7)', 'rgba(231, 76, 60, 0.7)', 'rgba(241, 196, 15, 0.7)'],
-                borderColor: ['rgba(46, 204, 113, 1)', 'rgba(231, 76, 60, 1)', 'rgba(241, 196, 15, 1)'],
+                data: counts,
+                backgroundColor: generateColorArray(fields.length, 0.7),
+                borderColor:     generateColorArray(fields.length, 1),
                 borderWidth: 2
             }]
         },
@@ -669,23 +486,16 @@ function initializePieChart() {
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: {
-                        padding: 15,
-                        boxWidth: 10,
-                        color: getChartTextColor(),
-                        font: { size: window.innerWidth <= 480 ? 8 : 10 }
-                    }
+                    labels: { padding: 15, boxWidth: 10, color: getChartTextColor(),
+                        font: { size: isMobile ? 8 : 10 } }
                 },
                 datalabels: {
                     formatter: (value, ctx) => {
-                        let sum = 0;
-                        let dataArr = ctx.chart.data.datasets[0].data;
-                        dataArr.forEach(data => { sum += data; });
-                        let percentage = (value*100 / sum).toFixed(1)+"%";
-                        return percentage;
+                        const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        return (value * 100 / sum).toFixed(1) + '%';
                     },
                     color: getChartTextColor(),
-                    font: { weight: 'bold', size: window.innerWidth <= 480 ? 8 : 10 }
+                    font: { weight: 'bold', size: isMobile ? 8 : 10 }
                 }
             }
         }
@@ -693,398 +503,143 @@ function initializePieChart() {
 }
 
 function initializeLineChart() {
-    const lineCtx = document.getElementById('lineChart');
-    if (!lineCtx) return null;
+    const ctx = document.getElementById('lineChart');
+    if (!ctx) return null;
+    const { labels, production } = DUMMY.lineChart;
+    const targetData = Array(labels.length).fill(window.targetValue);
+    const isMobile = window.innerWidth <= 480;
+    const isWhite = document.body.classList.contains('white-mode');
 
-    // Prepare target value dataset
-    const targetValue = window.targetValue || 0; // Fallback to 0 if not defined
-    const targetData = Array(5).fill(targetValue); // Match the number of labels (e.g., 5 time points)
-
-    return new Chart(lineCtx.getContext('2d'), {
+    return new Chart(ctx.getContext('2d'), {
         type: 'line',
         data: {
-            labels: ['12:30', '12:35', '12:40', '12:45', '12:50'],
+            labels,
             datasets: [
                 {
                     label: 'Production live',
-                    data: [10, 15, 5, 85, 15],
+                    data: production,
                     fill: true,
-                    backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                    borderColor: 'rgba(52, 152, 219, 1)',
+                    backgroundColor: 'rgba(52,152,219,0.2)',
+                    borderColor: 'rgba(52,152,219,1)',
                     tension: 0.4,
-                    pointBackgroundColor: 'rgba(52, 152, 219, 1)',
+                    pointBackgroundColor: 'rgba(52,152,219,1)',
                     pointBorderColor: '#fff',
-                    pointRadius: 4,
-                    pointHoverRadius: 6
+                    pointRadius: 4, pointHoverRadius: 6
                 },
                 {
                     label: 'Target',
                     data: targetData,
                     fill: false,
-                    borderColor: 'rgba(231, 76, 60, 1)', // Red color for target line
+                    borderColor: 'rgba(231,76,60,1)',
                     borderWidth: 2,
-                    borderDash: [5, 5], // Dashed line for visual distinction
-                    pointRadius: 0, // No points on the target line
-                    tension: 0
+                    borderDash: [5, 5],
+                    pointRadius: 0, tension: 0
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: window.innerWidth <= 480 ? 15 : 25 } },
+            layout: { padding: { top: isMobile ? 15 : 25 } },
             plugins: {
                 legend: {
-                    display: true, // Show legend to include "Target"
-                    labels: {
-                        color: getChartTextColor(),
-                        font: { size: window.innerWidth <= 480 ? 8 : 10 }
-                    }
+                    display: true,
+                    labels: { color: getChartTextColor(), font: { size: isMobile ? 8 : 10 } }
                 },
                 datalabels: {
-                    display: function(context) {
-                        // Only show datalabels for the production dataset (index 0)
-                        return context.datasetIndex === 0;
-                    },
-                    align: 'top',
-                    anchor: 'center',
-                    offset: 7,
-                    formatter: function(value) { return value; },
+                    display: ctx => ctx.datasetIndex === 0,
+                    align: 'top', anchor: 'center', offset: 7,
+                    formatter: v => v,
                     color: getChartTextColor(),
-                    backgroundColor: document.body.classList.contains('white-mode') ? 'rgba(52, 152, 219, 0.9)' : 'rgba(52, 152, 219, 0.7)',
-                    borderRadius: 4,
-                    padding: 4,
-                    font: { weight: 'bold', size: window.innerWidth <= 480 ? 8 : 10 }
+                    backgroundColor: isWhite ? 'rgba(52,152,219,0.9)' : 'rgba(52,152,219,0.7)',
+                    borderRadius: 4, padding: 4,
+                    font: { weight: 'bold', size: isMobile ? 8 : 10 }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    grid: { color: document.body.classList.contains('white-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)' },
-                    ticks: { 
-                        color: getChartTextColor(), 
-                        font: { size: window.innerWidth <= 480 ? 8 : 10 },
-                        callback: function(value) { return Number.isInteger(value) ? value : null; }
-                    },
-                    suggestedMax: function(context) {
-                        const productionMax = Math.max(...context.chart.data.datasets[0].data, targetValue);
-                        return Math.ceil(productionMax * 1.1); // Ensure target is visible
-                    }
+                    suggestedMax: Math.ceil(Math.max(...production, window.targetValue) * 1.1),
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: getChartTextColor(), font: { size: isMobile ? 8 : 10 },
+                        callback: v => Number.isInteger(v) ? v : null }
                 },
                 x: {
                     grid: { display: false },
-                    ticks: { color: getChartTextColor(), font: { size: window.innerWidth <= 480 ? 8 : 10 } }
+                    ticks: { color: getChartTextColor(), font: { size: isMobile ? 8 : 10 } }
                 }
             }
         }
     });
 }
 
-function setupEventListeners() {
-    setupFilterButtons();
-    setupChecksheetSelection();
-    setupLineFilter();
-    setupDateFilter();
-}
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
 
-function setupFilterButtons() {
-    const filterButtons = document.querySelectorAll('.chart-filter');
-    filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const siblings = this.parentNode.querySelectorAll('.chart-filter');
-            siblings.forEach(sibling => sibling.classList.remove('active'));
-            this.classList.add('active');
-            const period = this.dataset.period;
-            const chartCard = this.closest('.chart-card');
-            if (chartCard.querySelector('#barChart')) {
-                const selectedLine = document.getElementById('lineFilter')?.value || 'all';
-                const selectedDate = document.getElementById('dateFilter')?.value || '';
-                loadChartData(period, selectedLine, selectedDate);
-            } else if (chartCard.querySelector('#pieChart')) {
-                const checksheetId = document.getElementById('pieChartChecksheet')?.value;
-                const selectedDate = document.getElementById('dateFilter')?.value || '';
-                if (checksheetId) {
-                    loadPieChartData(checksheetId, period, selectedDate);
-                }
-            } else if (chartCard.querySelector('#lineChart')) {
-                applyVisualEffect(chartCard);
-            }
-        });
+    // Populate stat cards immediately
+    updateElementText('production-count',  DUMMY.stats.production_count);
+    updateElementText('reject-count',      DUMMY.stats.total_rejects);
+    updateElementText('actual-production', DUMMY.stats.actual_production);
+    updateElementText('efficiency-percent', DUMMY.stats.efficiency);
+
+    // Init charts
+    window.barChart  = initializeBarChart();
+    window.pieChart  = initializePieChart();
+    window.lineChart = initializeLineChart();
+
+    initializeTargetEditor();
+
+    // Target modal wiring
+    const closeBtn  = document.querySelector('.target-modal-close');
+    const cancelBtn = document.querySelector('.target-btn-cancel');
+    const modal     = document.getElementById('targetEditModal');
+    if (closeBtn)  closeBtn.onclick  = closeTargetModal;
+    if (cancelBtn) cancelBtn.onclick = closeTargetModal;
+    if (modal) modal.onclick = e => { if (e.target === modal) closeTargetModal(); };
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTargetModal(); });
+
+    const form = document.getElementById('targetEditForm');
+    if (form) {
+        form.onsubmit = function (e) {
+            e.preventDefault();
+            const val = parseInt(new FormData(form).get('production_target'));
+            if (isNaN(val) || val < 0) { showToast('Enter a valid positive number.', 'error'); return; }
+            updateTargetInChart(val);
+            closeTargetModal();
+            showToast('Production target updated!', 'success');
+        };
+    }
+
+    // Theme observer
+    new MutationObserver(() => {
+        updateChartTextColors(window.barChart);
+        updateChartTextColors(window.pieChart);
+        updateChartTextColors(window.lineChart);
+    }).observe(document.body, { attributes: true });
+
+    // Navbar filter clone (kept for UI consistency, no fetch calls)
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        const logoutBtn = navbar.querySelector('.logout-btn');
+        const lineFilterContainer = document.querySelector('.line-filter-container');
+        if (logoutBtn && lineFilterContainer) {
+            const navbarRight = document.createElement('div');
+            navbarRight.className = 'navbar-right line-filter-nav';
+            const clone = lineFilterContainer.cloneNode(true);
+            logoutBtn.parentNode.removeChild(logoutBtn);
+            navbarRight.appendChild(clone);
+            navbarRight.appendChild(logoutBtn);
+            navbar.appendChild(navbarRight);
+            lineFilterContainer.style.display = 'none';
+        }
+    }
+
+    // Resize handling
+    window.addEventListener('resize', () => {
+        [window.barChart, window.pieChart, window.lineChart].forEach(c => c?.resize());
     });
-}
-
-function setupChecksheetSelection() {
-    const pieChartChecksheet = document.getElementById('pieChartChecksheet');
-    if (!pieChartChecksheet) return;
-    pieChartChecksheet.addEventListener('change', function() {
-        if (this.value !== '') {
-            const activePeriod = this.closest('.chart-card').querySelector('.chart-filter.active')?.dataset.period || 'today';
-            const selectedDate = document.getElementById('dateFilter')?.value || '';
-            loadPieChartData(this.value, activePeriod, selectedDate);
-        } else {
-            const pieChartNoData = document.getElementById('pieChartNoData');
-            const pieChartElement = document.getElementById('pieChart');
-            if (pieChartNoData) pieChartNoData.style.display = 'flex';
-            if (pieChartElement) pieChartElement.style.display = 'none';
-        }
-    });
-}
-
-function setupLineFilter() {
-    filterChecksheetsByLine('all');
-    const lineFilter = document.getElementById('lineFilter');
-    if (lineFilter) {
-        lineFilter.addEventListener('change', function() {
-            const selectedLine = this.value;
-            const selectedDate = document.getElementById('dateFilter')?.value || '';
-            filterChecksheetsByLine(selectedLine);
-            const activePeriod = document.querySelector('.chart-card:has(#barChart) .chart-filter.active')?.dataset.period || 'today';
-            loadChartData(activePeriod, selectedLine, selectedDate);
-            loadDashboardStats(selectedLine, selectedDate);
-        });
-    }
-}
-
-function setupDateFilter() {
-    const dateFilter = document.getElementById('dateFilter');
-    if (dateFilter) {
-        dateFilter.addEventListener('change', function() {
-            const selectedDate = this.value;
-            const selectedLine = document.getElementById('lineFilter')?.value || 'all';
-            const activePeriod = document.querySelector('.chart-card:has(#barChart) .chart-filter.active')?.dataset.period || 'today';
-            const checksheetId = document.getElementById('pieChartChecksheet')?.value;
-            loadChartData(activePeriod, selectedLine, selectedDate);
-            if (checksheetId) {
-                loadPieChartData(checksheetId, activePeriod, selectedDate);
-            }
-            loadDashboardStats(selectedLine, selectedDate);
-        });
-    }
-}
-
-function filterChecksheetsByLine(line) {
-    const pieChartDropdown = document.getElementById('pieChartChecksheet');
-    if (!pieChartDropdown) return;
-    if (!window.checksheets || !Array.isArray(window.checksheets)) return;
-    while (pieChartDropdown.options.length > 1) {
-        pieChartDropdown.remove(1);
-    }
-    window.checksheets.forEach(sheet => {
-        if (line === 'all' || sheet.line === line) {
-            const option = document.createElement('option');
-            option.value = sheet.id;
-            option.text = sheet.name;
-            option.dataset.line = sheet.line;
-            pieChartDropdown.appendChild(option);
-        }
-    });
-    if (pieChartDropdown.options.length > 1) {
-        pieChartDropdown.value = pieChartDropdown.options[1].value;
-        const activePeriod = document.querySelector('.chart-card:has(#pieChart) .chart-filter.active')?.dataset.period || 'today';
-        const selectedDate = document.getElementById('dateFilter')?.value || '';
-        loadPieChartData(pieChartDropdown.value, activePeriod, selectedDate);
-    } else {
-        pieChartDropdown.value = '';
-        const pieChartNoData = document.getElementById('pieChartNoData');
-        const pieChartElement = document.getElementById('pieChart');
-        if (pieChartNoData) pieChartNoData.style.display = 'flex';
-        if (pieChartElement) pieChartElement.style.display = 'none';
-    }
-}
-
-function loadInitialData() {
-    const lineFilter = document.getElementById('lineFilter');
-    const dateFilter = document.getElementById('dateFilter');
-    const selectedLine = lineFilter ? lineFilter.value : 'all';
-    const selectedDate = dateFilter ? dateFilter.value : '';
-    loadChartData('today', selectedLine, selectedDate);
-    loadDashboardStats(selectedLine, selectedDate);
-    if (typeof today_yes_counts_json !== 'undefined') {
-        try {
-            const initialData = JSON.parse(today_yes_counts_json);
-            updateBarChart(initialData);
-        } catch (e) {
-            console.error('Error parsing initial data:', e);
-        }
-    }
-}
-
-function loadChartData(period, line = 'all', date = '') {
-    if (line === 'all') {
-        const lineFilter = document.getElementById('lineFilter');
-        if (lineFilter) line = lineFilter.value;
-    }
-    let url = `/get_chart_data/?period=${period}&line=${line}`;
-    if (date) url += `&date=${date}`;
-    fetch(url)
-        .then(response => response.json())
-        .then(data => updateBarChart(data))
-        .catch(error => console.error('Error loading chart data:', error));
-}
-
-function loadPieChartData(checksheetId, period, date = '') {
-    let url = `/get_pie_chart_data/?checksheet_id=${checksheetId}&period=${period}`;
-    if (date) url += `&date=${date}`;
-    fetch(url)
-        .then(response => response.json())
-        .then(data => updatePieChart(data))
-        .catch(error => console.error('Error loading pie chart data:', error));
-}
-
-function loadDashboardStats(line = 'all', date = '') {
-    let url = `/get_dashboard_stats/?line=${line}`;
-    if (date) url += `&date=${date}`;
-    fetch(url)
-        .then(response => response.json())
-        .then(data => updateDashboardElements(data))
-        .catch(error => console.error('Error loading dashboard stats:', error));
-}
-
-function updateBarChart(data) {
-    if (!window.barChart) return;
-    const labels = data.map(item => item.name);
-    const counts = data.map(item => item.yes_count);
-    window.barChart.originalLabels = [...labels];
-    const backgroundColors = generateColorArray(labels.length, 0.7);
-    const borderColors = generateColorArray(labels.length, 1);
-    window.barChart.data.labels = labels;
-    window.barChart.data.datasets[0].data = counts;
-    window.barChart.data.datasets[0].backgroundColor = backgroundColors;
-    window.barChart.data.datasets[0].borderColor = borderColors;
-    window.barChart.options.scales.y.suggestedMax = Math.max(...counts) * 1.1;
-    window.barChart.update();
-}
-
-function updatePieChart(data) {
-    if (!window.pieChart) return;
-    const pieChartNoData = document.getElementById('pieChartNoData');
-    const pieChartElement = document.getElementById('pieChart');
-    if (pieChartNoData) pieChartNoData.style.display = 'none';
-    if (pieChartElement) pieChartElement.style.display = 'block';
-    const fields = Object.keys(data.zone_yes_counts);
-    const counts = Object.values(data.zone_yes_counts);
-    const backgroundColors = generateColorArray(fields.length, 0.7);
-    const borderColors = generateColorArray(fields.length, 1);
-    window.pieChart.data.labels = fields;
-    window.pieChart.data.datasets[0].data = counts;
-    window.pieChart.data.datasets[0].backgroundColor = backgroundColors;
-    window.pieChart.data.datasets[0].borderColor = borderColors;
-    window.pieChart.update();
-}
-
-function setupWebSocketUpdates() {
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${protocol}://${window.location.host}/ws/production/`;
-    const socket = new WebSocket(wsUrl);
-    socket.onopen = function () {
-        const dateFilter = document.getElementById('dateFilter');
-        if (dateFilter && dateFilter.value) {
-            socket.send(JSON.stringify({
-                type: "set_date_filter",
-                date: dateFilter.value
-            }));
-        }
-    };
-    socket.onmessage = function (event) {
-        try {
-            const data = JSON.parse(event.data);
-            if (data.type === "send_production_update") {
-                updateDashboardElements(data.data);
-            }
-        } catch (e) {
-            console.error("Error parsing WebSocket message:", e);
-        }
-    };
-    socket.onerror = function (error) {
-        console.error("WebSocket error:", error);
-        setErrorState();
-    };
-    socket.onclose = function () {
-        console.warn("WebSocket closed");
-        setErrorState();
-    };
-    const dateFilter = document.getElementById('dateFilter');
-    if (dateFilter) {
-        dateFilter.addEventListener('change', function() {
-            if (socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({
-                    type: "set_date_filter",
-                    date: this.value
-                }));
-            }
-        });
-    }
-}
-
-function updateDashboardElements(data) {
-    if (!data) {
-        updateElementText("production-count", "N/A");
-        updateElementText("reject-count", "N/A");
-        updateElementText("actual-production", "N/A");
-        updateElementText("efficiency-percent", "N/A");
-        return;
-    }
-    updateElementText("production-count", data.production_count ?? "N/A");
-    updateElementText("reject-count", data.total_rejects ?? "N/A");
-    updateElementText("actual-production", data.actual_production ?? "N/A");
-    updateElementText("efficiency-percent", data.efficiency ?? "N/A");
-    if (data.connection_status) {
-        updateElementText("connection-status", data.connection_status);
-    }
-}
-
-function updateElementText(id, text) {
-    const element = document.getElementById(id);
-    if (element) element.textContent = text;
-}
-
-function setErrorState() {
-    updateElementText("production-count", "58");
-    updateElementText("reject-count", "17");
-    updateElementText("actual-production", "41");
-    updateElementText("efficiency-percent", "70.69%");
-}
-
-function setupResizeHandlers() {
-    setupSidebarObserver();
-    window.addEventListener('resize', resizeCharts);
-}
-
-function setupSidebarObserver() {
-    const sidebarToggle = document.querySelector('.sidebar-toggle');
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', () => setTimeout(resizeCharts, 300));
-    }
-    const resizeObserver = new ResizeObserver(() => setTimeout(resizeCharts, 300));
-    const chartsContainer = document.querySelector('.charts-container');
-    if (chartsContainer) resizeObserver.observe(chartsContainer);
-}
-
-function resizeCharts() {
-    if (window.barChart) window.barChart.resize();
-    if (window.pieChart) window.pieChart.resize();
-    if (window.lineChart) window.lineChart.resize();
-}
-
-function shortenLabel(label, maxLength) {
-    if (!label || label.length <= maxLength) return label || '';
-    return label.substring(0, maxLength - 3) + '...';
-}
-
-function generateColorArray(count, alpha) {
-    return Array(count).fill().map((_, i) => {
-        const hue = (i * 137) % 360;
-        return `hsla(${hue}, 70%, 60%, ${alpha})`;
-    });
-}
-
-function applyVisualEffect(chartCard) {
-    const chartContent = chartCard.querySelector('.chart-content');
-    if (chartContent) {
-        chartContent.style.opacity = '0.6';
-        setTimeout(() => { chartContent.style.opacity = '1'; }, 300);
-    }
-}
+});
 </script>
 
 {% endblock %}
