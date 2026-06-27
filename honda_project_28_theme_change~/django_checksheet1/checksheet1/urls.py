@@ -160,6 +160,8 @@ path("get_safe_ranges/", get_safe_ranges_view, name="get_safe_ranges"),
    path('arvrvideo/', arvrvideo_view, name='arvrvideo'),
     path('about/', about_view, name='about'),
     path('maintenance-video/', maintenance_video_view, name='maintenance_video'),
+    path('operation-standard/', operation_standard_video_view, name='operation-standard-video-view'),
+    path('junior-ca/', juniorca_video_view, name='juniorca-video-view'),
 ]
 
 

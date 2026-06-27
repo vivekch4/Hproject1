@@ -26,7 +26,7 @@ SECRET_KEY = "_n$o7+1gt*0-bk0^k0s^(!m=_dz64w4ghs@-sv5q3ybi1g@*t1"
 DEBUG = True
 
 # ALLOWED_HOSTS = []
-ALLOWED_HOSTS = ["worksp.pythonanywhere.com","192.168.1.60","122.180.247.129"]
+ALLOWED_HOSTS = ["worksp.pythonanywhere.com","192.168.1.60","122.180.247.129","127.0.0.1","*","localhost"]
 # ALLOWED_HOSTS = []
 # ALLOWED_HOSTS = ["*"]
 # ALLOWED_HOSTS = ["192.168.1.60","122.180.247.129"]

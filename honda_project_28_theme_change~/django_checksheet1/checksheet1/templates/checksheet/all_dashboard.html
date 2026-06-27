@@ -564,6 +564,30 @@
                 </div>
             </div>
 
+            <div class="demo-card"
+                style="--card-accent: linear-gradient(90deg,#00e5ff,#0091d4); --icon-bg: rgba(0,229,255,0.1);"
+                onclick="go('operation-standard')">
+                <div class="card-icon-wrap">📐</div>
+                <h3>Operation Standard</h3>
+                <p>Standardized operating procedure walkthrough for consistent, safe, and repeatable shop-floor execution.</p>
+                <div class="card-footer">
+                    <button class="card-btn btn-login" onclick="event.stopPropagation(); go('operation-standard')">Open →</button>
+                    <span class="card-dot" style="background:#00e5ff;"></span>
+                </div>
+            </div>
+
+            <div class="demo-card coming-soon"
+                style="--card-accent: linear-gradient(90deg,#ff8a5c,#d4530a); --icon-bg: rgba(255,138,92,0.1);"
+                onclick="go('junior-ca-assistant')">
+                <div class="card-icon-wrap">🧾</div>
+                <h3>Junior CA Assistant</h3>
+                <p>AI assistant for company secretaries and accounting teams — compliance checks, filings, and document drafting support.</p>
+                <div class="card-footer">
+                    <button class="card-btn btn-open" onclick="event.stopPropagation(); go('junior-ca-assistant')">Open →</button>
+                    <span class="card-dot" style="background:#ff8a5c;"></span>
+                </div>
+            </div>
+
         </div>
 
     </div>
@@ -582,7 +606,9 @@
             'slm-normal': 'https://slm.technovizautomation.com/login',
 
             'dojo-management': 'https://management-repo-seven.vercel.app/',
-            'slm-arvr': 'https://slm.technovizautomation.com/AR-VR'
+            'slm-arvr': 'https://slm.technovizautomation.com/AR-VR',
+            'operation-standard': '/operation-standard/',
+            'junior-ca-assistant': '/junior-ca/',
         };
 
         function go(key) {

@@ -5734,3 +5734,12 @@ def about_view(request):
 
 def maintenance_video_view(request):
     return render(request, 'checksheet/maintenance_video.html')
+
+
+
+def juniorca_video_view(request):
+    return render(request, 'checksheet/junior_ca.html')
+
+
+def operation_standard_video_view(request):
+    return render(request, 'checksheet/operation_standard.html')
